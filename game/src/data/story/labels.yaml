@@ -1,0 +1,9 @@
+# 執行器自己產生的選項標籤。
+resp:
+  swallow: { zh: "吞下去", en: "Swallow it" }
+  clarify: { zh: "澄清事實", en: "Clarify the facts" }
+  boundary: { zh: "設界線", en: "Set a boundary" }
+  talk: { zh: "找人討論", en: "Talk it over with someone" }
+ask:
+  plain: { zh: "直接問", en: "Just ask" }
+  checked: { zh: "先說我查過什麼", en: "Say what I already checked" }

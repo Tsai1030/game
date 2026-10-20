@@ -1,110 +1,97 @@
-# 第 2 章（Case 03）的對話。每一句都是中英並排，speaker 對應語系檔的 speaker.*。
-intro:
-  - speaker: sys
-    zh: "【02:47】手機震動。SPC：N9K417.1 AEI CD 47.4 nm 超出 UCL，已自動 Hold。"
-    en: "[02:47] Your phone buzzes. SPC: N9K417.1 AEI CD 47.4 nm, above UCL. Auto-held."
-  - speaker: me
-    zh: "……又是 ETCH 段。先回座位上的 PE 工作站看看。"
-    en: "…ETCH again. Let me check the PE workstation at my desk first."
-  - speaker: sys
-    zh: "方向鍵／WASD 走路，點地板會自動走過去。靠近東西按 E 或空白鍵互動。"
-    en: "Arrow keys or WASD to walk, or click the floor to walk there. Press E or Space next to something to interact."
+# 第 2 章（Case 03）的劇情。每段劇情是一串段落（beat），台詞中英並排；speaker 對應語系檔的 speaker.*。
+scenes:
+  intro:
+    - effect: { flag: ev_unlocked }
+    - line:
+        id: intro-1
+        speaker: sys
+        zh: "【02:47】手機震動。SPC：N9K417.1 AEI CD 47.4 nm 超出 UCL，已自動 Hold。"
+        en: "[02:47] Your phone buzzes. SPC: N9K417.1 AEI CD 47.4 nm, above UCL. Auto-held."
+    - line:
+        id: intro-2
+        speaker: me
+        zh: "……又是 ETCH 段。先回座位上的 PE 工作站看看。"
+        en: "…ETCH again. Let me check the PE workstation at my desk first."
+    - line:
+        id: intro-3
+        speaker: sys
+        zh: "方向鍵／WASD 走路，點地板會自動走過去。靠近東西按 E 或空白鍵互動。"
+        en: "Arrow keys or WASD to walk, or click the floor to walk there. Press E or Space next to something to interact."
 
-boss_solved:
-  - speaker: boss
-    zh: "辛苦了。8 點我來報，你去吃早餐吧。"
-    en: "Good work. I'll present it at 8. Go get some breakfast."
-boss_suit:
-  - speaker: boss
-    zh: "你穿兔寶寶裝跑來辦公室幹嘛……算了。"
-    en: "Why are you wearing the bunny suit in the office… never mind."
-boss_main:
-  - speaker: boss
-    zh: "CD 那批到底能不能放？8 點要報。"
-    en: "Can we release that CD lot or not? I'm presenting at 8."
-boss_ready:
-  - speaker: boss
-    zh: "證據看起來夠了，回 PE 工作站把結論填一填。"
-    en: "Looks like you have enough evidence. Go fill in the conclusion at the PE workstation."
-boss_more:
-  - speaker: boss
-    zh: "去 Fab 看看 ETCH-07。記得帶證據回來，不要跟我說「感覺」。"
-    en: "Go look at ETCH-07 in the fab. Bring back evidence. Don't tell me it's a “feeling.”"
+  # 王經理：依狀態組合台詞。
+  boss:
+    - if: { solved: true }
+      then:
+        - include: boss_solved
+      else:
+        - if: { suit: true }
+          then:
+            - include: boss_suit
+        - include: boss_main
+        - if: { clues: 3 }
+          then:
+            - include: boss_ready
+          else:
+            - include: boss_more
+  boss_solved:
+    - line: { id: boss_solved-1, speaker: boss, zh: "辛苦了。8 點我來報，你去吃早餐吧。", en: "Good work. I'll present it at 8. Go get some breakfast." }
+  boss_suit:
+    - line: { id: boss_suit-1, speaker: boss, zh: "你穿兔寶寶裝跑來辦公室幹嘛……算了。", en: "Why are you wearing the bunny suit in the office… never mind." }
+  boss_main:
+    - line: { id: boss_main-1, speaker: boss, zh: "CD 那批到底能不能放？8 點要報。", en: "Can we release that CD lot or not? I'm presenting at 8." }
+  boss_ready:
+    - line: { id: boss_ready-1, speaker: boss, zh: "證據看起來夠了，回 PE 工作站把結論填一填。", en: "Looks like you have enough evidence. Go fill in the conclusion at the PE workstation." }
+  boss_more:
+    - line: { id: boss_more-1, speaker: boss, zh: "去 Fab 看看 ETCH-07。記得帶證據回來，不要跟我說「感覺」。", en: "Go look at ETCH-07 in the fab. Bring back evidence. Don't tell me it's a “feeling.”" }
 
-kevin:
-  - speaker: kevin
-    zh: "喔，你也被 call 來了。"
-    en: "Oh, they called you in too."
-  - speaker: kevin
-    zh: "PM-B 從前天就怪怪的，RF 反射功率一直往上爬。"
-    en: "PM-B has been acting weird since the day before yesterday. RF reflected power keeps creeping up."
-  - speaker: kevin
-    zh: "偷偷跟你說，PM-B 的 PM 上禮拜被延了，生管說產能要顧。你懂的。"
-    en: "Between us, PM-B's maintenance got pushed back last week. Production control said throughput comes first. You know how it is."
-  - speaker: kevin
-    zh: "機台畫面有「耗材」頁，可以看 focus ring 用了幾小時。"
-    en: "The tool screen has a Consumables tab. It shows how many hours the focus ring has run."
+  kevin:
+    - line: { id: kevin-1, speaker: kevin, zh: "喔，你也被 call 來了。", en: "Oh, they called you in too." }
+    - line: { id: kevin-2, speaker: kevin, zh: "PM-B 從前天就怪怪的，RF 反射功率一直往上爬。", en: "PM-B has been acting weird since the day before yesterday. RF reflected power keeps creeping up." }
+    - line: { id: kevin-3, speaker: kevin, zh: "偷偷跟你說，PM-B 的 PM 上禮拜被延了，生管說產能要顧。你懂的。", en: "Between us, PM-B's maintenance got pushed back last week. Production control said throughput comes first. You know how it is." }
+    - line: { id: kevin-4, speaker: kevin, zh: "機台畫面有「耗材」頁，可以看 focus ring 用了幾小時。", en: "The tool screen has a Consumables tab. It shows how many hours the focus ring has run." }
+    - effect: { clue: pm }
 
-fse:
-  - speaker: fse
-    zh: "我是原廠的阿哲。CVD-11 今天很乖。"
-    en: "I'm A-Zhe from the OEM. CVD-11 is behaving today."
-  - speaker: fse
-    zh: "ETCH-07？原廠 part 要等三週喔～"
-    en: "ETCH-07? OEM parts take three weeks~"
-  - speaker: fse
-    zh: "不過 focus ring 你們倉庫應該有庫存啦。"
-    en: "Your warehouse should have focus rings in stock, though."
+  fse:
+    - line: { id: fse-1, speaker: fse, zh: "我是原廠的阿哲。CVD-11 今天很乖。", en: "I'm A-Zhe from the OEM. CVD-11 is behaving today." }
+    - line: { id: fse-2, speaker: fse, zh: "ETCH-07？原廠 part 要等三週喔～", en: "ETCH-07? OEM parts take three weeks~" }
+    - line: { id: fse-3, speaker: fse, zh: "不過 focus ring 你們倉庫應該有庫存啦。", en: "Your warehouse should have focus rings in stock, though." }
 
-say_desk2:
-  - speaker: me
-    zh: "桌上有三杯沒喝完的咖啡，還有一張寫著「PM-B ??」的便利貼。"
-    en: "Three half-finished coffees on the desk, and a sticky note that says “PM-B ??”."
-say_desk3:
-  - speaker: me
-    zh: "螢幕保護程式在跑：「良率就是生命」。"
-    en: "The screensaver reads: “Yield is life.”"
-say_desk4:
-  - speaker: me
-    zh: "抽屜裡有一包沒拆的泡麵。值班人的好朋友。"
-    en: "An unopened pack of instant noodles in the drawer. The night shift's best friend."
-say_bossdesk:
-  - speaker: me
-    zh: "桌上放著 8 點晨會的簡報，標題是「ETCH CD 異常說明」……內容還是空的。"
-    en: "The slides for the 8 a.m. stand-up sit on the desk, titled “ETCH CD Excursion Explained”… They're still blank."
+  say_desk2:
+    - line: { id: say_desk2-1, speaker: me, zh: "桌上有三杯沒喝完的咖啡，還有一張寫著「PM-B ??」的便利貼。", en: "Three half-finished coffees on the desk, and a sticky note that says “PM-B ??”." }
+  say_desk3:
+    - line: { id: say_desk3-1, speaker: me, zh: "螢幕保護程式在跑：「良率就是生命」。", en: "The screensaver reads: “Yield is life.”" }
+  say_desk4:
+    - line: { id: say_desk4-1, speaker: me, zh: "抽屜裡有一包沒拆的泡麵。值班人的好朋友。", en: "An unopened pack of instant noodles in the drawer. The night shift's best friend." }
+  say_bossdesk:
+    - line: { id: say_bossdesk-1, speaker: me, zh: "桌上放著 8 點晨會的簡報，標題是「ETCH CD 異常說明」……內容還是空的。", en: "The slides for the 8 a.m. stand-up sit on the desk, titled “ETCH CD Excursion Explained”… They're still blank." }
 
-locker_on:
-  - speaker: me
-    zh: "頭套、口罩、連身衣、兩層手套、無塵鞋……鏡子裡出現一隻兔寶寶。"
-    en: "Hood, mask, coverall, two pairs of gloves, cleanroom boots… A bunny stares back from the mirror."
-  - speaker: sys
-    zh: "往東走過風淋室就是 Fab。"
-    en: "Head east through the air shower to reach the fab."
+  locker_on:
+    - line: { id: locker_on-1, speaker: me, zh: "頭套、口罩、連身衣、兩層手套、無塵鞋……鏡子裡出現一隻兔寶寶。", en: "Hood, mask, coverall, two pairs of gloves, cleanroom boots… A bunny stares back from the mirror." }
+    - line: { id: locker_on-2, speaker: sys, zh: "往東走過風淋室就是 Fab。", en: "Head east through the air shower to reach the fab." }
 
-coffee_ok:
-  - speaker: me
-    zh: "公司咖啡：免費，但很苦。咖啡 +1。"
-    en: "Company coffee: free, and very bitter. Coffee +1."
-coffee_full:
-  - speaker: me
-    zh: "已經第五杯了，手在抖。先不要。"
-    en: "That's the fifth cup. Your hands are shaking. Maybe not."
+  coffee_ok:
+    - line: { id: coffee_ok-1, speaker: me, zh: "公司咖啡：免費，但很苦。咖啡 +1。", en: "Company coffee: free, and very bitter. Coffee +1." }
+  coffee_full:
+    - line: { id: coffee_full-1, speaker: me, zh: "已經第五杯了，手在抖。先不要。", en: "That's the fifth cup. Your hands are shaking. Maybe not." }
 
-rc_wrong:
-  - speaker: boss
-    zh: "EE 照你的結論處理了，CD 還是沒回來。再查查看？（咖啡 −1）"
-    en: "EE did what your conclusion said, and the CD still hasn't come back. Look again? (Coffee −1)"
+  rc_wrong:
+    - line: { id: rc_wrong-1, speaker: boss, zh: "EE 照你的結論處理了，CD 還是沒回來。再查查看？（咖啡 −1）", en: "EE did what your conclusion said, and the CD still hasn't come back. Look again? (Coffee −1)" }
+  rc_solved:
+    - line: { id: rc_solved-1, speaker: sys, zh: "EE 換上新的 focus ring，PM-B 跑 monitor wafer：CD 45.1 nm，回到 target。", en: "EE installed a new focus ring. PM-B ran a monitor wafer: CD 45.1 nm, back on target." }
+    - line: { id: rc_solved-2, speaker: sys, zh: "Hold 的 4 批 lot 重新量測後放行。", en: "The 4 held lots were re-measured and released." }
+    - line: { id: rc_solved-3, speaker: boss, zh: "好，8 點我來報。你去吃早餐吧。", en: "Fine. I'll present it at 8. Go get some breakfast." }
+    - line: { id: rc_solved-4, speaker: sys, zh: "CASE 03 完成！用到線索 {n}/5，剩下咖啡 {c} 杯。", en: "CASE 03 complete! Clues used: {n}/5. Coffee left: {c}." }
 
-rc_solved:
-  - speaker: sys
-    zh: "EE 換上新的 focus ring，PM-B 跑 monitor wafer：CD 45.1 nm，回到 target。"
-    en: "EE installed a new focus ring. PM-B ran a monitor wafer: CD 45.1 nm, back on target."
-  - speaker: sys
-    zh: "Hold 的 4 批 lot 重新量測後放行。"
-    en: "The 4 held lots were re-measured and released."
-  - speaker: boss
-    zh: "好，8 點我來報。你去吃早餐吧。"
-    en: "Fine. I'll present it at 8. Go get some breakfast."
-  - speaker: sys
-    zh: "CASE 03 完成！用到線索 {n}/5，剩下咖啡 {c} 杯。"
-    en: "CASE 03 complete! Clues used: {n}/5. Coffee left: {c}."
+  # C2-03：拿到 SPC 線索後，你在 LINE 回報王經理（證據 E-C2-01、E-C2-02）。
+  c2_report_spc:
+    - evidence: { id: E-C2-01, time: "03:05", source: chat, speaker: me, zh: "N9K417.1 OOC，正在查 ETCH-07 PM-B。", en: "N9K417.1 OOC, checking ETCH-07 PM-B." }
+    - line: { id: c2_report_spc-1, speaker: me, zh: "（LINE 給王經理）N9K417.1 OOC，正在查 ETCH-07 PM-B。", en: "(LINE to Manager Wang) N9K417.1 OOC, checking ETCH-07 PM-B." }
+    - evidence: { id: E-C2-02, time: "03:40", source: chat, speaker: boss, zh: "你自己看著辦，8 點前要有結論。", en: "Handle it yourself. I need a conclusion by 8." }
+    - line: { id: c2_report_spc-2, speaker: boss, zh: "（LINE）你自己看著辦，8 點前要有結論。", en: "(LINE) Handle it yourself. I need a conclusion by 8." }
+
+  # C2-06：拿到 focus ring 線索後，你在 LINE 回報王經理（證據 E-C2-03、E-C2-04）。
+  c2_report_ring:
+    - evidence: { id: E-C2-03, time: "04:32", source: chat, speaker: me, zh: "PM-B focus ring 1,180h，疑似到壽命，建議更換。", en: "PM-B focus ring at 1,180 h, likely end of life, recommend replacing." }
+    - line: { id: c2_report_ring-1, speaker: me, zh: "（LINE 給王經理）PM-B focus ring 1,180h，疑似到壽命，建議更換。", en: "(LINE to Manager Wang) PM-B focus ring at 1,180 h, likely end of life, recommend replacing." }
+    - evidence: { id: E-C2-04, time: "05:10", source: chat, speaker: boss, zh: "嗯。", en: "Mm." }
+    - line: { id: c2_report_ring-2, speaker: boss, zh: "（LINE，已讀很久之後）嗯。", en: "(LINE, long after reading it) Mm." }
