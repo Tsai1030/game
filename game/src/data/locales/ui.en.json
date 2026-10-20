@@ -5,5 +5,10 @@
   "loc.gown": "Gowning room",
   "loc.airShower": "Air shower",
   "loc.fabEtch": "Fab · Etch / Thin film",
-  "loc.fabLitho": "Fab · Yellow room"
+  "loc.fabLitho": "Fab · Yellow room",
+  "speaker.sys": "System",
+  "speaker.me": "You",
+  "speaker.boss": "Manager Wang",
+  "speaker.kevin": "Kevin",
+  "speaker.fse": "A-Zhe (vendor FSE)"
 }

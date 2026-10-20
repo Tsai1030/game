@@ -1,0 +1,69 @@
+{
+  "spc": [
+    ["N9K385.1", "A", 45.1], ["N9K386.1", "B", 44.8], ["N9K387.1", "A", 45.3], ["N9K388.1", "B", 45.0], ["N9K389.1", "A", 44.7],
+    ["N9K390.1", "B", 45.2], ["N9K391.1", "A", 45.0], ["N9K392.1", "B", 45.1], ["N9K393.1", "A", 44.6], ["N9K395.1", "B", 45.4],
+    ["N9K396.1", "A", 45.2], ["N9K398.1", "B", 45.3], ["N9K399.1", "A", 44.9], ["N9K401.1", "B", 45.6], ["N9K402.1", "A", 45.0],
+    ["N9K404.1", "B", 45.8], ["N9K405.1", "A", 45.2], ["N9K407.1", "B", 45.9], ["N9K408.1", "A", 44.8], ["N9K410.1", "B", 46.2],
+    ["N9K411.1", "A", 45.1], ["N9K412.1", "B", 46.8], ["N9K415.1", "B", 47.1], ["N9K416.1", "A", 45.1], ["N9K417.1", "B", 47.4]
+  ],
+  "lots": [
+    { "id": "N9K417.1", "tool": "ETCH-07", "ch": "PM-B", "cd": 47.4, "j": "ooc", "st": "HOLD" },
+    { "id": "N9K416.1", "tool": "ETCH-07", "ch": "PM-A", "cd": 45.1, "j": "ok", "st": "RUN" },
+    { "id": "N9K415.1", "tool": "ETCH-07", "ch": "PM-B", "cd": 47.1, "j": "ooc", "st": "HOLD" },
+    { "id": "N9K412.1", "tool": "ETCH-07", "ch": "PM-B", "cd": 46.8, "j": "ooc", "st": "HOLD" },
+    { "id": "N9K410.1", "tool": "ETCH-07", "ch": "PM-B", "cd": 46.2, "j": "warn", "st": "HOLD" },
+    { "id": "N9K409.1", "tool": "ETCH-05", "ch": "PM-C", "cd": 44.9, "j": "ok", "st": "RUN" }
+  ],
+  "logs": [
+    { "t": "00:12:03", "src": "ETCH-07", "ch": "PM-B", "lv": "info", "msg": { "zh": "STEP3 MAIN_ETCH start  RCP=PO_ET_V3  lot=N9K410.1", "en": "STEP3 MAIN_ETCH start  RCP=PO_ET_V3  lot=N9K410.1" } },
+    { "t": "00:12:41", "src": "ETCH-07", "ch": "PM-B", "lv": "warn", "msg": { "zh": "FDC RF_REFL_PWR 21.6 W > limit 20.0 W  lot=N9K410.1", "en": "FDC RF_REFL_PWR 21.6 W > limit 20.0 W  lot=N9K410.1" } },
+    { "t": "00:13:05", "src": "ETCH-07", "ch": "PM-A", "lv": "ok", "msg": { "zh": "FDC RF_REFL_PWR 4.1 W", "en": "FDC RF_REFL_PWR 4.1 W" } },
+    { "t": "00:47:19", "src": "ETCH-07", "ch": "PM-B", "lv": "ok", "msg": { "zh": "FDC ESC_HE_FLOW 8.9 sccm（規格 6–12）", "en": "FDC ESC_HE_FLOW 8.9 sccm (spec 6–12)" } },
+    { "t": "01:02:33", "src": "ETCH-07", "ch": "PM-B", "lv": "info", "msg": { "zh": "EVENT WAC auto-clean 完成 2m10s", "en": "EVENT WAC auto-clean complete 2m10s" } },
+    { "t": "01:20:11", "src": "ETCH-07", "ch": "PM-B", "lv": "warn", "msg": { "zh": "FDC RF_REFL_PWR 29.8 W > limit 20.0 W  lot=N9K412.1", "en": "FDC RF_REFL_PWR 29.8 W > limit 20.0 W  lot=N9K412.1" } },
+    { "t": "01:20:12", "src": "ETCH-07", "ch": "PM-B", "lv": "warn", "msg": { "zh": "FDC MATCH_C1_POS 71.3 %  drift +6.2 %", "en": "FDC MATCH_C1_POS 71.3 %  drift +6.2 %" } },
+    { "t": "01:41:58", "src": "ETCH-05", "ch": "PM-C", "lv": "ok", "msg": { "zh": "FDC RF_REFL_PWR 3.8 W  lot=N9K409.1", "en": "FDC RF_REFL_PWR 3.8 W  lot=N9K409.1" } },
+    { "t": "01:58:20", "src": "ETCH-07", "ch": "PM-A", "lv": "ok", "msg": { "zh": "STEP3 MAIN_ETCH end  EPD 正常  lot=N9K416.1", "en": "STEP3 MAIN_ETCH end  EPD normal  lot=N9K416.1" } },
+    { "t": "02:05:44", "src": "ETCH-07", "ch": "PM-B", "lv": "alarm", "msg": { "zh": "FDC RF_REFL_PWR 38.0 W > limit 20.0 W  lot=N9K417.1", "en": "FDC RF_REFL_PWR 38.0 W > limit 20.0 W  lot=N9K417.1" } },
+    { "t": "02:05:44", "src": "ETCH-07", "ch": "PM-B", "lv": "ok", "msg": { "zh": "FDC CHM_PRESS 10.02 mT（設定 10.0）", "en": "FDC CHM_PRESS 10.02 mT (setpoint 10.0)" } },
+    { "t": "02:06:10", "src": "ETCH-07", "ch": "PM-B", "lv": "warn", "msg": { "zh": "CONSUMABLE FOCUS_RING RF_HRS=1,180 h（PM 上限 1,200 h）", "en": "CONSUMABLE FOCUS_RING RF_HRS=1,180 h (PM limit 1,200 h)" } },
+    { "t": "02:11:37", "src": "MES", "ch": "SPC", "lv": "alarm", "msg": { "zh": "AEI_CD_EDGE 47.4 nm > UCL 46.5 → OOC  lot=N9K417.1", "en": "AEI_CD_EDGE 47.4 nm > UCL 46.5 → OOC  lot=N9K417.1" } },
+    { "t": "02:11:38", "src": "MES", "ch": "HOLD", "lv": "info", "msg": { "zh": "auto-hold by SPC  reason=OOC  lot=N9K417.1", "en": "auto-hold by SPC  reason=OOC  lot=N9K417.1" } },
+    { "t": "02:31:02", "src": "ETCH-07", "ch": "PM-B", "lv": "info", "msg": { "zh": "RCP PO_ET_V3 rev.12 最後修改 09/30（本週無變更）", "en": "RCP PO_ET_V3 rev.12 last modified 09/30 (no change this week)" } }
+  ],
+  "logClue": { "1": "fdc", "5": "fdc", "9": "fdc", "11": "ring" },
+  "logNote": {
+    "3": { "zh": "He flow 在規格內，ESC 應該沒問題。", "en": "He flow is in spec. The ESC should be fine." },
+    "6": { "zh": "Matcher 在追反射功率，比較像結果，不是原因。", "en": "The matcher is chasing the reflected power. That's a symptom, not the cause." },
+    "7": { "zh": "ETCH-05 的反射功率很正常，可以當對照組。", "en": "ETCH-05's reflected power is normal. Good as a control." },
+    "10": { "zh": "腔體壓力正常。", "en": "Chamber pressure is normal." },
+    "12": { "zh": "這是 SPC 的結果，不是原因。", "en": "That's the SPC result, not the cause." },
+    "14": { "zh": "Recipe 這週沒動過，可以排除。", "en": "The recipe hasn't changed this week. Rule it out." }
+  },
+  "clues": {
+    "spc": { "t": { "zh": "OOC 的點全部來自 ETCH-07 PM-B", "en": "Every OOC point comes from ETCH-07 PM-B" }, "src": { "zh": "PE 工作站 · SPC", "en": "PE workstation · SPC" } },
+    "fdc": { "t": { "zh": "PM-B 的 RF 反射功率一路飆到 38 W", "en": "PM-B's RF reflected power climbed to 38 W" }, "src": { "zh": "ETCH-07 · FDC Log", "en": "ETCH-07 · FDC log" } },
+    "ring": { "t": { "zh": "PM-B focus ring 已用 1,180 h（壽命 1,200 h）", "en": "PM-B focus ring at 1,180 h (life 1,200 h)" }, "src": { "zh": "ETCH-07 · 耗材", "en": "ETCH-07 · Consumables" } },
+    "map": { "t": { "zh": "Wafer 邊緣一圈 CD 偏高，中心正常", "en": "High CD in a ring at the wafer edge, normal at the center" }, "src": { "zh": "MET-02 · Wafer map", "en": "MET-02 · Wafer map" } },
+    "pm": { "t": { "zh": "PM-B 的定期保養上禮拜被延期", "en": "PM-B's scheduled maintenance was postponed last week" }, "src": { "zh": "Kevin 學長", "en": "Kevin" } }
+  },
+  "cons": [
+    { "name": "Focus ring", "val": { "zh": "1,180 / 1,200 h", "en": "1,180 / 1,200 h" }, "pct": 98, "clue": "ring" },
+    { "name": "Edge ring", "val": { "zh": "640 / 1,500 h", "en": "640 / 1,500 h" }, "pct": 43 },
+    { "name": "Showerhead", "val": { "zh": "2,100 / 4,000 h", "en": "2,100 / 4,000 h" }, "pct": 53 },
+    { "name": "ESC", "val": { "zh": "5,400 / 12,000 h", "en": "5,400 / 12,000 h" }, "pct": 45 },
+    { "name": "O-ring kit", "val": { "zh": "90 / 180 天", "en": "90 / 180 days" }, "pct": 50 }
+  ],
+  "tools": ["ETCH-07", "ETCH-05", "LITHO-03", "CVD-11"],
+  "chambers": ["PM-A", "PM-B", "PM-C", "PM-D"],
+  "causes": [
+    { "id": "focus_ring_eol", "zh": "Focus ring 耗損到壽命", "en": "Focus ring at end of life" },
+    { "id": "recipe_changed", "zh": "Recipe 被改過", "en": "The recipe was changed" },
+    { "id": "esc_he", "zh": "ESC 背面氦氣異常", "en": "Abnormal ESC backside helium" },
+    { "id": "pressure_drift", "zh": "腔體壓力飄移", "en": "Chamber pressure drift" },
+    { "id": "litho_focus", "zh": "前站曝光 focus 偏移", "en": "Upstream litho focus shift" }
+  ],
+  "answer": { "tool": "ETCH-07", "ch": "PM-B", "cause": "focus_ring_eol" },
+  "minClues": 3,
+  "waferSeed": 1027
+}

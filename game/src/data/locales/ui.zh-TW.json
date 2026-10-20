@@ -5,5 +5,10 @@
   "loc.gown": "更衣室",
   "loc.airShower": "風淋室",
   "loc.fabEtch": "Fab · 蝕刻／薄膜區",
-  "loc.fabLitho": "Fab · 黃光區"
+  "loc.fabLitho": "Fab · 黃光區",
+  "speaker.sys": "系統",
+  "speaker.me": "你",
+  "speaker.boss": "王經理",
+  "speaker.kevin": "Kevin 學長",
+  "speaker.fse": "阿哲（廠商 FSE）"
 }
