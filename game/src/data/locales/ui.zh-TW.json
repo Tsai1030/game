@@ -1,4 +1,9 @@
 {
   "app.title": "Fab 夜班",
-  "app.subtitle": "曦晶半導體 Fab 9 · 製程工程師值班中"
+  "app.subtitle": "曦晶半導體 Fab 9 · 製程工程師值班中",
+  "loc.office": "辦公室",
+  "loc.gown": "更衣室",
+  "loc.airShower": "風淋室",
+  "loc.fabEtch": "Fab · 蝕刻／薄膜區",
+  "loc.fabLitho": "Fab · 黃光區"
 }

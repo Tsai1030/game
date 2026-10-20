@@ -1,4 +1,9 @@
 {
   "app.title": "Fab Night Shift",
-  "app.subtitle": "Xijing Semiconductor Fab 9 · Process engineer on shift"
+  "app.subtitle": "Xijing Semiconductor Fab 9 · Process engineer on shift",
+  "loc.office": "Office",
+  "loc.gown": "Gowning room",
+  "loc.airShower": "Air shower",
+  "loc.fabEtch": "Fab · Etch / Thin film",
+  "loc.fabLitho": "Fab · Yellow room"
 }
