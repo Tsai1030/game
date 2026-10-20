@@ -1,0 +1,57 @@
+# 話術圖鑑 v0.1（7 張卡）。文字來自 docs/02-story.*.md 第 9 節。
+double_bind:
+  name: { zh: "雙重束縛", en: "Double bind" }
+  what:
+    zh: "同時給你互相矛盾的要求，讓你怎麼做都錯，例如「不會就去問」又「這也要問？」"
+    en: "Gives you contradictory demands so whatever you do is wrong, like “If you don't know, ask” and “You need to ask about this?”"
+  todo:
+    zh: "問之前先說你查過什麼；請主管指定可以問的人。"
+    en: "Say what you already checked before asking, and ask your manager to name who you can go to."
+personal_attack:
+  name: { zh: "否定人格", en: "Personal attack" }
+  what:
+    zh: "批評的對象從工作變成你這個人，例如「你學校在學什麼？」"
+    en: "The criticism shifts from your work to you as a person, like “What did they teach you in school?”"
+  todo:
+    zh: "只接收跟工作有關的部分，其他的不是你的課題。"
+    en: "Take only the work-related part. The rest is their issue, not yours."
+comparison:
+  name: { zh: "拿人比較", en: "Comparison" }
+  what:
+    zh: "用別人當標準來貶低你，例如「Kevin 當年第一週就會了。」"
+    en: "Uses someone else as the yardstick to put you down, like “Kevin knew this in his first week.”"
+  todo:
+    zh: "回到自己的標準和進步紀錄。"
+    en: "Go back to your own standard and your own progress record."
+family:
+  name: { zh: "大家庭", en: "We're a family" }
+  what:
+    zh: "用「我們是一家人」要你犧牲私人時間和界線。"
+    en: "Uses “we're one big family” to make you give up your own time and boundaries."
+  todo:
+    zh: "職場是契約關係，家人不會這樣排班。"
+    en: "Work is a contract. Family doesn't schedule you like this."
+for_your_good:
+  name: { zh: "為你好", en: "For your own good" }
+  what:
+    zh: "把不合理的要求包裝成給你的機會或照顧。"
+    en: "Packages unreasonable demands as an opportunity or a favor to you."
+  todo:
+    zh: "看工作量跟報酬是否相稱，而不是看包裝。"
+    en: "Judge the workload against the pay, not the packaging."
+credit_stealing:
+  name: { zh: "搶功", en: "Credit stealing" }
+  what:
+    zh: "把你的發現或成果說成是他的。"
+    en: "Presents your findings or work as theirs."
+  todo:
+    zh: "會後用 email 整理時間線，讓成果可追溯。"
+    en: "Email a timeline after the meeting so the work is traceable."
+gaslighting:
+  name: { zh: "煤氣燈", en: "Gaslighting" }
+  what:
+    zh: "否認發生過的事，讓你懷疑自己的記憶，例如「我不是叫你去看了嗎？你記錯了。」"
+    en: "Denies what happened so you doubt your own memory, like “Didn't I tell you to check it? You're remembering it wrong.”"
+  todo:
+    zh: "當下記錄，相信自己的紀錄。"
+    en: "Record things as they happen, and trust your records."

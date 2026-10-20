@@ -140,6 +140,13 @@
   "clues.unknown": "？？？",
   "clues.notFound": "尚未發現",
   "clues.note": "至少 3 條線索才能說服王經理。",
+  "codex.title": "話術圖鑑",
+  "codex.locked": "？？？",
+  "codex.what": "這是什麼",
+  "codex.todo": "可以怎麼做",
+  "codex.correct": "看穿了：{name}",
+  "codex.wrong": "好像不是這個……",
+  "codex.pick": "這句話是哪一種？",
 
   "settings.title": "設定",
   "settings.lang": "語言",

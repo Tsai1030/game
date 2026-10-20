@@ -140,6 +140,13 @@
   "clues.unknown": "???",
   "clues.notFound": "Not found yet",
   "clues.note": "You need at least 3 clues to convince Manager Wang.",
+  "codex.title": "Tactics Codex",
+  "codex.locked": "???",
+  "codex.what": "What this is",
+  "codex.todo": "What you can do",
+  "codex.correct": "Seen through: {name}",
+  "codex.wrong": "Not quite…",
+  "codex.pick": "Which tactic is this?",
 
   "settings.title": "Settings",
   "settings.lang": "Language",
