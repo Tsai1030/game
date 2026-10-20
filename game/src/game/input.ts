@@ -22,6 +22,10 @@ export interface InputHooks {
   escape(): boolean;
   /** C：打開線索簿。 */
   clues(): void;
+  /** J：打開證據簿（解鎖後）。 */
+  evidence(): void;
+  /** K：打開圖鑑。 */
+  codex(): void;
   /** 視窗或標題畫面開著時回傳 false，讓按鍵留給那些介面。 */
   enabled(): boolean;
 }
@@ -46,6 +50,8 @@ export function initInput(h: InputHooks): void {
       return;
     }
     if (e.code === 'KeyC') return h.clues();
+    if (e.code === 'KeyJ') return h.evidence();
+    if (e.code === 'KeyK') return h.codex();
     if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'Enter') {
       // 焦點在按鈕上時，空白鍵和 Enter 交給按鈕本身。
       if (tag === 'BUTTON' && e.code !== 'KeyE') return;

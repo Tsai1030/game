@@ -3,9 +3,10 @@ import { esc, L, LANGS, rich, t, type Lang } from '../core/i18n';
 import { switchLang } from '../core/lang';
 import { rng } from '../core/random';
 import { saveSettings, settings, type TextSpeed } from '../core/settings';
-import { S } from '../core/state';
+import { S, TACTIC_IDS, type EvidenceSource, type TacticId } from '../core/state';
 import { browserStore } from '../core/storage';
 import { CASE, type ClueId, type LogLevel } from '../data/case';
+import { CODEX } from '../data/codex';
 import { story } from '../data/story';
 import { TOOL_INFO, type Thing } from '../data/world';
 import { gainClue, setCoffee, setEtch, solveCase } from '../game/effects';
@@ -359,6 +360,89 @@ export function openClues(): void {
             )
             .join('') +
           `</ol><p class="note">${esc(t('clues.note'))}</p>`,
+      },
+    ],
+  });
+}
+
+/* ===== 證據簿、圖鑑 ===== */
+
+const SOURCES: EvidenceSource[] = ['talk', 'chat', 'meeting'];
+let evFilter: EvidenceSource | 'all' = 'all';
+let codexSel: TacticId | null = null;
+
+function evidenceHTML(): string {
+  const items = [...S.evidence].sort((a, b) => a.time.localeCompare(b.time)).filter((e) => evFilter === 'all' || e.source === evFilter);
+  const filters =
+    `<div class="segs">${seg('data-src', 'all', evFilter === 'all', t('ev.all'))}` +
+    SOURCES.map((s) => seg('data-src', s, evFilter === s, t('ev.src.' + s))).join('') +
+    `</div>`;
+  if (!S.evidence.length) return `${filters}<p class="note">${esc(t('ev.empty'))}</p>`;
+  return (
+    filters +
+    `<ol class="evlist">` +
+    items
+      .map(
+        (e) =>
+          `<li data-id="${esc(e.id)}"><span class="ev-meta"><b class="num">${esc(e.time)}</b> · ${esc(t('ev.src.' + e.source))} · ${esc(t('speaker.' + e.speaker))}</span><span class="ev-text">${esc(L(e))}</span></li>`,
+      )
+      .join('') +
+    `</ol>`
+  );
+}
+
+export function openEvidence(): void {
+  openWin({
+    title: () => t('ev.title'),
+    chip: () => chip('', String(S.evidence.length)),
+    tabs: [
+      {
+        label: () => t('ev.title'),
+        html: evidenceHTML,
+        on: (root) =>
+          root.addEventListener('click', (e) => {
+            const b = (e.target as HTMLElement).closest<HTMLElement>('[data-src]');
+            if (!b) return;
+            evFilter = b.dataset.src as EvidenceSource | 'all';
+            rerenderWin();
+          }),
+      },
+    ],
+  });
+}
+
+function codexHTML(): string {
+  const cards = TACTIC_IDS.map((id) => {
+    const open = S.codex.includes(id);
+    return `<button class="codex-card${open ? ' got' : ''}" data-card="${id}" aria-pressed="${codexSel === id}">${esc(open ? L(CODEX[id].name) : t('codex.locked'))}</button>`;
+  }).join('');
+  let detail = '';
+  if (codexSel && S.codex.includes(codexSel)) {
+    const c = CODEX[codexSel];
+    detail =
+      `<div class="codex-detail"><b>${esc(L(c.name))}</b>` +
+      `<p><span class="lbl">${esc(t('codex.what'))}</span>${esc(L(c.what))}</p>` +
+      `<p><span class="lbl">${esc(t('codex.todo'))}</span>${esc(L(c.todo))}</p></div>`;
+  } else if (codexSel) detail = `<p class="note">${esc(t('codex.locked'))}</p>`;
+  return `<div class="codex-grid">${cards}</div>${detail}`;
+}
+
+export function openCodex(): void {
+  codexSel = null;
+  openWin({
+    title: () => t('codex.title'),
+    chip: () => chip('', `${S.codex.length}/${TACTIC_IDS.length}`),
+    tabs: [
+      {
+        label: () => t('codex.title'),
+        html: codexHTML,
+        on: (root) =>
+          root.addEventListener('click', (e) => {
+            const b = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
+            if (!b) return;
+            codexSel = b.dataset.card as TacticId;
+            rerenderWin();
+          }),
       },
     ],
   });

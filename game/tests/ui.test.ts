@@ -4,14 +4,16 @@ import { settings, SETTINGS_KEY } from '../src/core/settings';
 import { newState, S, setState } from '../src/core/state';
 import { NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
 import { story } from '../src/data/story';
+import { CODEX } from '../src/data/codex';
+import { switchLang } from '../src/core/lang';
 import { gainClue } from '../src/game/effects';
 import { canOpenSettings } from '../src/game/runtime';
 import { isDialogOpen } from '../src/ui/dialog';
 import { advanceScene, initScenePlayer, playScene, stopScene } from '../src/ui/scene';
-import { verb } from '../src/ui/hud';
+import { refreshHud, verb } from '../src/ui/hud';
 import { hideTitle, showTitle } from '../src/ui/title';
 import { closeWin, initWin, rerenderWin, showTab } from '../src/ui/win';
-import { openEtch, openPC, openSettings, resetCaseUi } from '../src/ui/windows';
+import { openCodex, openEtch, openEvidence, openPC, openSettings, resetCaseUi } from '../src/ui/windows';
 
 const html = await Bun.file(new URL('../index.html', import.meta.url)).text();
 // 拿掉 <script>，避免 happy-dom 試著載入 main.ts。
@@ -160,6 +162,53 @@ test('grep highlighting keeps “>” readable in log lines', () => {
   const line = $('#log .ln[data-i="1"]');
   expect(line.textContent).toContain('21.6 W > limit 20.0 W');
   expect(line.querySelectorAll('mark').length).toBeGreaterThan(0);
+});
+
+test('the sanity bar shows the current value', () => {
+  S.sanity = 37;
+  refreshHud();
+  expect($('#sanity-n').textContent).toBe('37');
+  expect($('#sanity-bar').style.width).toBe('37%');
+  expect($('#sanity').getAttribute('aria-label')).toBe(t('hud.sanityAria', { n: 37 }));
+});
+
+test('the evidence button appears once the log is unlocked', () => {
+  refreshHud();
+  expect($('#ev-btn').hidden).toBe(true);
+  S.flags = ['ev_unlocked'];
+  refreshHud();
+  expect($('#ev-btn').hidden).toBe(false);
+});
+
+test('the evidence log lists items by time and filters by source', () => {
+  openEvidence();
+  expect($('#win-b').textContent).toContain(t('ev.empty'));
+  closeWin();
+  S.evidence = [
+    { id: 'b', time: '05:10', source: 'chat', speaker: 'boss', zh: '嗯。', en: 'Mm.' },
+    { id: 'a', time: '03:05', source: 'talk', speaker: 'me', zh: '甲', en: 'A' },
+  ];
+  openEvidence();
+  const rows = () => [...document.querySelectorAll('#win .evlist li')].map((li) => (li as HTMLElement).dataset.id);
+  expect(rows()).toEqual(['a', 'b']);
+  $<HTMLButtonElement>('#win [data-src="chat"]').click();
+  expect(rows()).toEqual(['b']);
+});
+
+test('the codex shows locked cards and opens unlocked ones', () => {
+  openCodex();
+  const cards = [...document.querySelectorAll<HTMLButtonElement>('#win [data-card]')];
+  expect(cards.length).toBe(7);
+  expect(cards.every((c) => c.textContent === t('codex.locked'))).toBe(true);
+  closeWin();
+  S.codex = ['family'];
+  openCodex();
+  $<HTMLButtonElement>('#win [data-card="family"]').click();
+  expect($('#win-b').textContent).toContain(CODEX.family.what.zh);
+  expect($('#win-b').textContent).toContain(CODEX.family.todo.zh);
+  switchLang('en');
+  expect($('#win [data-card="family"]').textContent).toBe(CODEX.family.name.en);
+  expect($('#win-b').textContent).toContain(CODEX.family.todo.en);
 });
 
 test('the same clue cannot be collected twice', () => {

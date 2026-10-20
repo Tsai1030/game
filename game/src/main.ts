@@ -24,7 +24,7 @@ import { initHud, refreshHud, setClock } from './ui/hud';
 import { hideTitle, isTitleOpen, showTitle } from './ui/title';
 import { toast } from './ui/toast';
 import { closeWin, initWin, isWinOpen } from './ui/win';
-import { openClues, openSettings, resetCaseUi } from './ui/windows';
+import { openClues, openCodex, openEvidence, openSettings, resetCaseUi } from './ui/windows';
 
 /* 1. 設定與語言 */
 loadSettings(browserStore(), {
@@ -51,6 +51,12 @@ initInput({
     closeWin();
     return true;
   },
+  evidence: () => {
+    if (!busy() && S.flags.includes('ev_unlocked')) openEvidence();
+  },
+  codex: () => {
+    if (!busy()) openCodex();
+  },
   clues: () => {
     if (!busy()) openClues();
   },
@@ -58,6 +64,12 @@ initInput({
 });
 $('#clue-btn').addEventListener('click', () => {
   if (!busy()) openClues();
+});
+$('#ev-btn').addEventListener('click', () => {
+  if (!busy()) openEvidence();
+});
+$('#codex-btn').addEventListener('click', () => {
+  if (!busy()) openCodex();
 });
 $('#set-btn').addEventListener('click', () => {
   if (canOpenSettings()) openSettings();

@@ -1,5 +1,5 @@
 import { esc, L, t } from '../core/i18n';
-import { fmtClock, S, SHIFT_END } from '../core/state';
+import { fmtClock, S, SHIFT_END, TACTIC_IDS } from '../core/state';
 import type { Thing } from '../data/world';
 import { QUEST } from '../systems/quest';
 import { $ } from './dom';
@@ -30,6 +30,14 @@ export function refreshHud(): void {
   cups.innerHTML = [0, 1, 2, 3, 4].map((i) => `<i class="${i < S.coffee ? '' : 'e'}"></i>`).join('');
   cups.setAttribute('aria-label', t('hud.coffeeAria', { n: S.coffee }));
   $('#clue-n').textContent = `${S.clues.length}/5`;
+  const san = $('#sanity');
+  san.className = `sanity ${S.sanity > 50 ? 'ok' : S.sanity > 25 ? 'warn' : 'bad'}`;
+  san.setAttribute('aria-label', t('hud.sanityAria', { n: S.sanity }));
+  $('#sanity-bar').style.width = `${S.sanity}%`;
+  $('#sanity-n').textContent = String(S.sanity);
+  $('#ev-btn').hidden = !S.flags.includes('ev_unlocked');
+  $('#ev-n').textContent = String(S.evidence.length);
+  $('#codex-n').textContent = `${S.codex.length}/${TACTIC_IDS.length}`;
   $('#q-list').innerHTML = QUEST.map((q) => `<li class="${q.done(S) ? 'done' : ''}"><i></i>${esc(t(q.key))}</li>`).join('');
   $('#loc').textContent = t(locKey);
   setPrompt(promptThing);
