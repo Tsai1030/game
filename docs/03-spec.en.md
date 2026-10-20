@@ -21,6 +21,8 @@ These were the open questions in the concept document. The owner asked Claude to
 | 7 | Tech | **TypeScript + Vite + Phaser 3; maps in Tiled; UI in the DOM** | Phaser provides tilemaps, scenes, camera, animation, and audio out of the box. The DOM is the easiest place for text-heavy UI, and the prototype proved it works |
 | 8 | Art | **v0.1 keeps the prototype's code-drawn pixel style. M2 decides whether to hire an artist or buy assets** | The black tools with LEDs are already approved; finish the game first |
 | 9 | Version control | **Run `git init` before starting** | The project isn't under version control yet |
+| 10 | Package manager and tests | **Bun for everything (`bun install`, `bun test`), never npm** (owner's directive, 2026-10-20) | The owner's preference; Bun has a built-in test runner and reads the YAML scripts natively |
+| 11 | Map format | **Maps are defined in code until M2; Tiled comes in with the M2 art decision** (decided during M0) | Tiles are drawn in code today, so there is no tileset image for Tiled to use yet |
 
 ---
 
@@ -47,11 +49,11 @@ These were the open questions in the concept document. The owner asked Claude to
 | Language | TypeScript |
 | Build | Vite |
 | Engine | Phaser 3 (pin a stable version number at kickoff) |
-| Map editor | Tiled (exports `.tmj`) |
+| Map editor | Until M2: defined in code (`src/data/world.ts`); from M2: Tiled (exports `.tmj`) |
 | Text UI | DOM layered over the canvas (HUD, dialogue, tool windows, Codex, Evidence Log) |
 | Script format | YAML with Chinese and English side by side |
-| Tests | Vitest for system logic, plus a manual playtest checklist |
-| Requirements | Node.js LTS (not installed on this machine yet; installed in M0) |
+| Tests | `bun test` for system logic (happy-dom for UI tests), plus a manual playtest checklist |
+| Requirements | Bun 1.4.3 (installed with winget at user scope) |
 
 ### 2.2 Folder layout
 

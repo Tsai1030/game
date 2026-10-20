@@ -22,9 +22,11 @@
 
 ## 2. M0 · 基礎建設（S）
 
+> **狀態（2026-10-20）：程式完成，等負責人手動試玩確認。** 在分支 `m0-foundation` 上：67 個自動測試通過、型別檢查通過、建置成功。實作計畫與進度見 `docs/superpowers/plans/2026-10-20-m0-foundation.zh-TW.md`。改用 Bun（使用者指定），地圖格式延到 M2（見規格書第 0 節）。
+
 **要做的事：**
 1. 在 `D:\g` 執行 `git init`，提交目前的 docs 和 mockups。
-2. 安裝 Node.js LTS。
+2. ~~安裝 Node.js LTS~~ → 改為安裝 Bun（使用者指定）。
 3. 在 `game/` 建立 Vite＋TypeScript＋Phaser 3 專案。
 4. 把原型搬進新架構：廠區地圖、移動與尋路、黑機台＋LED、機台視窗、線索簿、結論。
 5. 建好資料管線：YAML 劇本讀取、案件 JSON、介面文字的中英切換。

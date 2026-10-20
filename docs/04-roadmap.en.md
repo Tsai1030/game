@@ -22,9 +22,11 @@ Effort uses relative sizes: S, M, L, XL. Calendar time depends on how many peopl
 
 ## 2. M0 · Foundation (S)
 
+> **Status (2026-10-20): code complete, waiting for the owner's manual playtest.** On branch `m0-foundation`: 67 automated tests pass, typecheck passes, and the build succeeds. The implementation plan and progress are in `docs/superpowers/plans/2026-10-20-m0-foundation.md`. Bun replaced Node.js (owner's directive), and the map format moved to M2 (see section 0 of the spec).
+
 **Work:**
 1. Run `git init` in `D:\g` and commit the current docs and mockups.
-2. Install Node.js LTS.
+2. ~~Install Node.js LTS~~ → install Bun instead (owner's directive).
 3. Create a Vite + TypeScript + Phaser 3 project in `game/`.
 4. Move the prototype into the new architecture: site map, movement and pathfinding, black tools with LEDs, tool windows, clue book, conclusion.
 5. Build the data pipeline: YAML script loading, case JSON, Chinese/English UI text switching.
