@@ -1,3 +1,4 @@
+import { on } from '../core/bus';
 import { esc, getLang, t, type Lang } from '../core/i18n';
 import { $ } from './dom';
 
@@ -54,3 +55,6 @@ export function hideTitle(): void {
   open = false;
   $('#title').hidden = true;
 }
+
+// 語言切換時，標題畫面（開著的話）自動重畫。
+on('lang', () => rerenderTitle());

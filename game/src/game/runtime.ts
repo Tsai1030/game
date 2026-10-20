@@ -8,3 +8,6 @@ export const rt: { shower: number; near: Thing | null } = { shower: 0, near: nul
 
 /** 對話、視窗、標題畫面或風淋中時，角色不能開始新的移動。 */
 export const busy = (): boolean => isDialogOpen() || isWinOpen() || isTitleOpen() || rt.shower > 0;
+
+/** 設定（含語言切換）隨時都能打開，只有已經開著視窗或在標題畫面時例外。 */
+export const canOpenSettings = (): boolean => !isWinOpen() && !isTitleOpen();

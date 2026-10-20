@@ -1,4 +1,6 @@
+import { on } from '../core/bus';
 import { esc, t } from '../core/i18n';
+import { otherLang, switchLang } from '../core/lang';
 import { $ } from './dom';
 
 export interface Tab {
@@ -40,12 +42,20 @@ function render(): void {
     spec.tabs.length > 1
       ? `<div class="tabs" role="tablist">${spec.tabs.map((tb, i) => `<button role="tab" data-tab="${i}">${esc(tb.label())}</button>`).join('')}</div>`
       : '';
+  const langFocused = (document.activeElement as HTMLElement | null)?.dataset?.langtoggle !== undefined;
   $('#win').innerHTML =
-    `<div class="win-h"><b>${esc(spec.title())}</b>${spec.chip ? spec.chip() : ''}<button class="x" id="win-x" aria-label="${esc(t('win.close'))}">✕</button></div>` +
+    `<div class="win-h"><b>${esc(spec.title())}</b>${spec.chip ? spec.chip() : ''}` +
+    `<button class="lang-tog" data-langtoggle aria-label="${esc(t('win.langToggle'))}">${esc(t('lang.' + otherLang()))}</button>` +
+    `<button class="x" id="win-x" aria-label="${esc(t('win.close'))}">✕</button></div>` +
     `${tabs}<div class="win-b" id="win-b"></div>` +
     `<div class="win-f">${spec.foot ? spec.foot() : ''}<button class="pbtn" data-f="close">${esc(t('win.close'))}</button></div>`;
   renderTab();
+  // 用切換鈕換語言後，焦點留在新的切換鈕上，鍵盤使用者不會迷路。
+  if (langFocused) $<HTMLButtonElement>('#win [data-langtoggle]').focus();
 }
+
+// 語言切換時，開著的視窗自動換成新語言（保留目前分頁與表單選擇）。
+on('lang', () => render());
 
 export function openWin(spec: WinSpec): void {
   cur = { spec, tab: 0 };
@@ -78,6 +88,7 @@ export function initWin(onClose: () => void): void {
     const el = e.target as HTMLElement;
     const tab = el.closest<HTMLElement>('[data-tab]');
     if (tab) return showTab(Number(tab.dataset.tab));
+    if (el.closest('[data-langtoggle]')) return switchLang(otherLang());
     if (el.closest('#win-x')) return closeWin();
     const f = el.closest<HTMLElement>('[data-f]');
     if (!f) return;

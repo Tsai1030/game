@@ -68,6 +68,7 @@
   "toast.saveCorrupt": "The save file couldn't be read. Please start a new game.",
 
   "win.close": "Close",
+  "win.langToggle": "Switch language",
   "chip.run": "RUN",
   "chip.idle": "IDLE",
   "chip.alarm": "ALARM",

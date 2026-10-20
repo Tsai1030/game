@@ -5,10 +5,11 @@ import { newState, S, setState } from '../src/core/state';
 import { NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
 import { story } from '../src/data/story';
 import { gainClue } from '../src/game/effects';
+import { canOpenSettings } from '../src/game/runtime';
 import { advanceDialog, initDialog, isDialogOpen, relocalizeDialog, say } from '../src/ui/dialog';
 import { verb } from '../src/ui/hud';
-import { showTitle } from '../src/ui/title';
-import { initWin, rerenderWin, showTab } from '../src/ui/win';
+import { hideTitle, showTitle } from '../src/ui/title';
+import { closeWin, initWin, rerenderWin, showTab } from '../src/ui/win';
 import { openEtch, openPC, openSettings, resetCaseUi } from '../src/ui/windows';
 
 const html = await Bun.file(new URL('../index.html', import.meta.url)).text();
@@ -18,6 +19,9 @@ const $ = <T extends Element = HTMLElement>(s: string) => document.querySelector
 
 beforeEach(() => {
   document.body.innerHTML = body;
+  // 模組層級的狀態會跨測試保留，先把上一個測試開著的視窗與標題畫面關掉。
+  closeWin();
+  hideTitle();
   initWin(() => {});
   initDialog();
   setState(newState());
@@ -67,6 +71,28 @@ test('the conclusion form keeps its picks across a language switch', () => {
   expect($<HTMLSelectElement>('#rc-ch').value).toBe('PM-B');
   expect($<HTMLSelectElement>('#rc-cause').value).toBe('focus_ring_eol');
   expect($('#win-b').textContent).toContain('The culprit is');
+});
+
+test('the language toggle in a window header switches language and keeps the picks', () => {
+  openPC();
+  showTab(2);
+  pick('#rc-tool', 'ETCH-07');
+  pick('#rc-ch', 'PM-B');
+  pick('#rc-cause', 'focus_ring_eol');
+  $<HTMLButtonElement>('#win [data-langtoggle]').click();
+  expect(getLang()).toBe('en');
+  expect($<HTMLSelectElement>('#rc-ch').value).toBe('PM-B');
+  expect($('#win-b').textContent).toContain('The culprit is');
+  expect(localStorage.getItem(SETTINGS_KEY)).toContain('"lang":"en"');
+});
+
+test('settings can be opened mid-dialog and switching there relocalizes the dialog', () => {
+  say(story.kevin);
+  expect(canOpenSettings()).toBe(true);
+  openSettings();
+  $<HTMLButtonElement>('#win [data-lang="en"]').click();
+  expect($('#dlg-text').textContent).toBe(story.kevin[0]!.en);
+  expect($('#win .win-h b').textContent).toBe('Settings');
 });
 
 test('submitting with too few clues asks for more evidence', () => {

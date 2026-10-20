@@ -68,6 +68,7 @@
   "toast.saveCorrupt": "存檔讀取失敗，請開始新遊戲。",
 
   "win.close": "關閉",
+  "win.langToggle": "切換語言",
   "chip.run": "RUN",
   "chip.idle": "IDLE",
   "chip.alarm": "ALARM",

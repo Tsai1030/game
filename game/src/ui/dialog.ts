@@ -1,3 +1,4 @@
+import { on } from '../core/bus';
 import { fmt, L, t, type Params } from '../core/i18n';
 import { CPS, settings } from '../core/settings';
 import { S } from '../core/state';
@@ -93,3 +94,6 @@ export function relocalizeDialog(): void {
 export function initDialog(): void {
   $('#dialog').addEventListener('click', advanceDialog);
 }
+
+// 語言切換時，正在顯示的台詞自動換成新語言。
+on('lang', () => relocalizeDialog());

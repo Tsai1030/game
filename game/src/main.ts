@@ -3,8 +3,9 @@ import './style.css';
 import { saveNow, setAutosave } from './core/autosave';
 import { emit, on } from './core/bus';
 import { applyDom, setLang, t, type Lang } from './core/i18n';
+import { switchLang } from './core/lang';
 import { clearSave, readSave } from './core/save';
-import { loadSettings, saveSettings, settings } from './core/settings';
+import { loadSettings, settings } from './core/settings';
 import { newState, S, setState, START_POS, type GameState } from './core/state';
 import { browserStore } from './core/storage';
 import { story } from './data/story';
@@ -12,16 +13,16 @@ import { resetNpcs, syncEtch, walkable } from './data/world';
 import { doInteract } from './game/actions';
 import { setCoffee } from './game/effects';
 import { held, initInput } from './game/input';
-import { busy, rt } from './game/runtime';
+import { busy, canOpenSettings, rt } from './game/runtime';
 import { computeViewport } from './game/viewport';
 import { WorldScene } from './game/WorldScene';
 import { COFFEE_DECAY_MS, decay } from './systems/coffee';
-import { advanceDialog, initDialog, isDialogOpen, relocalizeDialog, say } from './ui/dialog';
+import { advanceDialog, initDialog, isDialogOpen, say } from './ui/dialog';
 import { $ } from './ui/dom';
 import { initHud, refreshHud, setClock } from './ui/hud';
-import { hideTitle, isTitleOpen, rerenderTitle, showTitle } from './ui/title';
+import { hideTitle, isTitleOpen, showTitle } from './ui/title';
 import { toast } from './ui/toast';
-import { closeWin, initWin, isWinOpen, rerenderWin } from './ui/win';
+import { closeWin, initWin, isWinOpen } from './ui/win';
 import { openClues, openSettings, resetCaseUi } from './ui/windows';
 
 /* 1. 設定與語言 */
@@ -58,7 +59,7 @@ $('#clue-btn').addEventListener('click', () => {
   if (!busy()) openClues();
 });
 $('#set-btn').addEventListener('click', () => {
-  if (!busy()) openSettings();
+  if (canOpenSettings()) openSettings();
 });
 
 /* 3. Phaser 遊戲畫面 */
@@ -118,11 +119,7 @@ function openTitle(): void {
     notice: r.kind === 'corrupt' ? t('toast.saveCorrupt') : undefined,
     onContinue: () => start(r.kind === 'ok' ? r.state : null),
     onNew: () => start(null),
-    onLang: (l: Lang) => {
-      settings.lang = l;
-      saveSettings(browserStore());
-      setLang(l);
-    },
+    onLang: (l: Lang) => switchLang(l),
   });
 }
 
@@ -132,14 +129,11 @@ on('toTitle', () => {
   openTitle();
 });
 
-/* 5. 語言切換：所有看得到的文字立刻重畫 */
+/* 5. 語言切換：頁面上的靜態文字與 HUD 在這裡重畫；視窗、對話框、標題畫面各自訂閱 'lang' 自行重畫。 */
 on('lang', () => {
   document.title = t('app.title');
   applyDom();
   refreshHud();
-  rerenderWin();
-  relocalizeDialog();
-  rerenderTitle();
 });
 
 /* 6. 時鐘、咖啡、自動存檔 */

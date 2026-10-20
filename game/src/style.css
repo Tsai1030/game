@@ -91,6 +91,8 @@ button.stat:active { transform: translate(3px, 3px); box-shadow: none; }
 .win-h { display: flex; align-items: center; gap: 10px; background: var(--edge); color: var(--accent-ink); padding: 8px 10px 8px 16px; position: sticky; top: 0; z-index: 2; }
 .win-h b { font-weight: 400; font-size: 20px; }
 .x { margin-left: auto; background: var(--panel); color: var(--ink); border: 0; width: 36px; height: 36px; cursor: pointer; font-size: 16px; flex: none; }
+.lang-tog { margin-left: auto; background: var(--panel); color: var(--ink); border: 0; height: 36px; padding: 0 12px; cursor: pointer; font-size: 14px; flex: none; }
+.lang-tog + .x { margin-left: 0; }
 .chip { font: 700 11px/1 var(--f-lbl); padding: 4px 6px; background: var(--ok); color: var(--accent-ink); border: 2px solid var(--accent-ink); }
 .chip.bad { background: var(--bad); } .chip.warn { background: var(--warn); }
 .tabs { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 18px 0; }

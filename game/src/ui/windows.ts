@@ -1,5 +1,6 @@
 import { emit } from '../core/bus';
-import { esc, L, LANGS, rich, setLang, t, type Lang } from '../core/i18n';
+import { esc, L, LANGS, rich, t, type Lang } from '../core/i18n';
+import { switchLang } from '../core/lang';
 import { rng } from '../core/random';
 import { saveSettings, settings, type TextSpeed } from '../core/settings';
 import { S } from '../core/state';
@@ -382,9 +383,7 @@ function settingsOn(root: HTMLElement): void {
     const b = (e.target as HTMLElement).closest<HTMLElement>('button.seg');
     if (!b) return;
     if (b.dataset.lang) {
-      settings.lang = b.dataset.lang as Lang;
-      saveSettings(browserStore());
-      setLang(settings.lang);
+      switchLang(b.dataset.lang as Lang);
     } else if (b.dataset.speed) {
       settings.textSpeed = b.dataset.speed as TextSpeed;
       saveSettings(browserStore());
