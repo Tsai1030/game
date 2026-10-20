@@ -1,0 +1,885 @@
+<title>Fab 夜班 RPG 原型</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap">
+<style>
+/* Layout: 全黑底像素 RPG。精簡 HUD 一列 → 盡量放大的遊戲畫面（任務框、互動提示、對話框疊在上面）→ 一行操作說明＋觸控方向鍵。
+   機台畫面以黑底白框像素視窗彈出，FDC 終端機維持琥珀色。刻意只做深色。 */
+:root{
+  --bg:#050507; --panel:#0e0d14; --panel2:#1a1825; --edge:#e8e3f3; --edge2:#3f3a55; --ink:#f1ecfa; --muted:#9b94b2;
+  --accent:#5fd0c4; --accent-ink:#06060a; --ok:#7ccf5c; --warn:#f2b544; --bad:#ff5e57; --hover:#2a2640;
+  --c1:#4f9a44; --c2:#a9b84a; --c3:#e79a2a; --c4:#f05246; --scrim:rgba(0,0,0,.78); --mist:rgba(210,225,255,.2);
+  --crt-bg:#110b04; --crt:#ffb43c; --crt2:#c88a2e; --crt3:#4f3512; --crt-hot:#ffe2a3; --crt-red:#ff5b3d; --crt-redbg:#3b1006; --crt-warnbg:#2b1c06;
+  --f-px:"DotGothic16","Noto Sans TC",sans-serif;
+  --f-lbl:"Silkscreen","DotGothic16",monospace;
+  --f-crt:"IBM Plex Mono","Noto Sans TC",monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-px);padding-block:10px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{max-width:1800px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.lbl{font:700 11px/1 var(--f-lbl);letter-spacing:.06em;text-transform:uppercase}
+.num{font-variant-numeric:tabular-nums}
+kbd{font:700 11px/1 var(--f-lbl);background:var(--edge);color:var(--accent-ink);padding:3px 6px}
+
+/* HUD */
+.hud{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.title{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.title b{font:30px/1 var(--f-px);letter-spacing:.04em;text-shadow:3px 3px 0 var(--edge2)}
+.title small{color:var(--muted);font-size:13px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.stat{display:flex;align-items:center;gap:8px;background:var(--panel);border:3px solid var(--edge2);padding:4px 12px;min-height:40px}
+.stat .lbl{color:var(--muted)}
+.stat b{font-weight:400;font-size:17px}
+.stat.warn b{color:var(--warn)}
+button.stat{cursor:pointer;border-color:var(--edge);box-shadow:3px 3px 0 var(--edge2)}
+button.stat:hover{background:var(--hover)}
+button.stat:active{transform:translate(3px,3px);box-shadow:none}
+.cups{display:flex;gap:3px}
+.cups i{width:10px;height:13px;background:var(--c3);border:2px solid var(--edge)}
+.cups i.e{background:transparent;border-color:var(--edge2)}
+
+/* 遊戲畫面 */
+.stage{position:relative;background:var(--bg);border:3px solid var(--edge2);display:flex;justify-content:center;overflow:hidden}
+#game{display:block;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:manipulation;outline:none}
+.quest{position:absolute;top:10px;left:10px;width:min(330px,calc(100% - 20px));background:var(--panel);border:3px solid var(--edge);font-size:14px}
+.quest button{display:flex;gap:8px;align-items:center;width:100%;background:var(--edge);color:var(--accent-ink);border:0;padding:6px 10px;cursor:pointer;text-align:left}
+.quest .tog{margin-left:auto}
+.quest ol{list-style:none;margin:0;padding:8px 12px 10px;display:flex;flex-direction:column;gap:4px}
+.quest li{display:flex;gap:8px;align-items:center}
+.quest li i{width:11px;height:11px;border:2px solid var(--edge);flex:none}
+.quest li.done{color:var(--muted);text-decoration:line-through}
+.quest li.done i{background:var(--ok);border-color:var(--ok)}
+.quest.min ol{display:none}
+.prompt{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--panel);color:var(--ink);border:3px solid var(--edge);padding:8px 16px;font-size:16px;cursor:pointer;white-space:nowrap;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;animation:bob 1s steps(2) infinite}
+.prompt kbd{margin-right:10px}
+@keyframes bob{50%{transform:translate(-50%,-3px)}}
+.dialog{position:absolute;left:12px;right:12px;bottom:12px;max-width:1100px;margin-inline:auto;display:grid;grid-template-columns:76px minmax(0,1fr);gap:16px;background:var(--panel);border:3px solid var(--edge);box-shadow:inset 0 0 0 3px var(--panel),inset 0 0 0 4px var(--edge2);padding:14px 18px 18px;cursor:pointer;min-height:116px}
+.portrait{width:76px;height:76px;image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid var(--edge);background:var(--panel2)}
+.dialog b{font-weight:400;color:var(--accent);font-size:15px}
+.dialog p{margin:4px 0 0;font-size:19px;line-height:1.5;min-height:3em}
+.dlg-next{position:absolute;right:14px;bottom:6px;animation:blink 1s steps(2) infinite}
+.shower{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--mist);overflow:hidden}
+.shower b,.shower small{position:relative;background:var(--panel);border:3px solid var(--edge);padding:6px 16px}
+.shower b{font-weight:400;font-size:28px}
+.jets{position:absolute;inset:0;background-image:radial-gradient(var(--edge) 1.5px,transparent 2px);background-size:24px 18px;opacity:.35;animation:jet .25s linear infinite}
+@keyframes jet{to{background-position:24px 0}}
+@keyframes blink{50%{opacity:.15}}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:center}
+.hint{margin:0;color:var(--muted);font-size:13px;line-height:2;text-align:center}
+.pad{display:none;gap:22px;align-items:center}
+@media (pointer:coarse),(max-width:720px){.pad{display:flex}}
+.dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);grid-template-areas:". u ." "l . r" ". d ."}
+.dpad button,.abtn{background:var(--panel);color:var(--ink);border:3px solid var(--edge);box-shadow:3px 3px 0 var(--edge2);font-size:16px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.dpad button:active,.abtn:active{transform:translate(3px,3px);box-shadow:none}
+.dpad [data-dir="up"]{grid-area:u}.dpad [data-dir="left"]{grid-area:l}.dpad [data-dir="right"]{grid-area:r}.dpad [data-dir="down"]{grid-area:d}
+.abtn{width:70px;height:70px;background:var(--accent);color:var(--accent-ink);font:700 20px var(--f-lbl)}
+
+/* 機台視窗 */
+.back{position:fixed;inset:0;background:var(--scrim);z-index:30;display:flex;align-items:center;justify-content:center;padding:16px}
+.win{width:min(1000px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--panel);border:3px solid var(--edge);box-shadow:inset 0 0 0 3px var(--panel),inset 0 0 0 4px var(--edge2);display:flex;flex-direction:column}
+.win-h{display:flex;align-items:center;gap:10px;background:var(--edge);color:var(--accent-ink);padding:8px 10px 8px 16px;position:sticky;top:0;z-index:2}
+.win-h b{font-weight:400;font-size:20px}
+.x{margin-left:auto;background:var(--panel);color:var(--ink);border:0;width:36px;height:36px;cursor:pointer;font-size:16px;flex:none}
+.chip{font:700 11px/1 var(--f-lbl);padding:4px 6px;background:var(--ok);color:var(--accent-ink);border:2px solid var(--accent-ink)}
+.chip.bad{background:var(--bad)} .chip.warn{background:var(--warn)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px 0}
+.tabs button{background:var(--panel2);border:3px solid var(--edge2);padding:5px 14px;cursor:pointer}
+.tabs button:hover{border-color:var(--edge)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.win-b{padding:14px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.win-f{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;padding:4px 18px 20px}
+.win .hint2{margin:0;font-size:15px;color:var(--muted)}
+.win .hint2 b{font-weight:400;color:var(--accent-ink);background:var(--warn);padding:0 4px}
+.note{margin:0;font-size:14px;color:var(--muted)}
+.pbtn{background:var(--panel2);border:3px solid var(--edge);box-shadow:4px 4px 0 var(--edge2);padding:8px 18px;cursor:pointer;min-height:42px}
+.pbtn:hover{background:var(--hover)}
+.pbtn:active{transform:translate(4px,4px);box-shadow:none}
+.pbtn.primary{background:var(--accent);color:var(--accent-ink)}
+.pbtn.danger{background:var(--bad);color:var(--accent-ink)}
+
+/* SPC */
+.chart-wrap{overflow-x:auto;background:var(--panel2);border:3px solid var(--edge2);padding:6px}
+.chart-wrap svg{display:block;width:100%;min-width:520px;height:auto;shape-rendering:crispEdges}
+svg text{font-family:var(--f-px);font-size:13px;fill:var(--muted)}
+.g{stroke:var(--edge2);stroke-width:2;stroke-dasharray:2 4}
+.lim{stroke:var(--bad);stroke-width:2;stroke-dasharray:8 4}
+.tgt{stroke:var(--ok);stroke-width:2}
+svg .lim-t{fill:var(--bad)} svg .tgt-t{fill:var(--ok)}
+.pl{fill:none;stroke:var(--ink);stroke-width:2}
+.pt{stroke:var(--edge);stroke-width:2;fill:var(--panel);cursor:pointer}
+.pt.b{fill:var(--accent)} .pt.ooc{fill:var(--bad)}
+.pt:hover{stroke:var(--warn);stroke-width:4}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:11px;height:11px;border:2px solid var(--edge);margin-right:5px;vertical-align:-1px;background:var(--panel)}
+.legend .lb{background:var(--accent)} .legend .lo{background:var(--bad)}
+.readout{min-height:1.5em;font-size:15px;text-align:center}
+
+/* 表格 */
+.tbl-wrap{overflow-x:auto;border:3px solid var(--edge2)}
+.tbl{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+.tbl th{font:700 11px var(--f-lbl);letter-spacing:.05em;text-transform:uppercase;text-align:left;background:var(--edge2);color:var(--ink);padding:7px 10px;white-space:nowrap}
+.tbl td{padding:7px 10px;border-bottom:2px dotted var(--edge2);white-space:nowrap}
+.tbl .n{text-align:right}
+.tbl tr.ooc td{color:var(--bad)} .tbl tr.warn td{color:var(--warn)}
+
+/* 結論 */
+.rc p{margin:0;line-height:2.5;font-size:17px}
+.rc select{background:var(--panel2);border:3px solid var(--edge);padding:3px 6px;max-width:100%}
+.evi{font-size:15px} .evi b{font-weight:400;font-size:19px;color:var(--accent)}
+.big{margin:0;font-size:18px}
+
+/* 機台狀態 */
+.cluster{display:grid;gap:8px;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-areas:". b c ." "a tm tm d" "ef ef ef ef" "l1 l2 l3 ."}
+.cluster>div{border:3px solid var(--edge2);padding:8px 10px;background:var(--panel2);font-size:15px;min-width:0;overflow-wrap:anywhere}
+.cluster small{display:block;font-size:12px;color:var(--muted)}
+.cluster .a{grid-area:a}.cluster .b{grid-area:b}.cluster .c{grid-area:c}.cluster .d{grid-area:d}.cluster .tm{grid-area:tm;text-align:center}.cluster .ef{grid-area:ef;text-align:center}.cluster .l1{grid-area:l1}.cluster .l2{grid-area:l2}.cluster .l3{grid-area:l3}
+.pm.run{box-shadow:inset 6px 0 0 var(--ok)} .pm.idle{box-shadow:inset 6px 0 0 var(--muted)}
+.pm.alarm{background:var(--bad);color:var(--accent-ink);border-color:var(--bad);animation:blink 1.2s steps(2) infinite} .pm.alarm small{color:inherit}
+.pm.inh{background:var(--warn);color:var(--accent-ink);border-color:var(--warn)} .pm.inh small{color:inherit}
+.alist{list-style:none;margin:0;padding:10px 12px;border:3px solid var(--edge2);background:var(--panel2);font-size:14px;display:flex;flex-direction:column;gap:3px}
+.alist .bad{color:var(--bad)} .alist .warn{color:var(--warn)} .alist .ok{color:var(--ok)}
+
+/* FDC 終端機（固定琥珀色） */
+.crt{background:var(--crt-bg);color:var(--crt);font:14px/1.6 var(--f-crt);border:3px solid var(--edge2);padding:12px;position:relative;text-shadow:0 0 5px rgba(255,170,50,.4)}
+.crt::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,.25) 2px 3px)}
+.crt-grep{display:flex;gap:1ch;align-items:center;color:var(--crt2);margin-bottom:6px}
+.crt-grep input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px dashed var(--crt3);color:var(--crt);caret-color:var(--crt-hot);text-shadow:inherit;padding:2px 0}
+.crt-grep input::placeholder{color:var(--crt3)}
+.crt-log{max-height:360px;overflow:auto}
+.crt .ln{white-space:pre;padding:1px 4px;cursor:pointer;width:max-content;min-width:100%}
+.crt .ln:hover{background:var(--crt3)}
+.crt .ln.warn{background:var(--crt-warnbg);color:var(--crt-hot)}
+.crt .ln.alarm{background:var(--crt-redbg);color:var(--crt-red)}
+.crt .ln.pick{outline:1px dashed var(--crt-hot);outline-offset:-1px}
+.crt .t{color:var(--crt2)}
+.crt mark{background:var(--crt);color:var(--crt-bg);text-shadow:none}
+
+/* 耗材 */
+.cons{display:flex;flex-direction:column;gap:8px}
+.con{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;text-align:left;background:var(--panel2);border:3px solid var(--edge2);padding:8px 12px;cursor:pointer}
+.con:hover{border-color:var(--edge);background:var(--hover)}
+.con b{font-weight:400}
+.con .bar{grid-column:1/-1;height:12px;border:2px solid var(--edge2);background:var(--panel)}
+.con .bar i{display:block;height:100%;background:var(--ok)}
+.con.mid .bar i{background:var(--warn)} .con.hi .bar i{background:var(--bad)} .con.hi .num{color:var(--bad)}
+
+/* Wafer map */
+.wbox{display:flex;flex-direction:column;align-items:center;gap:10px}
+.wmap{width:100%;max-width:360px;aspect-ratio:1;display:grid;grid-template-columns:repeat(21,1fr);grid-template-rows:repeat(21,1fr);gap:1px}
+.d{border:0;padding:0;margin:0;min-width:0;min-height:0}
+.d.v{visibility:hidden} .d.rim{background:var(--muted)}
+.d.k1{background:var(--c1)} .d.k2{background:var(--c2)} .d.k3{background:var(--c3)} .d.k4{background:var(--c4)}
+button.d{cursor:crosshair} button.d:hover{background:var(--edge)}
+.scale{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--muted);justify-content:center}
+.scale i{display:inline-block;width:11px;height:11px;border:2px solid var(--edge2);margin-right:4px;vertical-align:-1px}
+
+/* 其他 */
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 18px;margin:0;padding:12px 14px;border:3px solid var(--edge2);background:var(--panel2)}
+.kv dt{color:var(--muted)} .kv dd{margin:0;overflow-wrap:anywhere}
+.cluelist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.cluelist li{border:3px dashed var(--edge2);padding:10px 14px;color:var(--muted)}
+.cluelist li.got{border-style:solid;border-color:var(--edge);background:var(--panel2);color:var(--ink)}
+.cluelist b{font-weight:400;display:block;font-size:17px}
+.cluelist small{font-size:13px;color:var(--muted)}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px));max-width:min(600px,calc(100% - 32px));background:var(--panel);color:var(--ink);border:3px solid var(--edge);box-shadow:inset 0 0 0 3px var(--panel),inset 0 0 0 4px var(--edge2);padding:12px 18px;z-index:40;font-size:16px}
+#toast::before{content:"▶ ";color:var(--accent)}
+#toast[data-kind="bad"]{border-color:var(--bad)}
+#toast[data-kind="bad"]::before{color:var(--bad)}
+#toast[data-kind="clue"]{background:var(--warn);color:var(--accent-ink);border-color:var(--warn)}
+#toast[data-kind="clue"]::before{content:"✎ ";color:var(--accent-ink)}
+@media (prefers-reduced-motion:reduce){.prompt,.dlg-next,.jets,.pm.alarm{animation:none}}
+</style>
+
+<div class="app">
+  <header class="hud">
+    <div class="title"><b>Fab 夜班</b><small>曦晶半導體 Fab 9 · 製程工程師值班中</small></div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">位置</span><b id="loc">辦公室</b></div>
+      <div class="stat"><span class="lbl">10/21</span><b class="num" id="clock">02:47:00</b></div>
+      <div class="stat warn"><span class="lbl">交班</span><b class="num" id="countdown">05:13:00</b></div>
+      <div class="stat"><span class="lbl">咖啡</span><span class="cups" id="cups" aria-label="咖啡"></span></div>
+      <button class="stat" id="clue-btn"><span class="lbl">線索簿</span><b class="num" id="clue-n">0/5</b></button>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="game" tabindex="0" aria-label="Fab 夜班遊戲畫面：俯視的辦公室、更衣室與晶圓廠"></canvas>
+    <div class="quest" id="quest">
+      <button id="q-tog" aria-expanded="true"><span class="lbl">Case 03</span><span>ETCH 段 CD 偏移</span><span class="tog" id="q-sign">−</span></button>
+      <ol id="q-list"></ol>
+    </div>
+    <button class="prompt" id="prompt" hidden></button>
+    <div class="dialog" id="dialog" hidden>
+      <canvas class="portrait" id="dlg-por" width="16" height="16" aria-hidden="true"></canvas>
+      <div><b id="dlg-who"></b><p id="dlg-text"></p></div>
+      <span class="dlg-next" aria-hidden="true">▼</span>
+    </div>
+    <div class="shower" id="shower" hidden><div class="jets"></div><b>風淋中…</b><small>站好、張開雙臂、轉一圈</small></div>
+  </div>
+
+  <div class="controls">
+    <p class="hint"><kbd>方向鍵</kbd> / <kbd>WASD</kbd> 走路 · 點地板自動走過去 · 點機台或人會走過去互動 · <kbd>E</kbd> / <kbd>空白鍵</kbd> 互動 · <kbd>Esc</kbd> 關閉視窗 · 先點一下畫面，鍵盤才有反應</p>
+    <div class="pad" aria-label="觸控操作">
+      <div class="dpad"><button data-dir="up" aria-label="上">▲</button><button data-dir="left" aria-label="左">◀</button><button data-dir="right" aria-label="右">▶</button><button data-dir="down" aria-label="下">▼</button></div>
+      <button class="abtn" id="abtn" aria-label="互動">A</button>
+    </div>
+  </div>
+</div>
+
+<div class="back" id="back" hidden><div class="win" id="win" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+/* ===== 案件資料 ===== */
+const SPC=[["N9K385.1","A",45.1],["N9K386.1","B",44.8],["N9K387.1","A",45.3],["N9K388.1","B",45.0],["N9K389.1","A",44.7],["N9K390.1","B",45.2],["N9K391.1","A",45.0],["N9K392.1","B",45.1],["N9K393.1","A",44.6],["N9K395.1","B",45.4],["N9K396.1","A",45.2],["N9K398.1","B",45.3],["N9K399.1","A",44.9],["N9K401.1","B",45.6],["N9K402.1","A",45.0],["N9K404.1","B",45.8],["N9K405.1","A",45.2],["N9K407.1","B",45.9],["N9K408.1","A",44.8],["N9K410.1","B",46.2],["N9K411.1","A",45.1],["N9K412.1","B",46.8],["N9K415.1","B",47.1],["N9K416.1","A",45.1],["N9K417.1","B",47.4]];
+const LOTS=[
+  {id:"N9K417.1",tool:"ETCH-07",ch:"PM-B",cd:47.4,j:"ooc",st:"HOLD"},
+  {id:"N9K416.1",tool:"ETCH-07",ch:"PM-A",cd:45.1,j:"ok",st:"RUN"},
+  {id:"N9K415.1",tool:"ETCH-07",ch:"PM-B",cd:47.1,j:"ooc",st:"HOLD"},
+  {id:"N9K412.1",tool:"ETCH-07",ch:"PM-B",cd:46.8,j:"ooc",st:"HOLD"},
+  {id:"N9K410.1",tool:"ETCH-07",ch:"PM-B",cd:46.2,j:"warn",st:"HOLD"},
+  {id:"N9K409.1",tool:"ETCH-05",ch:"PM-C",cd:44.9,j:"ok",st:"RUN"}];
+const LOGS=[
+  ["00:12:03","ETCH-07","PM-B","info","STEP3 MAIN_ETCH start  RCP=PO_ET_V3  lot=N9K410.1"],
+  ["00:12:41","ETCH-07","PM-B","warn","FDC RF_REFL_PWR 21.6 W > limit 20.0 W  lot=N9K410.1"],
+  ["00:13:05","ETCH-07","PM-A","ok","FDC RF_REFL_PWR 4.1 W"],
+  ["00:47:19","ETCH-07","PM-B","ok","FDC ESC_HE_FLOW 8.9 sccm（規格 6–12）"],
+  ["01:02:33","ETCH-07","PM-B","info","EVENT WAC auto-clean 完成 2m10s"],
+  ["01:20:11","ETCH-07","PM-B","warn","FDC RF_REFL_PWR 29.8 W > limit 20.0 W  lot=N9K412.1"],
+  ["01:20:12","ETCH-07","PM-B","warn","FDC MATCH_C1_POS 71.3 %  drift +6.2 %"],
+  ["01:41:58","ETCH-05","PM-C","ok","FDC RF_REFL_PWR 3.8 W  lot=N9K409.1"],
+  ["01:58:20","ETCH-07","PM-A","ok","STEP3 MAIN_ETCH end  EPD 正常  lot=N9K416.1"],
+  ["02:05:44","ETCH-07","PM-B","alarm","FDC RF_REFL_PWR 38.0 W > limit 20.0 W  lot=N9K417.1"],
+  ["02:05:44","ETCH-07","PM-B","ok","FDC CHM_PRESS 10.02 mT（設定 10.0）"],
+  ["02:06:10","ETCH-07","PM-B","warn","CONSUMABLE FOCUS_RING RF_HRS=1,180 h（PM 上限 1,200 h）"],
+  ["02:11:37","MES","SPC","alarm","AEI_CD_EDGE 47.4 nm > UCL 46.5 → OOC  lot=N9K417.1"],
+  ["02:11:38","MES","HOLD","info","auto-hold by SPC  reason=OOC  lot=N9K417.1"],
+  ["02:31:02","ETCH-07","PM-B","info","RCP PO_ET_V3 rev.12 最後修改 09/30（本週無變更）"]];
+const LV={ok:"[ OK ]",info:"[INFO]",warn:"[WARN]",alarm:"[ALRM]"};
+const LOGCLUE={1:"fdc",5:"fdc",9:"fdc",11:"ring"};
+const LOGNOTE={3:"He flow 在規格內，ESC 應該沒問題。",6:"Matcher 在追反射功率，比較像結果，不是原因。",7:"ETCH-05 的反射功率很正常，可以當對照組。",10:"腔體壓力正常。",12:"這是 SPC 的結果，不是原因。",14:"Recipe 這週沒動過，可以排除。"};
+const CLUES={
+  spc:{t:"OOC 的點全部來自 ETCH-07 PM-B",src:"PE 工作站 · SPC"},
+  fdc:{t:"PM-B 的 RF 反射功率一路飆到 38 W",src:"ETCH-07 · FDC Log"},
+  ring:{t:"PM-B focus ring 已用 1,180 h（壽命 1,200 h）",src:"ETCH-07 · 耗材"},
+  map:{t:"Wafer 邊緣一圈 CD 偏高，中心正常",src:"MET-02 · Wafer map"},
+  pm:{t:"PM-B 的定期保養上禮拜被延期",src:"Kevin 學長"}};
+const CONS=[["Focus ring","1,180 / 1,200 h",98,"ring"],["Edge ring","640 / 1,500 h",43],["Showerhead","2,100 / 4,000 h",53],["ESC","5,400 / 12,000 h",45],["O-ring kit","90 / 180 天",50]];
+const INFO={
+  "ETCH-05":{type:"Poly Etch",st:"RUN",rows:[["PM-C","處理 N9K409.1 · STEP3"],["RF 反射功率","3.8 W（正常）"],["Focus ring","420 / 1,200 h"],["WIP","2 lots"]],note:"同型機台，可以拿來跟 ETCH-07 對照。"},
+  "CVD-11":{type:"SiN CVD",st:"RUN",rows:[["Recipe","SIN_DEP_V8"],["膜厚","1,002 Å（目標 1,000）"],["下次 PM","3 天後"],["WIP","3 lots"]],note:"阿哲說它今天很乖。"},
+  "WET-02":{type:"Wet Bench",st:"IDLE",rows:[["狀態","等 lot 中"],["槽液壽命","72%"],["SC1 溫度","65.0 °C"],["WIP","0 lots"]],note:"旁邊有人放了一雙備用手套。"},
+  "STK-01":{type:"Stocker",st:"RUN",rows:[["儲位","212 / 240"],["Hold 中","N9K417.1、N9K415.1、N9K412.1、N9K410.1"],["OHT","2 台運行中"]],note:"Hold 住的 4 批都在這裡等你的結論。"},
+  "LITHO-03":{type:"Scanner（黃光區）",st:"RUN",rows:[["曝光中","N9K420.1"],["Focus / Dose","正常"],["Overlay","3.1 nm"],["WIP","5 lots"]],note:"黃光區禁止白光，手機螢幕也算。"},
+  "TRACK-03":{type:"Coater / Developer",st:"RUN",rows:[["流程","塗佈 → 烘烤 → 顯影"],["PR 溫度","23.0 °C"],["WIP","4 lots"]],note:"跟 LITHO-03 連線一起跑。"}};
+
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ===== 遊戲世界配色（夜班，固定） ===== */
+const C={line:"#0a0910",shadow:"rgba(0,0,0,.45)",wall:"#242136",wallTop:"#34304a",wallEdge:"#4a4566",
+  carpet:"#1a1d30",carpet2:"#22263d",fab:"#1a1922",fab2:"#25232f",fabDot:"#302e3e",yel:"#2e2712",yel2:"#3d3318",yelDot:"#4d401f",
+  gown:"#122028",gown2:"#1b2e37",glass:"#24485a",glassHi:"#7fd0e0",grate:"#2b2e3e",grate2:"#3d4156",rail:"#5a5574",
+  top:"#c9ccd8",topWarm:"#d6ceb8",front:"#8e93a8",front2:"#767b92",dark:"#3d4160",win:"#5fd0e0",winDim:"#5c6178",
+  red:"#ff4d45",redDim:"#6a2329",amber:"#f2b544",green:"#6bd05a",off:"#34304a",pod:"#2fa39c",
+  wood:"#8a6142",wood2:"#5e3f2b",screen:"#7fd0e0",mon:"#202338",leaf:"#2f6b2a",leaf2:"#4c9a37",pot:"#7a4029",
+  metal:"#5a6482",metal2:"#434b66",skin:"#f2c9a0",suit:"#f4f5ff",suit2:"#b9bdd6",visor:"#2a2d50",glove:"#3d6fd6",
+  liquid:"#3a8fb8",white:"#ffffff",silicon:"#9ea3bb",accent:"#5fd0c4",
+  /* 機台：黑色機身＋邊光 */
+  tTop:"#0c0d12",tTopWarm:"#100f0c",tRim:"#3a3f5a",tRim2:"#1e2130",tFront:"#07080b",tFront2:"#2a2e42",tPanel:"#161821",tPanel2:"#242736",tDark:"#040507",tLabel:"#7f87a6",tWafer:"#4c5066",alarmGlow:"rgba(255,77,69,.14)"};
+
+/* ===== 3×5 點陣字（機台名牌） ===== */
+const GL={A:"010101111101101",B:"110101110101110",C:"011100100100011",D:"110101101101110",E:"111100110100111",F:"111100110100100",G:"011100101101011",H:"101101111101101",I:"111010010010111",K:"101101110101101",L:"100100100100111",M:"101111111101101",N:"110101101101101",O:"010101101101010",P:"110101110100100",R:"110101110101101",S:"011100010001110",T:"111010010010010",U:"101101101101111",V:"101101101101010",W:"101101111111101",Y:"101101010010010","0":"111101101101111","1":"010110010010111","2":"110001010100111","3":"110001010001110","4":"101101111001001","5":"111100110001110","6":"011100111101111","7":"111001010010010","8":"111101111101111","9":"111101111001110","-":"000000111000000"," ":"000000000000000"};
+function txt(c,s,x,y,col){c.fillStyle=col;for(let k=0;k<s.length;k++){const g=GL[s[k]]||GL[" "];for(let i=0;i<15;i++)if(g[i]==="1")c.fillRect(x+k*4+i%3,y+((i/3)|0),1,1)}}
+const txtW=s=>s.length*4-1;
+function R(c,col,x,y,w,h){c.fillStyle=col;c.fillRect(x,y,w,h)}
+function disc(c,cx,cy,r,col){c.fillStyle=col;for(let y=-r;y<=r;y++){const w=Math.floor(Math.sqrt(r*r-y*y)+.5);c.fillRect(cx-w,cy+y,w*2+1,1)}}
+
+/* ===== 地圖 ===== */
+const TS=16,MW=46,MH=28;
+const T=[...Array(MH)].map(()=>Array(MW).fill("#"));
+const fill=(x,y,w,h,ch)=>{for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)T[j][i]=ch};
+fill(1,1,13,13,".");fill(1,15,13,12,"=");fill(15,1,30,18,",");fill(15,19,30,8,"y");
+T[14][3]=T[14][4]="D";
+for(let y=3;y<=10;y++)T[y][14]="g";
+T[17][14]="A";
+
+const OBJ=[
+  {id:"pc",kind:"desk",x:2,y:3,w:3,h:1,pc:1,name:"PE 工作站",act:"pc"},
+  {id:"desk2",kind:"desk",x:6,y:3,w:3,h:1,pc:1,name:"Kevin 學長的座位",act:"say",say:"桌上有三杯沒喝完的咖啡，還有一張寫著「PM-B ??」的便利貼。"},
+  {id:"desk3",kind:"desk",x:2,y:7,w:3,h:1,pc:1,name:"隔壁的座位",act:"say",say:"螢幕保護程式在跑：「良率就是生命」。"},
+  {id:"desk4",kind:"desk",x:6,y:7,w:3,h:1,pc:1,name:"空位",act:"say",say:"抽屜裡有一包沒拆的泡麵。值班人的好朋友。"},
+  {id:"bossdesk",kind:"desk",x:10,y:2,w:3,h:1,pc:1,name:"王經理的座位",act:"say",say:"桌上放著 8 點晨會的簡報，標題是「ETCH CD 異常說明」……內容還是空的。"},
+  {id:"coffee",kind:"coffee",x:1,y:11,w:1,h:1,name:"咖啡機",act:"coffee"},
+  {id:"plant1",kind:"plant",x:13,y:12,w:1,h:1},
+  {id:"plant2",kind:"plant",x:1,y:1,w:1,h:1},
+  {id:"locker",kind:"locker",x:6,y:15,w:7,h:1,name:"無塵衣置物櫃",act:"locker"},
+  {id:"bench",kind:"bench",x:4,y:20,w:4,h:1},
+  {id:"ETCH-05",kind:"etch",x:17,y:3,w:5,h:3,st:"run",act:"tool"},
+  {id:"ETCH-07",kind:"etch",x:25,y:3,w:5,h:3,st:"alarm",act:"etch07"},
+  {id:"CVD-11",kind:"cvd",x:33,y:3,w:5,h:3,st:"run",act:"tool"},
+  {id:"MET-02",kind:"met",x:17,y:11,w:4,h:3,st:"run",act:"met"},
+  {id:"WET-02",kind:"wet",x:25,y:11,w:6,h:2,st:"idle",act:"tool"},
+  {id:"STK-01",kind:"stk",x:39,y:10,w:4,h:5,st:"run",act:"tool"},
+  {id:"LITHO-03",kind:"litho",x:20,y:21,w:7,h:3,st:"run",act:"tool"},
+  {id:"TRACK-03",kind:"track",x:30,y:21,w:6,h:3,st:"run",act:"tool"}];
+const NPC=[
+  {id:"boss",name:"王經理",x:11,y:4,w:1,h:1,dir:"down",npc:1,act:"npc",look:{hair:"#8a8898",top:"#f4f2fa",bottom:"#4a4670",tie:1}},
+  {id:"kevin",name:"Kevin 學長",x:27,y:7,w:1,h:1,dir:"up",npc:1,act:"npc",look:{suit:1}},
+  {id:"fse",name:"阿哲（廠商 FSE）",x:36,y:7,w:1,h:1,dir:"left",npc:1,act:"npc",look:{suit:1,glove:"#f08a2a"}}];
+const ACTS=[...OBJ.filter(o=>o.act),...NPC];
+const BLK=[...Array(MH)].map(()=>Array(MW).fill(null));
+[...OBJ,...NPC].forEach(o=>{for(let j=o.y;j<o.y+o.h;j++)for(let i=o.x;i<o.x+o.w;i++)BLK[j][i]=o});
+const PL_OFFICE={hair:"#2b2230",top:"#8fb8e0",bottom:"#4a4670"};
+
+/* ===== 狀態 ===== */
+const S={x:3,y:4,px:48,py:64,dir:"up",suit:false,everSuit:false,coffee:3,got:new Set(),solved:false,etch:"alarm"};
+const DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+let step=null,path=[],pending=null,marker=null,shower=null,walkT=0,near=null,DQ=null,winOpen=null;
+const held=[];
+const busy=()=>!!(winOpen||DQ||shower);
+
+/* ===== 靜態地圖層 ===== */
+const bg=document.createElement("canvas");bg.width=MW*TS;bg.height=MH*TS;
+function tile(b,i,j){
+  const ch=T[j][i],X=i*TS,Y=j*TS;
+  const floor=(base,seam,dot)=>{R(b,base,X,Y,16,16);R(b,seam,X,Y,16,1);R(b,seam,X,Y,1,16);for(const a of [4,8,12])for(const d of [4,8,12])R(b,dot,X+a,Y+d,1,1)};
+  if(ch==="."){R(b,C.carpet,X,Y,16,16);R(b,C.carpet2,X+3,Y+3,2,2);R(b,C.carpet2,X+11,Y+11,2,2)}
+  else if(ch===",")floor(C.fab,C.fab2,C.fabDot);
+  else if(ch==="y")floor(C.yel,C.yel2,C.yelDot);
+  else if(ch==="="){R(b,C.gown,X,Y,16,16);R(b,C.gown2,X,Y,16,1);R(b,C.gown2,X,Y,1,16)}
+  else if(ch==="D"){R(b,C.gown,X,Y,16,16);R(b,C.wallEdge,X,Y,16,2);R(b,C.wallEdge,X,Y+14,16,2)}
+  else if(ch==="A"){R(b,C.grate,X,Y,16,16);for(let k=1;k<16;k+=3)R(b,C.grate2,X,Y+k,16,1);R(b,C.glove,X,Y,2,16);R(b,C.glove,X+14,Y,2,16)}
+  else if(ch==="g"){R(b,C.wallTop,X,Y,16,16);R(b,C.line,X+4,Y,8,16);R(b,C.glass,X+5,Y,6,16);R(b,C.glassHi,X+6,Y+2+((j*5)%7),1,4)}
+  else{R(b,C.wallTop,X,Y,16,16);const below=j+1<MH?T[j+1][i]:"#";if(below!=="#"&&below!=="g"&&below!=="A"){R(b,C.wall,X,Y+9,16,7);R(b,C.wallEdge,X,Y+9,16,1);R(b,C.line,X,Y+15,16,1)}}
+}
+(function(){const b=bg.getContext("2d");
+  for(let j=0;j<MH;j++)for(let i=0;i<MW;i++)tile(b,i,j);
+  R(b,C.line,81,1,62,14);R(b,"#d9dbe6",82,2,60,12);R(b,C.red,85,5,22,1);R(b,C.glove,85,8,34,1);R(b,C.glove,112,5,24,1);R(b,C.line,85,11,14,1);
+  txt(b,"FAB 9  ETCH BAY",272,4,C.white);
+  txt(b,"YELLOW ROOM",608,412,"#6b5a2a");
+  txt(b,"AIR SHOWER",172,282,C.rail);
+})();
+
+/* ===== 物件繪製 ===== */
+/* ---- 機台燈號：每台機台用固定種子產生一批 LED，逐格閃爍並加上發光暈 ---- */
+const LEDC={g:"#5dff7a",c:"#5ff0ff",a:"#ffc04a",b:"#6b9bff",r:"#ff4d45",w:"#e8f0ff"};
+const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`};
+const HALO1={},HALO2={};for(const k in LEDC){HALO1[k]=hexA(LEDC[k],.35);HALO2[k]=hexA(LEDC[k],.12)}
+const fract=v=>v-Math.floor(v);
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function ledZones(k,tx,ty,tw,th){
+  if(k==="etch"||k==="cvd")return [[tx+2,ty+2,9,th-12],[tx+tw-11,ty+2,8,th-12],[tx+6,ty+th-8,tw-12,1],[tx+37,ty+2,4,8]];
+  if(k==="wet")return [[tx+3,ty+1,tw-6,2],[tx+3,ty+18,tw-6,3]];
+  if(k==="met")return [[tx+2,ty+30,tw-6,8],[tx+36,ty+23,22,5],[tx+2,ty+2,8,6]];
+  if(k==="litho")return [[tx+3,ty+21,30,16],[tx+66,ty+2,6,36],[tx+3,ty+1,tw-8,2],[tx+40,ty+33,26,4]];
+  if(k==="track")return [[tx+3,ty+26,tw-6,7],[tx+3,ty+1,tw-6,3]];
+  return [[tx+3,ty+3,tw-6,44]];
+}
+function buildLeds(o,tx,ty,tw,th,X,Y,W,H){
+  const r=rng(hashStr(o.id)),L=[],used=new Set(),pal=o.id==="ETCH-07"?"ggcccbwarrr":"gggcccbbwa";
+  ledZones(o.kind,tx,ty,tw,th).forEach(z=>{
+    const n=Math.min(50,Math.max(3,Math.round(z[2]*z[3]/10)));
+    for(let k=0;k<n;k++){
+      const x=z[0]+Math.floor(r()*z[2]),y=z[1]+Math.floor(r()*z[3]),key=x*7919+y;
+      if(used.has(key))continue;used.add(key);
+      const q=r();
+      L.push({x,y,col:pal[Math.floor(r()*pal.length)],kind:q<.22?"steady":q<.62?"blink":"flick",rate:.4+r()*2.6,ph:r(),duty:.25+r()*.55});
+    }
+  });
+  const strip=[];for(let x=X+3;x<X+W-3;x+=3)strip.push(x);
+  return {L,strip,sy:Y+H-2};
+}
+function drawLeds(c,o,D,t){
+  c.globalCompositeOperation="lighter";
+  const sk=o.st==="alarm"?"r":o.st==="inhibit"?"a":"c";
+  for(const l of D.L){
+    const on=l.kind==="steady"||(l.kind==="blink"?fract(t*l.rate+l.ph)<l.duty:fract(Math.sin((Math.floor(t*12)+l.ph*977)*12.9898)*43758.5453)>.45);
+    if(!on)continue;
+    let k=l.col;if(k==="r"&&o.st!=="alarm")k=o.st==="inhibit"?"a":"g";
+    c.fillStyle=HALO2[k];c.fillRect(l.x-2,l.y-2,5,5);
+    c.fillStyle=HALO1[k];c.fillRect(l.x-1,l.y-1,3,3);
+    c.fillStyle=LEDC[k];c.fillRect(l.x,l.y,1,1);
+  }
+  const n=D.strip.length,head=Math.floor(t*12)%n;
+  for(let d=0;d<4;d++){const x=D.strip[(head-d+n)%n];c.fillStyle=HALO2[sk];c.fillRect(x-1,D.sy-1,4,3);c.fillStyle=hexA(LEDC[sk],.9-d*.22);c.fillRect(x,D.sy,2,1)}
+  c.globalCompositeOperation="source-over";
+}
+function dTool(c,o,X,Y,W,H,t){
+  const stk=o.kind==="stk",FH=stk?22:10,blink=Math.floor(t*2.5)%2===0;
+  const tx=X+1,ty=Y-5,tw=W-2,th=H+4-FH;
+  if(o.st==="alarm"&&blink)R(c,C.alarmGlow,X-6,Y-10,W+12,H+16);
+  R(c,C.shadow,X+3,Y+H-2,W,4);
+  R(c,C.line,X,Y-6,W,H+6);
+  R(c,o.kind==="litho"?C.tTopWarm:C.tTop,tx,ty,tw,th);
+  R(c,C.tRim,tx,ty,tw,1);R(c,C.tRim,tx,ty,1,th);R(c,C.tRim2,tx+tw-1,ty,1,th);
+  R(c,C.tFront,tx,Y+H-FH,tw,FH-1);R(c,C.tFront2,tx,Y+H-FH,tw,1);
+  let foups=0;
+  if(o.kind==="etch"||o.kind==="cvd"){
+    const cx=tx+(tw>>1),cy=ty+21;
+    R(c,C.tPanel,tx+4,ty+th-9,tw-8,7);R(c,C.tPanel2,cx-2,ty+th-7,4,3);
+    R(c,C.line,cx-7,cy-6,14,13);R(c,C.tPanel,cx-6,cy-5,12,11);R(c,C.tPanel2,cx-1,cy-3,2,7);
+    const pms=o.kind==="etch"?[["A",cx-25,cy-3],["B",cx-17,cy-19],["C",cx+3,cy-19],["D",cx+11,cy-3]]:[["A",cx-25,cy-3],["B",cx-7,cy-19],["C",cx+11,cy-3]];
+    pms.forEach(p=>{
+      const col=pmColor(o,p[0],blink),x=p[1],y=p[2];
+      R(c,C.line,x,y,14,11);R(c,C.tPanel,x+1,y+1,12,9);
+      R(c,col,x+1,y+1,12,1);R(c,col,x+1,y+9,12,1);R(c,col,x+1,y+1,1,9);R(c,col,x+12,y+1,1,9);
+      txt(c,p[0],x+5,y+3,col);
+      if(o.id==="ETCH-07"&&p[0]==="B"&&S.etch==="alarm"&&blink){c.globalCompositeOperation="lighter";R(c,"rgba(255,77,69,.22)",x-3,y-3,20,17);c.globalCompositeOperation="source-over"}
+    });
+    foups=3;
+  }else if(o.kind==="wet"){
+    for(let k=0;k<5;k++){const x=tx+5+k*18;R(c,C.line,x,ty+4,15,12);R(c,C.liquid,x+1,ty+5,13,10);R(c,C.glassHi,x+2,ty+6,4,1)}
+    R(c,C.tPanel2,tx+4,ty+th-4,tw-8,2);foups=1;
+  }else if(o.kind==="met"){
+    disc(c,tx+22,ty+18,9,C.tRim);disc(c,tx+22,ty+18,8,C.tPanel);disc(c,tx+22,ty+18,4,C.tDark);
+    R(c,C.line,tx+38,ty+8,18,13);R(c,C.screen,tx+39,ty+9,16,11);R(c,C.tDark,tx+41,ty+12,10,1);R(c,C.red,tx+41,ty+15,6,1);
+    c.globalCompositeOperation="lighter";R(c,"rgba(95,240,255,.08)",tx+35,ty+5,24,19);c.globalCompositeOperation="source-over";
+    foups=1;
+  }else if(o.kind==="litho"){
+    R(c,C.line,tx+8,ty+6,22,12);R(c,C.tDark,tx+9,ty+7,20,10);R(c,C.amber,tx+11,ty+9,4,1);
+    disc(c,tx+52,ty+19,11,C.tRim);disc(c,tx+52,ty+19,10,C.tPanel);disc(c,tx+52,ty+19,5,C.tDark);
+    R(c,C.line,tx+74,ty+6,30,28);R(c,C.tPanel,tx+75,ty+7,28,26);disc(c,tx+89,ty+20,9,C.tWafer);
+  }else if(o.kind==="track"){
+    for(let k=0;k<4;k++){const x=tx+13+k*22;disc(c,x,ty+15,8,C.tRim);disc(c,x,ty+15,7,C.tPanel);disc(c,x,ty+15,4,C.tWafer)}
+    for(let k=0;k<4;k++)R(c,C.redDim,tx+6+k*22,ty+th-6,14,2);
+  }else if(stk){
+    for(let k=0;k<5;k++)R(c,C.tPanel,tx+3,ty+6+k*10,tw-6,1);
+    for(let r=0;r<2;r++)for(let k=0;k<5;k++){const x=tx+3+k*12,y=Y+H-FH+3+r*9;R(c,C.line,x,y,9,7);R(c,C.pod,x+1,y+1,7,5)}
+  }
+  for(let k=0;k<foups;k++){const x=X+5+k*11;R(c,C.line,x,Y+H-FH-4,10,9);R(c,C.pod,x+1,Y+H-FH-3,8,7);R(c,C.line,x+2,Y+H-FH-1,6,1)}
+  const lx0=X+5+foups*11,lx=stk?X+((W-txtW(o.id))>>1):lx0+((X+W-6-lx0-txtW(o.id))>>1);
+  txt(c,o.id,lx,stk?ty+th-9:Y+H-FH+2,C.tLabel);
+  /* 燈號塔 */
+  const px=X+W-7,lamps=[[o.st==="alarm"&&blink,"r",Y-20],[o.st==="idle"||o.st==="inhibit","a",Y-18],[o.st==="run","g",Y-16]];
+  R(c,C.line,px+1,Y-14,1,9);R(c,C.line,px-1,Y-21,5,8);
+  lamps.forEach(l=>R(c,C.off,px,l[2],3,2));
+  drawLeds(c,o,o.leds||(o.leds=buildLeds(o,tx,ty,tw,th,X,Y,W,H)),t);
+  c.globalCompositeOperation="lighter";
+  lamps.forEach(l=>{if(!l[0])return;c.fillStyle=HALO2[l[1]];c.fillRect(px-3,l[2]-3,9,8);c.fillStyle=HALO1[l[1]];c.fillRect(px-1,l[2]-1,5,4);c.fillStyle=LEDC[l[1]];c.fillRect(px,l[2],3,2)});
+  c.globalCompositeOperation="source-over";
+}
+function pmColor(o,n,blink){
+  if(o.id!=="ETCH-07")return C.win;
+  if(n==="B"){if(S.etch==="alarm")return blink?C.red:C.redDim;if(S.etch==="inhibit")return C.amber;return C.win}
+  return n==="C"?C.winDim:C.win;
+}
+function dDesk(c,o,X,Y,W,t){
+  R(c,C.shadow,X+2,Y+12,W,3);
+  R(c,C.line,X,Y-2,W,16);R(c,C.wood,X+1,Y-1,W-2,9);R(c,C.wood2,X+1,Y+8,W-2,5);
+  if(o.id==="desk2")for(let k=0;k<3;k++){R(c,C.line,X+3+k*5,Y,4,5);R(c,C.white,X+4+k*5,Y+1,2,3)}
+  if(o.pc){const mx=X+(W>>1)-7,alert=o.id==="pc"&&!S.got.has("spc")&&Math.floor(t*2)%2===0;
+    R(c,C.line,mx,Y-13,14,12);R(c,C.mon,mx+1,Y-12,12,10);R(c,alert?C.red:C.screen,mx+2,Y-11,10,7);
+    R(c,C.line,mx+6,Y-1,2,1);R(c,C.front,mx-1,Y+2,16,3);R(c,C.line,mx-1,Y+5,16,1)}
+}
+function dLocker(c,X,Y,W){
+  R(c,C.line,X,Y-12,W,27);R(c,C.metal,X+1,Y-11,W-2,25);
+  for(let x=X+16;x<X+W-1;x+=16)R(c,C.metal2,x,Y-11,1,25);
+  for(let x=X+12;x<X+W;x+=16)R(c,C.line,x,Y-1,1,3);
+  for(let x=X+4;x<X+W-6;x+=16)for(let k=0;k<3;k++)R(c,C.metal2,x,Y-8+k*2,6,1);
+  R(c,C.line,X+33,Y-10,14,23);
+  if(!S.suit){R(c,C.suit,X+36,Y-8,8,18);R(c,C.suit2,X+39,Y-8,2,18);R(c,C.visor,X+37,Y-6,6,2)}
+}
+function dCoffee(c,X,Y,t){R(c,C.shadow,X+3,Y+13,12,3);R(c,C.line,X+2,Y-10,12,25);R(c,C.metal,X+3,Y-9,10,23);R(c,C.screen,X+5,Y-7,6,3);R(c,Math.floor(t)%2?C.red:C.redDim,X+10,Y-2,2,2);R(c,C.line,X+5,Y+3,6,6);R(c,C.white,X+6,Y+5,4,4)}
+function dPlant(c,X,Y){R(c,C.shadow,X+3,Y+13,10,3);disc(c,X+8,Y+1,6,C.line);disc(c,X+8,Y+1,5,C.leaf);disc(c,X+6,Y-1,2,C.leaf2);disc(c,X+10,Y+2,2,C.leaf2);R(c,C.line,X+3,Y+6,10,9);R(c,C.pot,X+4,Y+7,8,7)}
+function dBench(c,X,Y,W){R(c,C.shadow,X+2,Y+12,W,3);R(c,C.line,X,Y+2,W,10);R(c,C.wood,X+1,Y+3,W-2,5);R(c,C.wood2,X+1,Y+8,W-2,3)}
+function drawObj(c,o,t){
+  const X=o.x*TS,Y=o.y*TS,W=o.w*TS,H=o.h*TS;
+  if(o.kind==="desk")dDesk(c,o,X,Y,W,t);
+  else if(o.kind==="locker")dLocker(c,X,Y,W);
+  else if(o.kind==="coffee")dCoffee(c,X,Y,t);
+  else if(o.kind==="plant")dPlant(c,X,Y);
+  else if(o.kind==="bench")dBench(c,X,Y,W);
+  else dTool(c,o,X,Y,W,H,t);
+}
+
+/* ===== 人物（俯視 Q 版，程式繪製） ===== */
+function person(c,X,Y,dir,fr,mv,L){
+  const suit=!!L.suit,body=suit?C.suit:L.top,legs=suit?C.suit:L.bottom,feet=suit?(L.glove||C.glove):C.line,hand=suit?(L.glove||C.glove):C.skin,head=suit?C.suit:L.hair;
+  const a=mv?(fr?1:-1):0,lL=a>0?-1:0,rL=a<0?-1:0;
+  R(c,C.shadow,X+3,Y+13,10,3);
+  const P=[[5,10+lL,2,5,legs],[9,10+rL,2,5,legs],[4,3,8,8,body],[2,4-a,2,6,body],[12,4+a,2,6,body],[3,-6,10,9,head]];
+  c.fillStyle=C.line;P.forEach(p=>c.fillRect(X+p[0]-1,Y+p[1]-1,p[2]+2,p[3]+2));
+  P.forEach(p=>{c.fillStyle=p[4];c.fillRect(X+p[0],Y+p[1],p[2],p[3])});
+  R(c,feet,X+5,Y+14+lL,2,1);R(c,feet,X+9,Y+14+rL,2,1);
+  R(c,hand,X+2,Y+9-a,2,1);R(c,hand,X+12,Y+9+a,2,1);
+  if(suit)R(c,C.suit2,X+7,Y+4,2,6);
+  if(dir!=="up"){
+    const fx=dir==="left"?3:dir==="right"?7:4,fw=dir==="down"?8:6;
+    if(suit)R(c,C.skin,X+fx,Y-2,fw,3);else R(c,C.skin,X+fx,Y-3,fw,5);
+    (dir==="left"?[4]:dir==="right"?[11]:[6,9]).forEach(x=>R(c,C.line,X+x,Y-2,1,2));
+    if(suit&&dir==="down")R(c,C.suit2,X+5,Y+1,6,1);
+  }
+  if(L.tie&&dir==="down")R(c,C.red,X+7,Y+4,2,5);
+}
+
+/* ===== 天車 OHT ===== */
+function oht(c,t){
+  const x0=264,x1=696,y0=136,y1=264,w=x1-x0,h=y1-y0,Lp=2*(w+h);
+  R(c,C.rail,x0,y0-1,w+1,2);R(c,C.rail,x0,y1-1,w+1,2);R(c,C.rail,x0-1,y0,2,h);R(c,C.rail,x1-1,y0,2,h);
+  [0,Lp/2].forEach((off,k)=>{let d=(t*28+off)%Lp,x,y;
+    if(d<w){x=x0+d;y=y0}else if((d-=w)<h){x=x1;y=y0+d}else if((d-=h)<w){x=x1-d;y=y1}else{d-=w;x=x0;y=y1-d}
+    x=Math.round(x);y=Math.round(y);
+    R(c,C.shadow,x-6,y+9,12,3);R(c,C.line,x-6,y-5,12,10);R(c,C.tPanel,x-5,y-4,10,8);R(c,C.tRim,x-5,y-4,10,1);R(c,C.tFront,x-5,y+2,10,2);R(c,C.amber,x+2,y-3,2,2);
+    if(k===0)R(c,C.pod,x-4,y-2,5,4);
+  });
+}
+
+/* ===== 移動與尋路 ===== */
+const FLOOR=".,y=D";
+const inb=(x,y)=>x>=0&&y>=0&&x<MW&&y<MH;
+function walk(x,y,suit){if(!inb(x,y))return false;const ch=T[y][x];if(ch==="A"){if(!suit)return false}else if(!FLOOR.includes(ch))return false;return !BLK[y][x]}
+const objAt=(x,y)=>inb(x,y)?BLK[y][x]:null;
+function adj(o,x,y){return (x>=o.x&&x<o.x+o.w&&(y===o.y-1||y===o.y+o.h))||(y>=o.y&&y<o.y+o.h&&(x===o.x-1||x===o.x+o.w))}
+function bfs(sx,sy,goal,suit){
+  if(goal(sx,sy))return [];
+  const prev=new Int32Array(MW*MH).fill(-2),s0=sy*MW+sx,q=[s0];prev[s0]=-1;let h=0;
+  while(h<q.length){const k=q[h++],x=k%MW,y=(k/MW)|0;
+    for(const v of [[0,-1],[0,1],[-1,0],[1,0]]){const nx=x+v[0],ny=y+v[1];if(!walk(nx,ny,suit))continue;const nk=ny*MW+nx;if(prev[nk]!==-2)continue;prev[nk]=k;
+      if(goal(nx,ny)){const p=[];let cc=nk;while(cc!==s0){p.push({x:cc%MW,y:(cc/MW)|0});cc=prev[cc]}return p.reverse()}
+      q.push(nk)}}
+  return null;
+}
+let lastWarn=0;
+function warnSuit(){const n=performance.now();if(n-lastWarn<1500)return;lastWarn=n;toast("沒穿無塵衣不能進 Fab！先到更衣室的置物櫃換裝。","bad")}
+function tryMove(d){
+  S.dir=d;const v=DIRS[d],nx=S.x+v[0],ny=S.y+v[1];
+  if(inb(nx,ny)&&T[ny][nx]==="A"&&!S.suit){warnSuit();return false}
+  if(!walk(nx,ny,S.suit))return false;
+  step={fx:S.x,fy:S.y,tx:nx,ty:ny,t:0};return true;
+}
+function region(x,y){const ch=T[y][x];if(ch==="A")return "風淋室";if(x<14)return y<14?"辦公室":"更衣室";return y>=19?"Fab · 黃光區":"Fab · 蝕刻／薄膜區"}
+function arrive(px){$("#loc").textContent=region(S.x,S.y);if(T[S.y][S.x]==="A"&&px<S.x){shower={t:1.4};$("#shower").hidden=false}}
+function faceTo(o){if(S.y<o.y)S.dir="down";else if(S.y>=o.y+o.h)S.dir="up";else if(S.x<o.x)S.dir="right";else S.dir="left"}
+function nearObj(){const f=DIRS[S.dir],o=objAt(S.x+f[0],S.y+f[1]);if(o&&o.act)return o;for(const k in DIRS){const v=DIRS[k],q=objAt(S.x+v[0],S.y+v[1]);if(q&&q.act)return q}return null}
+const EXT={etch:24,cvd:24,met:24,wet:24,stk:24,litho:24,track:24,desk:14,locker:13,coffee:11};
+function pick(wx,wy){let best=null;for(const o of ACTS){const top=o.y*TS-(o.npc?7:(EXT[o.kind]||0)),bot=(o.y+o.h)*TS;if(wx>=o.x*TS&&wx<(o.x+o.w)*TS&&wy>=top&&wy<bot&&(!best||bot>(best.y+best.h)*TS))best=o}return best}
+
+/* ===== 畫面：寬度吃滿、高度盡量吃滿視窗，像素整數倍放大 ===== */
+const cv=$("#game"),ctx=cv.getContext("2d");
+let VW=384,VH=216;const cam={x:0,y:0};
+function fit(){
+  const cw=$("#stage").clientWidth,narrow=cw<700,sc=cw>=1500?4:cw>=840?3:2;
+  const avail=innerHeight-(narrow?300:140);
+  let vw=Math.floor(cw/sc),vh=Math.floor(Math.max(narrow?300:420,Math.min(avail,narrow?cw*1.2:cw*.68))/sc);
+  vw=Math.min(vw,MW*TS);vh=Math.min(vh,MH*TS);
+  if(cv.width!==vw)cv.width=vw;if(cv.height!==vh)cv.height=vh;
+  cv.style.width=vw*sc+"px";cv.style.height=vh*sc+"px";VW=vw;VH=vh;ctx.imageSmoothingEnabled=false;
+}
+function updCam(px,py){
+  const mw=MW*TS,mh=MH*TS;
+  cam.x=mw<=VW?-((VW-mw)>>1):Math.max(0,Math.min(mw-VW,Math.round(px+8-VW/2)));
+  cam.y=mh<=VH?-((VH-mh)>>1):Math.max(0,Math.min(mh-VH,Math.round(py+8-VH/2)));
+}
+function arrow(c,o,t){
+  const ox=o.x*TS+o.w*8,oy=o.y*TS-(o.npc?18:(EXT[o.kind]||6)+12)+(Math.floor(t*3)%2);
+  R(c,C.line,ox-5,oy-1,11,1);
+  for(let k=0;k<5;k++)R(c,C.line,ox-5+k,oy+k,11-2*k,1);
+  for(let k=0;k<4;k++)R(c,C.amber,ox-4+k,oy+k,9-2*k,1);
+}
+function render(t){
+  ctx.fillStyle="#050507";ctx.fillRect(0,0,VW,VH);
+  ctx.save();ctx.translate(-cam.x,-cam.y);
+  ctx.drawImage(bg,0,0);
+  if(marker&&Math.floor(t*4)%2===0){const X=marker.x*TS,Y=marker.y*TS;R(ctx,C.accent,X+1,Y+1,14,2);R(ctx,C.accent,X+1,Y+13,14,2);R(ctx,C.accent,X+1,Y+1,2,14);R(ctx,C.accent,X+13,Y+1,2,14)}
+  const fr=Math.floor(walkT*7)%2,look=S.suit?{suit:1}:PL_OFFICE;
+  const vis=o=>(o.x+o.w)*TS+8>=cam.x&&o.x*TS-8<=cam.x+VW&&(o.y+o.h)*TS+8>=cam.y&&o.y*TS-32<=cam.y+VH;
+  const ents=OBJ.filter(vis).map(o=>({y:(o.y+o.h)*TS,f:()=>drawObj(ctx,o,t)}));
+  NPC.forEach(n=>ents.push({y:(n.y+1)*TS,f:()=>person(ctx,n.x*TS,n.y*TS,n.dir,0,false,n.look)}));
+  ents.push({y:S.py+TS+.5,f:()=>person(ctx,Math.round(S.px),Math.round(S.py),S.dir,fr,!!step,look)});
+  ents.sort((a,b)=>a.y-b.y).forEach(e=>e.f());
+  oht(ctx,t);
+  if(near)arrow(ctx,near,t);
+  ctx.restore();
+}
+
+/* ===== 主迴圈 ===== */
+function update(dt){
+  if(DQ){const L=DQ.lines[DQ.i];if(DQ.n<L.text.length){DQ.n=Math.min(L.text.length,DQ.n+dt*40);$("#dlg-text").textContent=L.text.slice(0,Math.floor(DQ.n))}}
+  if(shower){shower.t-=dt;if(shower.t<=0){shower=null;$("#shower").hidden=true;toast("風淋完成。歡迎來到 Fab 9，記得別摸臉。")}}
+  if(step){step.t+=dt/.15;walkT+=dt;if(step.t>=1){const px=S.x;S.x=step.tx;S.y=step.ty;step=null;arrive(px)}}
+  if(!step&&!busy()){
+    const d=held[held.length-1];
+    if(d){path=[];pending=null;marker=null;tryMove(d)}
+    else if(path.length){
+      const n=path.shift(),dx=n.x-S.x,dy=n.y-S.y;
+      const dd=Math.abs(dx)+Math.abs(dy)!==1?null:dx===1?"right":dx===-1?"left":dy===1?"down":"up";
+      if(!dd||!tryMove(dd)){path=[];pending=null}
+      if(!path.length)marker=null;
+    }else if(pending){const o=pending;pending=null;if(adj(o,S.x,S.y))doInteract(o)}
+  }
+  if(step){S.px=(step.fx+(step.tx-step.fx)*Math.min(1,step.t))*TS;S.py=(step.fy+(step.ty-step.fy)*Math.min(1,step.t))*TS}
+  else{S.px=S.x*TS;S.py=S.y*TS}
+  updCam(S.px,S.py);
+  const nn=(!busy()&&!step)?nearObj():null;
+  if(nn!==near){near=nn;updPrompt()}
+}
+let last=performance.now();const T0=last;
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);render((now-T0)/1000);requestAnimationFrame(frame)}
+
+/* ===== 輸入 ===== */
+const KEYMAP={ArrowUp:"up",KeyW:"up",ArrowDown:"down",KeyS:"down",ArrowLeft:"left",KeyA:"left",ArrowRight:"right",KeyD:"right"};
+addEventListener("keydown",e=>{
+  const tg=e.target,tag=tg&&tg.tagName;
+  if(e.key==="Escape"){if(winOpen){closeWin();e.preventDefault()}return}
+  if(tag==="INPUT"||tag==="SELECT"||tag==="TEXTAREA"||winOpen)return;
+  const d=KEYMAP[e.code];
+  if(d){e.preventDefault();if(!held.includes(d))held.push(d);return}
+  if(e.code==="Space"||e.code==="KeyE"||e.code==="Enter"){
+    if(tag==="BUTTON"&&e.code!=="KeyE")return;
+    e.preventDefault();
+    if(DQ)advance();else if(near&&!busy())doInteract(near);
+  }
+});
+addEventListener("keyup",e=>{const d=KEYMAP[e.code];if(d){const i=held.indexOf(d);if(i>=0)held.splice(i,1)}});
+addEventListener("blur",()=>{held.length=0});
+cv.addEventListener("pointerdown",e=>{
+  cv.focus({preventScroll:true});
+  if(DQ){advance();return}
+  if(busy())return;
+  const r=cv.getBoundingClientRect(),wx=(e.clientX-r.left)/r.width*VW+cam.x,wy=(e.clientY-r.top)/r.height*VH+cam.y;
+  const tx=Math.floor(wx/TS),ty=Math.floor(wy/TS),sx=step?step.tx:S.x,sy=step?step.ty:S.y;
+  held.length=0;
+  const hit=pick(wx,wy);
+  if(hit){
+    if(!step&&adj(hit,S.x,S.y)){doInteract(hit);return}
+    const p=bfs(sx,sy,(x,y)=>adj(hit,x,y),S.suit);
+    if(p){path=p;pending=hit;marker=null}
+    else if(!S.suit&&hit.x>=15)warnSuit();
+    else toast("走不過去。");
+    return;
+  }
+  if(walk(tx,ty,S.suit)){const p=bfs(sx,sy,(x,y)=>x===tx&&y===ty,S.suit);if(p){path=p;pending=null;marker={x:tx,y:ty}}}
+  else if(inb(tx,ty)&&!S.suit&&(T[ty][tx]==="A"||tx>=15))warnSuit();
+});
+document.querySelectorAll("[data-dir]").forEach(b=>{
+  const d=b.dataset.dir,up=()=>{const i=held.indexOf(d);if(i>=0)held.splice(i,1)};
+  b.addEventListener("pointerdown",e=>{e.preventDefault();if(DQ){advance();return}if(!held.includes(d))held.push(d)});
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,up));
+});
+$("#abtn").addEventListener("click",()=>{if(DQ)advance();else if(near&&!busy())doInteract(near)});
+$("#prompt").addEventListener("click",()=>{if(near&&!busy())doInteract(near)});
+$("#dialog").addEventListener("click",advance);
+$("#clue-btn").addEventListener("click",()=>{if(!DQ)openClues()});
+$("#q-tog").addEventListener("click",()=>{const q=$("#quest"),m=q.classList.toggle("min");$("#q-sign").textContent=m?"+":"−";$("#q-tog").setAttribute("aria-expanded",String(!m))});
+
+/* ===== 互動 ===== */
+const me=()=>S.suit?"meSuit":"me";
+function verb(o){
+  if(o.npc)return `和${o.name}說話`;
+  if(o.act==="pc")return "登入 PE 工作站";
+  if(o.act==="locker")return S.suit?"脫下無塵衣":"換上無塵衣";
+  if(o.act==="coffee")return "泡一杯咖啡";
+  if(o.act==="say")return `查看${o.name}`;
+  return `開啟 ${o.id} 機台畫面`;
+}
+function updPrompt(){const p=$("#prompt");if(!near||busy()){p.hidden=true;return}p.innerHTML=`<kbd>E</kbd>${esc(verb(near))}`;p.hidden=false}
+function doInteract(o){
+  faceTo(o);held.length=0;
+  if(o.npc)return talk(o);
+  if(o.act==="pc")return openPC();
+  if(o.act==="etch07")return openEtch();
+  if(o.act==="met")return openMet();
+  if(o.act==="tool")return openTool(o);
+  if(o.act==="locker")return doLocker();
+  if(o.act==="coffee")return doCoffee();
+  if(o.act==="say")return say([{who:"你",por:me(),text:o.say}]);
+}
+function talk(n){
+  const dx=S.x-n.x,dy=S.y-n.y;n.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");
+  const W=(who,por,arr)=>arr.map(t=>({who,por,text:t}));
+  if(n.id==="boss"){
+    const L=[];
+    if(S.solved)L.push("辛苦了。8 點我來報，你去吃早餐吧。");
+    else{if(S.suit)L.push("你穿兔寶寶裝跑來辦公室幹嘛……算了。");L.push("CD 那批到底能不能放？8 點要報。");L.push(S.got.size>=3?"證據看起來夠了，回 PE 工作站把結論填一填。":"去 Fab 看看 ETCH-07。記得帶證據回來，不要跟我說「感覺」。")}
+    say(W("王經理","boss",L));
+  }else if(n.id==="kevin"){
+    say(W("Kevin 學長","kevin",["喔，你也被 call 來了。","PM-B 從前天就怪怪的，RF 反射功率一直往上爬。","偷偷跟你說，PM-B 的 PM 上禮拜被延了，生管說產能要顧。你懂的。","機台畫面有「耗材」頁，可以看 focus ring 用了幾小時。"]),()=>addClue("pm"));
+  }else{
+    say(W("阿哲（廠商 FSE）","fse",["我是原廠的阿哲。CVD-11 今天很乖。","ETCH-07？原廠 part 要等三週喔～","不過 focus ring 你們倉庫應該有庫存啦。"]));
+  }
+}
+function doLocker(){
+  if(!S.suit){S.suit=true;S.everSuit=true;say([{who:"你",por:"meSuit",text:"頭套、口罩、連身衣、兩層手套、無塵鞋……鏡子裡出現一隻兔寶寶。"},{who:"系統",por:"sys",text:"往東走過風淋室就是 Fab。"}])}
+  else{S.suit=false;toast("你脫下無塵衣，掛回置物櫃。")}
+  updHud();updPrompt();
+}
+function doCoffee(){
+  if(S.coffee>=5){say([{who:"你",por:me(),text:"已經第五杯了，手在抖。先不要。"}]);return}
+  S.coffee++;updHud();say([{who:"你",por:me(),text:"公司咖啡：免費，但很苦。咖啡 +1。"}]);
+}
+function addClue(k){if(S.got.has(k)){toast("這條已經記在線索簿了。");return}S.got.add(k);toast(`記下線索：${CLUES[k].t}`,"clue");updHud()}
+
+/* ===== 對話框 ===== */
+const BOSS=["................",".....OOOOOO.....","....OHHHHHHO....","...OHHHHHHHHO...","...OHSSSSSSHO...","...OSSSSSSSSO...","...OGGGSSGGGO...","...OGEGSSGEGO...","...OSSSSSSSSO...","...OSSSMMSSSO...","....OSSSSSSO....",".....OOSSOO.....","...OOWWRRWWOO...","..OWWWWRRWWWWO..","..OWWWWRRWWWWO..","..OOOOOOOOOOOO.."];
+const KEV=["................",".....OOOOOO.....","....OWWWWWWO....","...OWWWWWWWWO...","...OWVVVVVVWO...","...OWVEVVEVWO...","...OWVVVVVVWO...","...OWWWWWWWWO...","...OWWWWWWWWO...","....OWWWWWWO....",".....OOWWOO.....","...OOWWWWWWOO...","..OWWWWSSWWWWO..","..OWWWWWWWWWWO..","..OWWWWWWWWWWO..","..OOOOOOOOOOOO.."];
+const ME=["................",".....OOOOOO.....","....OHHHHHHO....","...OHHHHHHHHO...","...OHHSSSSHHO...","...OHSSSSSSHO...","...OSSESSESSO...","...OSSSSSSSSO...","...OSSSMMSSSO...","....OSSSSSSO....",".....OOSSOO.....","...OOBBBBBBOO...","..OBBBBBBBBBBO..","..OBBBBBBBBBBO..","..OBBBBBBBBBBO..","..OOOOOOOOOOOO.."];
+const PHONE=["................","....OOOOOOOO....","....OKKKKKKO....","....OKAAAAKO....","....OKARRAKO....","....OKAAAAKO....","....OKARRAKO....","....OKAAAAKO....","....OKAAAAKO....","....OKKKKKKO....","....OKKWWKKO....","....OKKKKKKO....","....OOOOOOOO....","................","................","................"];
+const POR={
+  boss:[BOSS,{O:C.line,H:"#8a8898",S:C.skin,G:C.line,E:C.white,M:C.red,W:"#f4f2fa",R:C.red}],
+  kevin:[KEV,{O:C.line,W:C.suit,S:C.suit2,V:C.visor,E:C.skin}],
+  fse:[KEV,{O:C.line,W:C.suit,S:"#f08a2a",V:C.visor,E:C.skin}],
+  me:[ME,{O:C.line,H:"#2b2230",S:C.skin,E:C.line,M:"#c0605a",B:"#8fb8e0"}],
+  meSuit:[KEV,{O:C.line,W:C.suit,S:C.glove,V:C.visor,E:C.skin}],
+  sys:[PHONE,{O:C.line,K:"#3a3e6b",A:C.win,R:C.red,W:C.white}]};
+function drawPortrait(k){const c=$("#dlg-por").getContext("2d");c.clearRect(0,0,16,16);const m=POR[k][0],map=POR[k][1];m.forEach((row,j)=>{for(let i=0;i<16;i++){const ch=row[i];if(ch===".")continue;c.fillStyle=map[ch]||C.line;c.fillRect(i,j,1,1)}})}
+function say(lines,onEnd){DQ={lines,i:0,n:0,onEnd};$("#dialog").hidden=false;showLine();updPrompt()}
+function showLine(){const L=DQ.lines[DQ.i];$("#dlg-who").textContent=L.who;drawPortrait(L.por);DQ.n=0;$("#dlg-text").textContent=""}
+function advance(){
+  if(!DQ)return;const L=DQ.lines[DQ.i];
+  if(DQ.n<L.text.length){DQ.n=L.text.length;$("#dlg-text").textContent=L.text;return}
+  DQ.i++;
+  if(DQ.i>=DQ.lines.length){const f=DQ.onEnd;DQ=null;$("#dialog").hidden=true;if(f)f();return}
+  showLine();
+}
+
+/* ===== 機台視窗 ===== */
+function openWin(o){
+  winOpen=o;held.length=0;
+  $("#win").innerHTML=`<div class="win-h"><b>${o.title}</b>${o.chip||""}<button class="x" id="win-x" aria-label="關閉">✕</button></div>${o.tabs.length>1?`<div class="tabs" role="tablist">${o.tabs.map((t,i)=>`<button role="tab" data-tab="${i}">${t.label}</button>`).join("")}</div>`:""}<div class="win-b" id="win-b"></div><div class="win-f">${o.foot||""}<button class="pbtn" data-f="close">關閉</button></div>`;
+  $("#back").hidden=false;showTab(0);$("#win-x").focus();updPrompt();
+}
+function showTab(i){
+  const t=winOpen.tabs[i];
+  document.querySelectorAll("#win [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(+b.dataset.tab===i)));
+  const b=$("#win-b");b.innerHTML=t.html();if(t.on)t.on(b);
+}
+function closeWin(){$("#back").hidden=true;winOpen=null;cv.focus({preventScroll:true})}
+$("#win").addEventListener("click",e=>{
+  const tb=e.target.closest("[data-tab]");if(tb){showTab(+tb.dataset.tab);return}
+  if(e.target.closest("#win-x")){closeWin();return}
+  const f=e.target.closest("[data-f]");if(!f)return;
+  if(f.dataset.f==="close"){closeWin();return}
+  if(winOpen&&winOpen.onFoot)winOpen.onFoot(f.dataset.f);
+});
+$("#back").addEventListener("click",e=>{if(e.target.id==="back")closeWin()});
+
+/* PE 工作站 */
+function drawChart(){
+  const W=640,H=240,L=46,Rr=84,Tp=14,B=30,n=SPC.length;
+  const x=i=>Math.round(L+i*((W-L-Rr)/(n-1))),y=v=>Math.round(Tp+(48-v)/5*(H-Tp-B));
+  let s="";
+  for(let v=43;v<=48;v++)s+=`<line class="g" x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-8}" y="${y(v)+5}" text-anchor="end">${v.toFixed(1)}</text>`;
+  [["UCL",46.5,"lim"],["Target",45,"tgt"],["LCL",43.5,"lim"]].forEach(a=>{s+=`<line class="${a[2]}" x1="${L}" x2="${W-Rr}" y1="${y(a[1])}" y2="${y(a[1])}"/><text class="${a[2]}-t" x="${W-Rr+6}" y="${y(a[1])+5}">${a[0]} ${a[1].toFixed(1)}</text>`});
+  s+=`<polyline class="pl" points="${SPC.map((p,i)=>x(i)+","+y(p[2])).join(" ")}"/>`;
+  SPC.forEach((p,i)=>{s+=`<rect class="pt ${p[1]==="B"?"b":"a"}${p[2]>46.5?" ooc":""}" data-i="${i}" x="${x(i)-6}" y="${y(p[2])-6}" width="12" height="12"/>`;if(i%4===0||i===n-1)s+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle">#${i+1}</text>`});
+  const svg=$("#spc");svg.innerHTML=s;
+  const rd=p=>{const d=SPC[+p.dataset.i];$("#spc-read").textContent=`${d[0]} · ETCH-07 PM-${d[1]} · ${d[2].toFixed(1)} nm${d[2]>46.5?" · OOC":""}`};
+  svg.addEventListener("pointerover",e=>{const p=e.target.closest(".pt");if(p)rd(p)});
+  svg.addEventListener("click",e=>{const p=e.target.closest(".pt");if(!p)return;rd(p);if(SPC[+p.dataset.i][2]>46.5)addClue("spc");else toast("這點在管制線內。")});
+}
+const lotsHTML=()=>`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lot ID</th><th>機台 / Chamber</th><th class="n">AEI CD</th><th>狀態</th></tr></thead><tbody>${LOTS.map(l=>`<tr class="${S.solved?"":l.j}"><td>${l.id}</td><td>${l.tool} / ${l.ch}</td><td class="n">${l.cd.toFixed(1)}</td><td>${S.solved&&l.st==="HOLD"?"RELEASED":l.st}</td></tr>`).join("")}</tbody></table></div><p class="note">${S.solved?"重新量測後 4 批都放行了。":"SPC 自動 hold 了 4 批，都在 STK-01 等你的結論。"}</p>`;
+const rcHTML=()=>S.solved?`<p class="big">CASE 03 已結案：ETCH-07 PM-B，focus ring 耗損到壽命。</p>`:`<div class="evi">目前證據 <b>${S.got.size}</b> / 5（至少 3 條才能說服王經理）</div><div class="rc"><p>兇手是 <select id="rc-tool" aria-label="機台"><option value="">？？？</option><option>ETCH-07</option><option>ETCH-05</option><option>LITHO-03</option><option>CVD-11</option></select> 的 <select id="rc-ch" aria-label="Chamber"><option value="">？？？</option><option>PM-A</option><option>PM-B</option><option>PM-C</option><option>PM-D</option></select>，</p><p>因為 <select id="rc-cause" aria-label="原因"><option value="">？？？</option><option>Focus ring 耗損到壽命</option><option>Recipe 被改過</option><option>ESC 背面氦氣異常</option><option>腔體壓力飄移</option><option>前站曝光 focus 偏移</option></select>。</p></div><div><button class="pbtn primary" id="rc-go">提交結論</button></div>`;
+function openPC(){
+  openWin({title:"PE 工作站",chip:S.solved?`<span class="chip">OK</span>`:`<span class="chip bad">SPC ALARM</span>`,tabs:[
+    {label:"SPC 警報",html:()=>`<p class="hint2">ETCH-07 · AEI CD（Edge）· 單位 nm。<b>點紅色的 OOC 點</b>，看它們來自哪個 chamber。</p><div class="chart-wrap"><svg id="spc" viewBox="0 0 640 240" role="img" aria-label="AEI CD 管制圖，最後三點超出 UCL"></svg></div><div class="legend"><span><i></i>PM-A</span><span><i class="lb"></i>PM-B</span><span><i class="lo"></i>OOC</span><span>UCL 46.5 / Target 45.0 / LCL 43.5</span></div><div class="readout" id="spc-read">滑過或點選資料點查看</div>`,on:drawChart},
+    {label:"Lot 清單",html:lotsHTML},
+    {label:"結論",html:rcHTML,on:()=>{const g=$("#rc-go");if(g)g.addEventListener("click",submitRC)}}]});
+}
+function submitRC(){
+  const a=$("#rc-tool").value,b=$("#rc-ch").value,c=$("#rc-cause").value;
+  if(!a||!b||!c){toast("三格都要選完才能送出。","bad");return}
+  const ok=a==="ETCH-07"&&b==="PM-B"&&c==="Focus ring 耗損到壽命";
+  if(ok&&S.got.size<3){toast("方向對了，但證據不到 3 條，王經理一定會問爆。","bad");return}
+  closeWin();
+  if(!ok){S.coffee=Math.max(0,S.coffee-1);updHud();say([{who:"王經理",por:"boss",text:"EE 照你的結論處理了，CD 還是沒回來。再查查看？（咖啡 −1）"}]);return}
+  S.solved=true;S.etch="fixed";setEtchSt();updHud();
+  say([{who:"系統",por:"sys",text:"EE 換上新的 focus ring，PM-B 跑 monitor wafer：CD 45.1 nm，回到 target。"},{who:"系統",por:"sys",text:"Hold 的 4 批 lot 重新量測後放行。"},{who:"王經理",por:"boss",text:"好，8 點我來報。你去吃早餐吧。"},{who:"系統",por:"sys",text:`CASE 03 完成！用到線索 ${S.got.size}/5，剩下咖啡 ${S.coffee} 杯。`}]);
+}
+
+/* ETCH-07 */
+function setEtchSt(){OBJ.find(o=>o.id==="ETCH-07").st=S.etch==="alarm"?"alarm":S.etch==="inhibit"?"inhibit":"run"}
+const etchChip=()=>S.etch==="alarm"?`<span class="chip bad" id="win-chip">ALARM</span>`:S.etch==="inhibit"?`<span class="chip warn" id="win-chip">PM-B INHIBIT</span>`:`<span class="chip" id="win-chip">RUN</span>`;
+function etchStatusHTML(){
+  const b=S.etch==="fixed"?["run","RUN · 新 focus ring"]:S.etch==="inhibit"?["inh","INHIBIT"]:["alarm","ALARM · ALM-3307"];
+  return `<div class="cluster"><div class="pm a run">PM-A<small>RUN · N9K416.1</small></div><div class="pm b ${b[0]}">PM-B<small>${b[1]}</small></div><div class="pm c idle">PM-C<small>IDLE</small></div><div class="pm d run">PM-D<small>RUN · N9K418.1</small></div><div class="tm">TM<small>VTM robot OK</small></div><div class="ef">EFEM · ATM robot</div><div class="l1">LP1<small>N9K418.1</small></div><div class="l2">LP2<small>空</small></div><div class="l3">LP3<small>N9K419.1</small></div></div>
+  <ul class="alist">${S.etch==="fixed"?`<li class="ok">03:40:12 PM-B focus ring 更換完成，monitor CD 45.1 nm</li>`:""}<li class="bad">02:05:44 ALM-3307 PM-B RF reflected power high（38.0 W）</li><li>02:11:38 SPC auto-hold N9K417.1</li><li class="warn">01:20:12 WRN-1102 PM-B matcher C1 position drift</li></ul>`;
+}
+function drawLog(){
+  const q=$("#grep").value.trim().toLowerCase();
+  const rows=LOGS.map((r,i)=>[r,i]).filter(a=>!q||a[0].join(" ").toLowerCase().includes(q));
+  const hi=t=>{let h=esc(t);if(q){const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");h=h.replace(re,m=>`<mark>${m}</mark>`)}return h};
+  $("#log").innerHTML=rows.length?rows.map(a=>{const r=a[0];return `<div class="ln ${r[3]}" data-i="${a[1]}"><span class="t">${r[0]}</span> ${LV[r[3]]} ${hi(r[1].padEnd(7))} ${hi(r[2].padEnd(4))} ${hi(r[4])}</div>`}).join(""):`<div class="ln">grep: no match for "${esc(q)}"</div>`;
+}
+function logClick(e){
+  const ln=e.target.closest(".ln[data-i]");if(!ln)return;const i=+ln.dataset.i;
+  document.querySelectorAll("#log .ln").forEach(x=>x.classList.toggle("pick",x===ln));
+  if(LOGCLUE[i])addClue(LOGCLUE[i]);else toast(LOGNOTE[i]||"這行看起來正常。");
+}
+function consHTML(){
+  const rows=CONS.map((c,i)=>{const fixed=S.etch==="fixed"&&i===0,pct=fixed?1:c[2],val=fixed?"12 / 1,200 h（新品）":c[1];
+    return `<button class="con ${pct>=90?"hi":pct>=70?"mid":""}" data-i="${i}"><b>${c[0]}</b><span class="num">${val}</span><span class="bar"><i style="width:${pct}%"></i></span></button>`}).join("");
+  return `<p class="hint2">PM-B 耗材壽命。<b>點選可疑的項目</b>記進線索簿。</p><div class="cons">${rows}</div>`;
+}
+function consClick(e){const b=e.target.closest(".con");if(!b)return;const c=CONS[+b.dataset.i];if(c[3]&&S.etch!=="fixed")addClue(c[3]);else toast("還在壽命內。")}
+function openEtch(){
+  openWin({title:"ETCH-07 · Poly Etch",chip:etchChip(),tabs:[
+    {label:"機台狀態",html:etchStatusHTML},
+    {label:"FDC Log",html:()=>`<p class="hint2"><b>點選可疑的 log 行</b>，把它記進線索簿。</p><div class="crt"><div class="crt-grep"><label for="grep">$ grep -i</label><input id="grep" placeholder="PM-B | RF_REFL | N9K417" autocomplete="off"></div><div class="crt-log" id="log"></div></div>`,on:()=>{drawLog();$("#grep").addEventListener("input",drawLog);$("#log").addEventListener("click",logClick)}},
+    {label:"耗材",html:consHTML,on:b=>b.querySelector(".cons").addEventListener("click",consClick)}],
+    foot:`<button class="pbtn danger" data-f="inhibit">Inhibit PM-B</button><button class="pbtn" data-f="ticket">開單給 EE</button>`,
+    onFoot:a=>{
+      if(a==="inhibit"){if(S.etch==="alarm"){S.etch="inhibit";setEtchSt();$("#win-chip").outerHTML=etchChip();toast("PM-B 已 Inhibit。產能少一半，生管已經在打電話了。","bad");showTab(0)}else toast("PM-B 已經不在 alarm 狀態了。")}
+      else toast("已開單 EE-2610-0871 給設備值班。回覆時間：20 分鐘（樂觀估計）。");
+    }});
+}
+
+/* MET-02 */
+function drawWafer(){
+  const r=rng(1027),N=21,Cc=10,RAD=9.2;let h="";
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const dx=i-Cc,dy=j-Cc,d=Math.hypot(dx,dy);
+    if(d>RAD){const rim=d<=RAD+1.25&&!(dx===0&&dy>9);h+=`<span class="d ${rim?"rim":"v"}"></span>`;continue}
+    let cd=45+(r()-.5)*.6;const e=d/RAD;
+    if(e>.72)cd+=(e-.72)/.28*2.7*(.75+r()*.5);
+    if(r()<.015)cd+=1.6;
+    const k=cd>46.5?4:cd>46?3:cd>45.5?2:1;
+    h+=`<button class="d k${k}" data-x="${dx}" data-y="${-dy}" data-cd="${cd.toFixed(1)}" data-r="${d.toFixed(1)}" aria-label="die ${dx},${-dy}"></button>`;
+  }
+  const m=$("#wmap");m.innerHTML=h;
+  const rd=d=>{const cd=+d.dataset.cd;$("#w-read").textContent=`Die (${d.dataset.x}, ${d.dataset.y})　CD ${cd.toFixed(1)} nm　${cd>46.5?"OOS":cd>46?"偏高":"PASS"}`};
+  m.addEventListener("pointerover",e=>{const d=e.target.closest("button.d");if(d)rd(d)});
+  m.addEventListener("click",e=>{const d=e.target.closest("button.d");if(!d)return;rd(d);const cd=+d.dataset.cd,rr=+d.dataset.r;
+    if(cd>46.5&&rr>7)addClue("map");else if(cd>46.5)toast("這顆在中間，比較像隨機 particle，不是 pattern。");else toast("這顆正常。")});
+}
+function openMet(){
+  openWin({title:"MET-02 · CD-SEM",chip:`<span class="chip">RUN</span>`,tabs:[{label:"Wafer Map",html:()=>`<p class="hint2">N9K417.1 · Slot 07 · AEI CD。<b>點選異常的 die</b>，找出分布。</p><div class="wbox"><div class="wmap" id="wmap" aria-label="晶圓 CD 分布圖"></div><div class="readout num" id="w-read">滑過 die 查看量測值</div><div class="scale"><span><i style="background:var(--c1)"></i>≤45.5</span><span><i style="background:var(--c2)"></i>≤46.0</span><span><i style="background:var(--c3)"></i>≤46.5</span><span><i style="background:var(--c4)"></i>OOS</span></div></div>`,on:drawWafer}]});
+}
+
+/* 其他機台與線索簿 */
+function openTool(o){
+  const I=INFO[o.id];
+  openWin({title:`${o.id} · ${I.type}`,chip:`<span class="chip ${I.st==="IDLE"?"warn":""}">${I.st}</span>`,tabs:[{label:"狀態",html:()=>`<dl class="kv">${I.rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("")}</dl><p class="note">${I.note}</p>`}]});
+}
+function openClues(){
+  openWin({title:"線索簿",chip:`<span class="chip">${S.got.size}/5</span>`,tabs:[{label:"線索",html:()=>`<ol class="cluelist">${Object.keys(CLUES).map(k=>S.got.has(k)?`<li class="got"><b>${CLUES[k].t}</b><small>${CLUES[k].src}</small></li>`:`<li><b>？？？</b><small>尚未發現</small></li>`).join("")}</ol><p class="note">至少 3 條線索才能說服王經理。</p>`}]});
+}
+
+/* ===== HUD ===== */
+const Q=[["在 PE 工作站確認 SPC 警報",()=>S.got.has("spc")],["到更衣室換上無塵衣",()=>S.everSuit],["檢查 ETCH-07 的 log 與耗材",()=>S.got.has("fdc")&&S.got.has("ring")],["到 MET-02 看 wafer map",()=>S.got.has("map")],["回 PE 工作站提交結論",()=>S.solved]];
+function updHud(){
+  $("#cups").innerHTML=[0,1,2,3,4].map(i=>`<i class="${i<S.coffee?"":"e"}"></i>`).join("");
+  $("#cups").setAttribute("aria-label",`咖啡 ${S.coffee}/5`);
+  $("#clue-n").textContent=`${S.got.size}/5`;
+  $("#q-list").innerHTML=Q.map(q=>`<li class="${q[1]()?"done":""}"><i></i>${q[0]}</li>`).join("");
+}
+let tt;function toast(m,k){const t=$("#toast");t.textContent=m;t.dataset.kind=k||"";t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{t.hidden=true},3400)}
+let sec=2*3600+47*60;
+const fmt=s=>[(s/3600)|0,((s%3600)/60)|0,s%60].map(n=>String(n).padStart(2,"0")).join(":");
+setInterval(()=>{sec++;$("#clock").textContent=fmt(sec);$("#countdown").textContent=fmt(Math.max(0,8*3600-sec))},1000);
+setInterval(()=>{if(S.coffee>0){S.coffee--;updHud();if(!S.coffee)toast("咖啡見底了，好睏……回辦公室泡一杯吧。","bad")}},120000);
+
+/* ===== 開始 ===== */
+addEventListener("resize",fit);
+fit();updHud();
+if($("#stage").clientWidth<700){$("#quest").classList.add("min");$("#q-sign").textContent="+";$("#q-tog").setAttribute("aria-expanded","false")}
+say([{who:"系統",por:"sys",text:"【02:47】手機震動。SPC：N9K417.1 AEI CD 47.4 nm 超出 UCL，已自動 Hold。"},{who:"你",por:"me",text:"……又是 ETCH 段。先回座位上的 PE 工作站看看。"},{who:"系統",por:"sys",text:"方向鍵／WASD 走路，點地板會自動走過去。靠近東西按 E 或空白鍵互動。"}]);
+requestAnimationFrame(frame);
+</script>

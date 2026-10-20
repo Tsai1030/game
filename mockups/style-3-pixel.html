@@ -1,0 +1,410 @@
+<title>Fab 夜班 像素版</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Silkscreen:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap">
+<style>
+/* Layout: 像素 RPG。HUD 標題列 → 無塵室像素場景＋對話框（IM）→ 對話框面板（SPC｜Wafer／Lot｜日誌｜結論）→ 動作按鈕。淺色＝黃光區白班，深色＝夜班。 */
+:root{
+  --bg:#efdfa4; --panel:#fff7da; --panel2:#f6e6ae; --line:#2c2442; --ink:#2c2442; --muted:#6c6080;
+  --accent:#2a8a85; --accent-ink:#fff7da; --ok:#4c9a37; --warn:#d98a1c; --bad:#d23f3d; --sel:#ffe27a;
+  --c1:#7bbf5a; --c2:#c6d058; --c3:#f0a830; --c4:#e0473f; --silicon:#d8dbe8;
+  --sc-wall:#e8e2f1; --sc-ceil:#cbc2df; --sc-ffu:#fbf8ff; --sc-floor:#b8b0c9; --sc-dot:#968daa;
+  --sc-tool:#d6dae4; --sc-tool2:#a9afbf; --sc-win:#7fd0e0; --sc-suit:#fbfbff; --sc-suit2:#d2d5ea;
+  --sc-visor:#3a3e6b; --sc-skin:#f2c9a0; --sc-glove:#3d6fd6; --sc-hair:#3a2c26; --sc-pod:#2a8a85;
+  --f-px:"DotGothic16","Noto Sans TC",sans-serif;
+  --f-lbl:"Silkscreen","DotGothic16",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1c1832; --panel:#2a2448; --panel2:#352e5a; --line:#0c0a18; --ink:#f4ead0; --muted:#b2a7cb;
+  --accent:#5fd0c4; --accent-ink:#1c1832; --ok:#7ccf5c; --warn:#f2b544; --bad:#ff6b5e; --sel:#4a3f7a;
+  --c1:#5aa54a; --c2:#b3c048; --c3:#e79a2a; --c4:#f05246; --silicon:#4a4670;
+  --sc-wall:#2e2950; --sc-ceil:#211d3c; --sc-ffu:#4d4784; --sc-floor:#3a3462; --sc-dot:#28234a;
+  --sc-tool:#58537f; --sc-tool2:#403b67; --sc-win:#3fa9bd; --sc-suit:#e2e4f6; --sc-suit2:#a7acd0;
+  --sc-visor:#14122a; --sc-skin:#e0b48c; --sc-glove:#5b8cf0; --sc-hair:#1a1412; --sc-pod:#5fd0c4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1c1832; --panel:#2a2448; --panel2:#352e5a; --line:#0c0a18; --ink:#f4ead0; --muted:#b2a7cb;
+  --accent:#5fd0c4; --accent-ink:#1c1832; --ok:#7ccf5c; --warn:#f2b544; --bad:#ff6b5e; --sel:#4a3f7a;
+  --c1:#5aa54a; --c2:#b3c048; --c3:#e79a2a; --c4:#f05246; --silicon:#4a4670;
+  --sc-wall:#2e2950; --sc-ceil:#211d3c; --sc-ffu:#4d4784; --sc-floor:#3a3462; --sc-dot:#28234a;
+  --sc-tool:#58537f; --sc-tool2:#403b67; --sc-win:#3fa9bd; --sc-suit:#e2e4f6; --sc-suit2:#a7acd0;
+  --sc-visor:#14122a; --sc-skin:#e0b48c; --sc-glove:#5b8cf0; --sc-hair:#1a1412; --sc-pod:#5fd0c4; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-px);padding-block:16px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.lbl{font:700 12px/1 var(--f-lbl);letter-spacing:.06em;text-transform:uppercase}
+.num{font-variant-numeric:tabular-nums}
+
+/* 像素框：粗外框＋內框＋實心位移陰影 */
+.box{background:var(--panel);border:3px solid var(--line);box-shadow:inset 0 0 0 3px var(--panel2),5px 5px 0 var(--line);min-width:0;display:flex;flex-direction:column}
+.box>h2{margin:0;align-self:flex-start;background:var(--line);color:var(--panel);padding:5px 10px 6px;font:700 13px/1 var(--f-lbl);letter-spacing:.06em;text-transform:uppercase;display:flex;gap:8px;align-items:center}
+.box>h2 small{font:12px var(--f-px);text-transform:none;letter-spacing:0;opacity:.85}
+.bb{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sq{display:inline-block;width:10px;height:10px;background:var(--ok);border:2px solid var(--line);flex:none}
+.sq.warn{background:var(--warn)} .sq.bad{background:var(--bad)} .sq.info{background:var(--accent)}
+.blink{animation:blink 1s steps(2) infinite} @keyframes blink{50%{opacity:.2}}
+
+/* HUD */
+.hud{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.title b{display:block;font:40px/1 var(--f-px);letter-spacing:.04em;text-shadow:3px 3px 0 var(--panel2)}
+.title small{display:block;color:var(--muted);font-size:13px;margin-top:6px}
+.quest{display:flex;align-items:center;gap:10px;background:var(--panel);border:3px solid var(--line);padding:8px 12px;box-shadow:4px 4px 0 var(--line);min-width:0}
+.quest strong{font-weight:400;font-size:17px}
+.badge{font:700 11px/1 var(--f-lbl);padding:4px 6px;background:var(--bad);color:var(--panel);border:2px solid var(--line)}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.stat{display:flex;align-items:center;gap:8px;background:var(--panel);border:3px solid var(--line);padding:4px 10px}
+.stat .lbl{color:var(--muted)}
+.stat b{font-weight:400;font-size:16px}
+.stat.bad b{color:var(--bad)} .stat.warn b{color:var(--warn)}
+.cups{display:flex;gap:3px}
+.cups i{width:10px;height:12px;background:var(--c3);border:2px solid var(--line)}
+.cups i.e{background:transparent}
+
+/* 場景＋對話 */
+.hero{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:18px;align-items:stretch}
+@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}}
+.scene{position:relative;padding:0;overflow:hidden}
+.scene canvas{display:block;width:100%;height:auto;aspect-ratio:200/72;image-rendering:pixelated;image-rendering:crisp-edges}
+.bubble{position:absolute;left:19%;top:14%;max-width:46%;background:var(--panel);border:3px solid var(--line);padding:4px 8px;font-size:13px;line-height:1.35}
+.bubble::after{content:"";position:absolute;left:18px;bottom:-11px;width:10px;height:8px;background:var(--panel);border:3px solid var(--line);border-top:0;clip-path:polygon(0 0,100% 0,0 100%)}
+.scene .tag{position:absolute;right:8px;bottom:8px;background:var(--line);color:var(--panel);padding:3px 6px;font:700 11px/1 var(--f-lbl)}
+.talk{display:flex;flex-direction:column;gap:12px}
+.line{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:start}
+.portrait{width:56px;height:56px;image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid var(--line);background:var(--panel2)}
+.line .who{display:flex;gap:8px;align-items:baseline}
+.line .who b{font-weight:400} .line time{font-size:12px;color:var(--muted)}
+.line p{margin:4px 0 0;font-size:16px}
+.line.boss p{color:var(--bad)}
+.more{align-self:flex-end;font-size:13px;color:var(--muted)}
+.more::after{content:" ▼";display:inline-block;animation:blink 1s steps(2) infinite}
+
+/* 主面板 */
+.layout{display:grid;gap:22px 18px;grid-template-columns:minmax(260px,300px) minmax(0,1fr) minmax(290px,330px);
+  grid-template-areas:"spc spc wafer" "lots log rc";align-items:start}
+.a-lots{grid-area:lots}.a-spc{grid-area:spc}.a-wafer{grid-area:wafer}.a-log{grid-area:log}.a-rc{grid-area:rc}
+@media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"spc spc" "lots wafer" "log log" "rc rc"}}
+@media (max-width:720px){.layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"spc" "lots" "log" "wafer" "rc"}}
+
+/* Lot 道具欄 */
+.lots{display:flex;flex-direction:column;gap:6px}
+.lot{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:4px 10px;align-items:center;text-align:left;background:var(--panel2);border:3px solid var(--line);padding:6px 8px;cursor:pointer}
+.lot:hover{background:var(--sel)}
+.lot.on{background:var(--accent);color:var(--accent-ink)}
+.lot .ic{width:18px;height:18px;background:var(--silicon);border:3px solid var(--line);clip-path:polygon(25% 0,75% 0,100% 25%,100% 75%,75% 100%,25% 100%,0 75%,0 25%)}
+.lot.ooc .ic{background:var(--c4)} .lot.warn .ic{background:var(--c3)}
+.lot .id{font-size:15px}
+.lot .meta{grid-column:2;font-size:12px;opacity:.85}
+.lot .cd{grid-row:1/3;grid-column:3;text-align:right;font-size:18px}
+.lot.ooc .cd{color:var(--bad)} .lot.warn .cd{color:var(--warn)} .lot.on .cd{color:inherit}
+.lot .st{font:700 10px/1 var(--f-lbl);display:block;margin-top:3px}
+
+/* SPC */
+.chart-wrap{overflow-x:auto;background:var(--panel2);border:3px solid var(--line);padding:6px}
+.chart-wrap svg{display:block;width:100%;min-width:520px;height:auto;shape-rendering:crispEdges}
+svg text{font-family:var(--f-px);font-size:13px;fill:var(--muted)}
+.g{stroke:var(--line);stroke-opacity:.18;stroke-width:2;stroke-dasharray:2 4}
+.lim{stroke:var(--bad);stroke-width:2;stroke-dasharray:8 4}
+.tgt{stroke:var(--ok);stroke-width:2}
+svg .lim-t{fill:var(--bad)} svg .tgt-t{fill:var(--ok)}
+.pl{fill:none;stroke:var(--ink);stroke-width:2;stroke-linejoin:miter}
+.pt{stroke:var(--line);stroke-width:2;fill:var(--panel)}
+.pt.b{fill:var(--accent)}
+.pt.ooc{fill:var(--bad)}
+.pt.hl{stroke:var(--warn);stroke-width:5;paint-order:stroke}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:10px;height:10px;border:2px solid var(--line);margin-right:5px;vertical-align:-1px;background:var(--panel)}
+.legend .lb{background:var(--accent)} .legend .lo{background:var(--bad)}
+
+/* 日誌 */
+.search{display:flex;gap:8px;align-items:center}
+.search input{flex:1;min-width:0;background:var(--panel2);border:3px solid var(--line);padding:4px 8px}
+.logbox{height:300px;overflow:auto;background:var(--panel2);border:3px solid var(--line)}
+.log{min-width:560px}
+.ln{display:grid;grid-template-columns:14px 70px 132px minmax(0,1fr);gap:8px;align-items:center;padding:4px 8px;border-bottom:2px dotted var(--sc-dot);font-size:13px}
+.ln .t{color:var(--muted)}
+.ln.warn .m{color:var(--warn)} .ln.alarm{background:var(--panel)} .ln.alarm .m{color:var(--bad)}
+.ln.hl{box-shadow:inset 4px 0 0 var(--accent)}
+mark{background:var(--sel);color:var(--ink)}
+
+/* Wafer */
+.wbox{display:flex;flex-direction:column;align-items:center;gap:8px}
+.wmap{width:100%;max-width:273px;aspect-ratio:1;display:grid;grid-template-columns:repeat(21,1fr);grid-template-rows:repeat(21,1fr);gap:1px}
+.d.v{visibility:hidden}
+.d.rim{background:var(--line)}
+.d.k1{background:var(--c1)} .d.k2{background:var(--c2)} .d.k3{background:var(--c3)} .d.k4{background:var(--c4)}
+.d.k1,.d.k2,.d.k3,.d.k4{cursor:crosshair}
+.d.k1:hover,.d.k2:hover,.d.k3:hover,.d.k4:hover{background:var(--ink)}
+.readout{min-height:1.5em;font-size:14px;text-align:center}
+.scale{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:var(--muted);justify-content:center}
+.scale i{display:inline-block;width:10px;height:10px;border:2px solid var(--line);margin-right:4px;vertical-align:-1px}
+
+/* 結論 */
+.clues{display:flex;flex-wrap:wrap;gap:6px}
+.clue{font-size:13px;background:var(--panel2);border:2px dashed var(--line);padding:2px 8px}
+.rc p{margin:0;line-height:2.4;font-size:16px}
+.rc select{background:var(--panel2);border:3px solid var(--line);padding:2px 4px;max-width:100%}
+
+/* 按鈕 */
+.pbtn{background:var(--panel);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line);padding:8px 16px;cursor:pointer;min-height:40px}
+.pbtn:hover{background:var(--sel)}
+.pbtn:active{transform:translate(4px,4px);box-shadow:none}
+.pbtn.primary{background:var(--accent);color:var(--accent-ink)}
+.pbtn.danger{background:var(--bad);color:var(--panel)}
+.pbtn::before{content:"▶ "}
+.actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 14px}
+.actions .sel{margin-right:auto;font-size:14px;color:var(--muted)} .actions .sel b{font-weight:400;color:var(--ink);font-size:17px;margin-left:6px}
+.foot{font-size:12px;color:var(--muted);text-align:center}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));max-width:min(560px,calc(100% - 32px));background:var(--panel);border:3px solid var(--line);box-shadow:inset 0 0 0 3px var(--panel2),5px 5px 0 var(--line);padding:12px 16px;z-index:20;font-size:15px}
+#toast::before{content:"▶ ";color:var(--accent)}
+#toast[data-kind="bad"]::before{color:var(--bad)}
+@media (prefers-reduced-motion:reduce){.blink,.more::after{animation:none}}
+</style>
+
+<div class="app">
+  <header class="hud">
+    <div class="title"><b>Fab 夜班</b><small>曦晶半導體 Fab 9 · 製程工程師值班中</small></div>
+    <div class="quest"><span class="lbl">Case 03</span><strong>ETCH 段 Poly CD 偏移</strong><span class="badge blink">OOC</span></div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">10/21</span><b class="num" id="clock">02:47:00</b></div>
+      <div class="stat warn"><span class="lbl">交班</span><b class="num" id="countdown">05:13:00</b></div>
+      <div class="stat bad"><span class="lbl">Hold</span><b>4 lots</b></div>
+      <div class="stat bad"><span class="lbl">OOC</span><b>3 點</b></div>
+      <div class="stat"><span class="lbl">良率衝擊</span><b>−3.1%</b></div>
+      <div class="stat"><span class="lbl">咖啡</span><span class="cups" aria-label="咖啡 3/5"><i></i><i></i><i></i><i class="e"></i><i class="e"></i></span></div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="box scene">
+      <canvas id="scene" width="200" height="72" aria-label="像素無塵室：穿兔寶寶裝的工程師站在 ETCH-07 前，PM-B 的燈在閃紅"></canvas>
+      <div class="bubble">PM-B 你是不是又在鬧…</div>
+      <span class="tag">ETCH-07 · Bay 3</span>
+    </div>
+    <div class="box">
+      <h2>廠內 IM <small>2 則未讀</small></h2>
+      <div class="bb talk">
+        <div class="line"><canvas class="portrait" id="p-kev" width="16" height="16" aria-hidden="true"></canvas><div><div class="who"><b>Kevin 學長</b><time>02:44</time></div><p>PM-B 的 PM 上禮拜被延了，你懂的。</p></div></div>
+        <div class="line boss"><canvas class="portrait" id="p-boss" width="16" height="16" aria-hidden="true"></canvas><div><div class="who"><b>王經理</b><time>02:46</time></div><p>CD 那批到底能不能放？8 點要報。</p></div></div>
+        <span class="more">已讀不回會被記住</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="layout">
+    <section class="box a-spc">
+      <h2>SPC <small>AEI CD（Edge）· PO_ET · ETCH-07 · nm</small></h2>
+      <div class="bb">
+        <div class="chart-wrap"><svg id="spc" viewBox="0 0 640 240" role="img" aria-label="AEI CD 管制圖，最後三點超出 UCL"></svg></div>
+        <div class="legend"><span><i></i>PM-A</span><span><i class="lb"></i>PM-B</span><span><i class="lo"></i>OOC</span><span>UCL 46.5 / Target 45.0 / LCL 43.5</span></div>
+      </div>
+    </section>
+
+    <section class="box a-wafer">
+      <h2>Wafer Map <small>N9K417.1 · #07</small></h2>
+      <div class="bb wbox">
+        <div class="wmap" id="wmap" aria-label="晶圓 CD 分布圖，邊緣一圈偏高"></div>
+        <div class="readout num" id="readout">把游標移到 die 上</div>
+        <div class="scale"><span><i style="background:var(--c1)"></i>≤45.5</span><span><i style="background:var(--c2)"></i>≤46.0</span><span><i style="background:var(--c3)"></i>≤46.5</span><span><i style="background:var(--c4)"></i>OOS</span></div>
+      </div>
+    </section>
+
+    <section class="box a-lots">
+      <h2>Lot <small>相關 6 筆</small></h2>
+      <div class="bb"><div class="lots" id="lots"></div></div>
+    </section>
+
+    <section class="box a-log">
+      <h2>值班日誌 <small>FDC / Event · 00:00–02:47</small></h2>
+      <div class="bb">
+        <div class="search"><label for="grep" class="lbl">搜尋</label><input id="grep" placeholder="PM-B、RF_REFL、N9K417" autocomplete="off"></div>
+        <div class="logbox"><div class="log" id="log"></div></div>
+      </div>
+    </section>
+
+    <section class="box a-rc">
+      <h2>結論 <small>Root Cause</small></h2>
+      <div class="bb rc">
+        <div class="clues"><span class="clue">只有 PM-B 飄</span><span class="clue">RF 反射功率 ↑</span><span class="clue">Edge 一圈偏高</span><span class="clue">Recipe 沒改</span></div>
+        <div>
+          <p>兇手是
+            <select id="rc-tool" aria-label="機台"><option value="">？？？</option><option>ETCH-07</option><option>ETCH-05</option><option>LITHO-03</option><option>CVD-11</option></select>
+            的
+            <select id="rc-ch" aria-label="Chamber"><option value="">？？？</option><option>PM-A</option><option>PM-B</option><option>PM-C</option><option>PM-D</option></select>，</p>
+          <p>因為
+            <select id="rc-cause" aria-label="原因"><option value="">？？？</option><option>Focus ring 耗損到壽命</option><option>Recipe 被改過</option><option>ESC 背面氦氣異常</option><option>腔體壓力飄移</option><option>前站曝光 focus 偏移</option></select>。</p>
+        </div>
+        <div><button class="pbtn primary" id="rc-submit">提交結論</button></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="box actions">
+    <span class="sel">目前選取<b id="sel-lot">N9K417.1</b></span>
+    <button class="pbtn" data-act="hold">Hold Lot</button>
+    <button class="pbtn" data-act="release">Release</button>
+    <button class="pbtn danger" data-act="inhibit">Inhibit Chamber</button>
+    <button class="pbtn primary" data-act="ticket">開單給 EE</button>
+  </div>
+  <div class="foot">MES 連線中 · EAP 正常 · FDC 延遲 1.2 秒 · 無塵室內禁止拍照</div>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+const SPC=[["N9K385.1","A",45.1],["N9K386.1","B",44.8],["N9K387.1","A",45.3],["N9K388.1","B",45.0],["N9K389.1","A",44.7],["N9K390.1","B",45.2],["N9K391.1","A",45.0],["N9K392.1","B",45.1],["N9K393.1","A",44.6],["N9K395.1","B",45.4],["N9K396.1","A",45.2],["N9K398.1","B",45.3],["N9K399.1","A",44.9],["N9K401.1","B",45.6],["N9K402.1","A",45.0],["N9K404.1","B",45.8],["N9K405.1","A",45.2],["N9K407.1","B",45.9],["N9K408.1","A",44.8],["N9K410.1","B",46.2],["N9K411.1","A",45.1],["N9K412.1","B",46.8],["N9K415.1","B",47.1],["N9K416.1","A",45.1],["N9K417.1","B",47.4]];
+const LOTS=[
+  {id:"N9K417.1",tool:"ETCH-07",ch:"PM-B",cd:47.4,j:"ooc",st:"HOLD"},
+  {id:"N9K416.1",tool:"ETCH-07",ch:"PM-A",cd:45.1,j:"ok",st:"RUN"},
+  {id:"N9K415.1",tool:"ETCH-07",ch:"PM-B",cd:47.1,j:"ooc",st:"HOLD"},
+  {id:"N9K412.1",tool:"ETCH-07",ch:"PM-B",cd:46.8,j:"ooc",st:"HOLD"},
+  {id:"N9K410.1",tool:"ETCH-07",ch:"PM-B",cd:46.2,j:"warn",st:"HOLD"},
+  {id:"N9K409.1",tool:"ETCH-05",ch:"PM-C",cd:44.9,j:"ok",st:"RUN"}];
+const LOGS=[
+  ["00:12:03","ETCH-07","PM-B","info","STEP3 MAIN_ETCH start  RCP=PO_ET_V3  lot=N9K410.1"],
+  ["00:12:41","ETCH-07","PM-B","warn","FDC RF_REFL_PWR 21.6 W > limit 20.0 W  lot=N9K410.1"],
+  ["00:13:05","ETCH-07","PM-A","ok","FDC RF_REFL_PWR 4.1 W"],
+  ["00:47:19","ETCH-07","PM-B","ok","FDC ESC_HE_FLOW 8.9 sccm（規格 6–12）"],
+  ["01:02:33","ETCH-07","PM-B","info","EVENT WAC auto-clean 完成 2m10s"],
+  ["01:20:11","ETCH-07","PM-B","warn","FDC RF_REFL_PWR 29.8 W > limit 20.0 W  lot=N9K412.1"],
+  ["01:20:12","ETCH-07","PM-B","warn","FDC MATCH_C1_POS 71.3 %  drift +6.2 %"],
+  ["01:41:58","ETCH-05","PM-C","ok","FDC RF_REFL_PWR 3.8 W  lot=N9K409.1"],
+  ["01:58:20","ETCH-07","PM-A","ok","STEP3 MAIN_ETCH end  EPD 正常  lot=N9K416.1"],
+  ["02:05:44","ETCH-07","PM-B","alarm","FDC RF_REFL_PWR 38.0 W > limit 20.0 W  lot=N9K417.1"],
+  ["02:05:44","ETCH-07","PM-B","ok","FDC CHM_PRESS 10.02 mT（設定 10.0）"],
+  ["02:06:10","ETCH-07","PM-B","warn","CONSUMABLE FOCUS_RING RF_HRS=1,180 h（PM 上限 1,200 h）"],
+  ["02:11:37","MES","SPC","alarm","AEI_CD_EDGE 47.4 nm > UCL 46.5 → OOC  lot=N9K417.1"],
+  ["02:11:38","MES","HOLD","info","auto-hold by SPC  reason=OOC  lot=N9K417.1"],
+  ["02:31:02","ETCH-07","PM-B","info","RCP PO_ET_V3 rev.12 最後修改 09/30（本週無變更）"]];
+const SQ={ok:"",info:"info",warn:"warn",alarm:"bad"};
+
+const $=s=>document.querySelector(s);
+let selLot="N9K417.1";
+
+function drawChart(){
+  const W=640,H=240,L=46,R=84,T=14,B=30,n=SPC.length;
+  const x=i=>Math.round(L+i*((W-L-R)/(n-1))), y=v=>Math.round(T+(48-v)/5*(H-T-B));
+  let s="";
+  for(let v=43;v<=48;v++)s+=`<line class="g" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-8}" y="${y(v)+5}" text-anchor="end">${v.toFixed(1)}</text>`;
+  [["UCL",46.5,"lim"],["Target",45,"tgt"],["LCL",43.5,"lim"]].forEach(([k,v,c])=>{s+=`<line class="${c}" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="${c}-t" x="${W-R+6}" y="${y(v)+5}">${k} ${v.toFixed(1)}</text>`});
+  s+=`<polyline class="pl" points="${SPC.map((p,i)=>x(i)+","+y(p[2])).join(" ")}"/>`;
+  SPC.forEach((p,i)=>{
+    const ooc=p[2]>46.5, c=`pt ${p[1]==="B"?"b":"a"}${ooc?" ooc":""}`;
+    s+=`<rect class="${c}" data-lot="${p[0]}" x="${x(i)-5}" y="${y(p[2])-5}" width="10" height="10"><title>${p[0]} · ETCH-07 PM-${p[1]} · ${p[2].toFixed(1)} nm</title></rect>`;
+    if(i%4===0||i===n-1)s+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle">#${i+1}</text>`;
+  });
+  $("#spc").innerHTML=s;
+}
+
+function drawLots(){
+  $("#lots").innerHTML=LOTS.map(l=>`<button class="lot ${l.j}${l.id===selLot?" on":""}" data-lot="${l.id}"><span class="ic"></span><span class="id num">${l.id}</span><span class="cd num">${l.cd.toFixed(1)}<span class="st">${l.st}</span></span><span class="meta">${l.tool} / ${l.ch}</span></button>`).join("");
+}
+
+function esc(t){return t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function drawLog(){
+  const q=$("#grep").value.trim().toLowerCase();
+  const rows=LOGS.filter(r=>!q||r.join(" ").toLowerCase().includes(q));
+  const hi=t=>{let h=esc(t);if(q){const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");h=h.replace(re,m=>`<mark>${m}</mark>`)}return h};
+  $("#log").innerHTML=rows.length?rows.map(r=>`<div class="ln ${r[3]}${r[4].includes(selLot)?" hl":""}"><i class="sq ${SQ[r[3]]}"></i><span class="t num">${r[0]}</span><span>${hi(r[1])} ${hi(r[2])}</span><span class="m">${hi(r[4])}</span></div>`).join(""):`<div class="ln"><i class="sq info"></i><span class="t">—</span><span></span><span class="m">找不到「${esc(q)}」，換個關鍵字試試</span></div>`;
+}
+
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function drawWafer(){
+  const r=rng(1027),N=21,C=10,RAD=9.2;let h="";
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const dx=i-C,dy=j-C,d=Math.hypot(dx,dy);
+    if(d>RAD){const rim=d<=RAD+1.25&&!(dx===0&&dy>9);h+=`<span class="d ${rim?"rim":"v"}"></span>`;continue}
+    let cd=45+(r()-.5)*.6;const e=d/RAD;
+    if(e>.72)cd+=(e-.72)/.28*2.7*(.75+r()*.5);
+    if(r()<.015)cd+=1.6;
+    const k=cd>46.5?4:cd>46?3:cd>45.5?2:1;
+    h+=`<span class="d k${k}" data-x="${dx}" data-y="${-dy}" data-cd="${cd.toFixed(1)}"></span>`;
+  }
+  $("#wmap").innerHTML=h;
+}
+$("#wmap").addEventListener("pointerover",e=>{
+  const d=e.target.closest(".d[data-cd]");if(!d)return;
+  const cd=+d.dataset.cd;
+  $("#readout").textContent=`Die (${d.dataset.x}, ${d.dataset.y})　CD ${cd.toFixed(1)} nm　${cd>46.5?"OOS！":cd>46?"偏高":"PASS"}`;
+});
+
+function select(id){
+  selLot=id;$("#sel-lot").textContent=id;drawLots();drawLog();
+  document.querySelectorAll("#spc .pt").forEach(p=>p.classList.toggle("hl",p.dataset.lot===id));
+}
+$("#lots").addEventListener("click",e=>{const b=e.target.closest(".lot");if(b){select(b.dataset.lot);$(`.lot[data-lot="${b.dataset.lot}"]`).focus()}});
+$("#grep").addEventListener("input",drawLog);
+
+let tt;function toast(m,k){const t=$("#toast");t.textContent=m;t.dataset.kind=k||"";t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3600)}
+const ACT={
+  hold:()=>[`${selLot} 已 Hold，原因碼 OOC-INV（調查中）。`],
+  release:()=>["放行前要先填結論，不然 8 點會被問爆。","bad"],
+  inhibit:()=>["ETCH-07 PM-B 已 Inhibit。產能少一半，生管已經在打電話了。","bad"],
+  ticket:()=>["已開單 EE-2610-0871 給設備值班。回覆時間：20 分鐘（樂觀估計）。"]};
+document.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click",()=>toast(...ACT[b.dataset.act]())));
+$("#rc-submit").addEventListener("click",()=>{
+  const a=$("#rc-tool").value,b=$("#rc-ch").value,c=$("#rc-cause").value;
+  if(!a||!b||!c)return toast("三格都要選完才能送出結論。","bad");
+  toast(`結論已送出：${a} ${b}，${c}。等王經理簽核。`);
+});
+
+let sec=2*3600+47*60;
+const fmt=s=>[s/3600|0,(s%3600)/60|0,s%60].map(n=>String(n).padStart(2,"0")).join(":");
+setInterval(()=>{sec++;$("#clock").textContent=fmt(sec);$("#countdown").textContent=fmt(Math.max(0,8*3600-sec))},1000);
+
+/* ---------- 像素場景 ---------- */
+const ENG=["....OOOO....","...OWWWWO...","..OWWWWWWO..","..OWVVVVWO..","..OWVEVEWO..","..OWVVVVWO..","..OWWWWWWO..","...OOWWOO...","..OWWWWWWO..",".OWWWSSWWWO.","OWOWWWWWWOWO","OWOWWWWWWOWO","OWOWWSSWWOWO","OBOWWWWWWOBO",".O.OWWWWO.O.","...OWWWWO...","...OWWWWO...","...OWOOWO...","...OWOOWO...","...OWOOWO...","..OBBOOBBO..","..OOOOOOOO.."];
+const KEV=["................",".....OOOOOO.....","....OWWWWWWO....","...OWWWWWWWWO...","...OWVVVVVVWO...","...OWVEVVEVWO...","...OWVVVVVVWO...","...OWWWWWWWWO...","...OWWWWWWWWO...","....OWWWWWWO....",".....OOWWOO.....","...OOWWWWWWOO...","..OWWWWSSWWWWO..","..OWWWWWWWWWWO..","..OWWWWWWWWWWO..","..OOOOOOOOOOOO.."];
+const BOSS=["................",".....OOOOOO.....","....OHHHHHHO....","...OHHHHHHHHO...","...OHSSSSSSHO...","...OSSSSSSSSO...","...OGGGSSGGGO...","...OGEGSSGEGO...","...OSSSSSSSSO...","...OSSSMMSSSO...","....OSSSSSSO....",".....OOSSOO.....","...OOWWRRWWOO...","..OWWWWRRWWWWO..","..OWWWWRRWWWWO..","..OOOOOOOOOOOO.."];
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function pal(){const P={};["line","bad","warn","ok","accent","sc-wall","sc-ceil","sc-ffu","sc-floor","sc-dot","sc-tool","sc-tool2","sc-win","sc-suit","sc-suit2","sc-visor","sc-skin","sc-glove","sc-hair","sc-pod","c3"].forEach(k=>P[k.replace("sc-","")]=css("--"+k));return P}
+function sprite(c,m,x,y,map){m.forEach((row,j)=>{for(let i=0;i<row.length;i++){const ch=row[i];if(ch===".")continue;c.fillStyle=map[ch];c.fillRect(x+i,y+j,1,1)}})}
+
+const cv=$("#scene"),cx=cv.getContext("2d");
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function drawScene(t){
+  const P=pal(),W=200,blink=Math.floor(t*2)%2===0,R=(c,x,y,w,h)=>{cx.fillStyle=c;cx.fillRect(x,y,w,h)};
+  R(P.wall,0,0,W,72);
+  R(P.ceil,0,0,W,9);for(let x=2;x<W;x+=14)R(P.ffu,x,2,11,5);
+  R(P.line,0,10,W,2);
+  /* 背景機台 */
+  R(P.line,5,27,37,34);R(P.tool2,6,28,35,32);R(P.tool,9,31,29,10);R(P.win,11,33,10,6);
+  R(P.line,38,21,1,6);R(P.ok,37,19,3,2);
+  /* 高架地板 */
+  R(P.floor,0,60,W,12);R(P.line,0,60,W,1);
+  for(let x=0;x<W;x+=10){R(P.dot,x,61,1,11);for(let yy=63;yy<72;yy+=3)for(let xx=x+3;xx<x+10;xx+=3)R(P.dot,xx,yy,1,1)}
+  /* ETCH-07 */
+  R(P.line,97,23,90,38);R(P.tool,98,24,88,36);R(P.tool2,98,50,88,10);
+  for(let i=0;i<2;i++){const x=100+i*11;R(P.line,x,36,9,12);R(P.pod,x+1,37,7,10);R(P.line,x+2,39,5,1)}
+  ["A","B","C","D"].forEach((c,i)=>{const x=124+i*15;R(P.line,x-1,28,13,11);R(c==="B"&&blink?P.bad:P.win,x,29,11,9);R(P.ffu,x+1,30,3,1)});
+  for(let x=124;x<184;x+=4)R(P.tool2,x,43,2,5);
+  R(P.line,182,20,1,3);R(blink?P.bad:P.dot,181,14,3,2);R(P.dot,181,16,3,2);R(P.dot,181,18,3,2);
+  /* OHT 天車 */
+  const ox=reduce?150:((t*14)%260)-30;
+  R(P.line,ox-1,11,18,9);R(P.tool,ox,12,16,7);R(P.win,ox+2,14,5,3);R(P.c3,ox+12,14,2,2);
+  /* 推車＋筆電，螢幕上的 log 會捲動 */
+  R(P.line,73,45,17,2);R(P.line,74,47,1,13);R(P.line,88,47,1,13);R(P.line,73,58,17,1);
+  R(P.line,75,35,14,10);R(P.visor,76,36,12,8);
+  const off=reduce?0:Math.floor(t*3);
+  for(let k=0;k<4;k++){const w=3+((k+off)*5)%7;R((k+off)%5===2?P.bad:P.c3,77,37+k*2,w,1)}
+  R(P.line,74,44,16,1);
+  /* 兔寶寶裝工程師，每 3 秒眨眼 */
+  const closed=!reduce&&(t%3)<.18;
+  sprite(cx,ENG,58,38,{O:P.line,W:P.suit,S:P.suit2,V:P.visor,E:closed?P.visor:P.skin,B:P.glove});
+}
+function drawPortraits(){
+  const P=pal();
+  sprite($("#p-kev").getContext("2d"),KEV,0,0,{O:P.line,W:P.suit,S:P.suit2,V:P.visor,E:P.skin});
+  sprite($("#p-boss").getContext("2d"),BOSS,0,0,{O:P.line,H:P.hair,S:P.skin,G:P.line,E:P.ffu,M:P.bad,W:P.suit,R:P.bad});
+}
+let t0=performance.now(),last=-1e9;
+function loop(now){if(now-last>=125){last=now;drawScene((now-t0)/1000)}requestAnimationFrame(loop)}
+function redrawAll(){["#p-kev","#p-boss"].forEach(s=>$(s).getContext("2d").clearRect(0,0,16,16));drawPortraits();drawScene(0)}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",redrawAll);
+new MutationObserver(redrawAll).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+drawChart();drawLots();drawLog();drawWafer();select(selLot);drawPortraits();
+if(reduce)drawScene(0);else requestAnimationFrame(loop);
+</script>

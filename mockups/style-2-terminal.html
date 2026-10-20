@@ -1,0 +1,316 @@
+<title>Fab 夜班 終端機版</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap">
+<style>
+/* Layout: 一台琥珀色 CRT 終端機。提示列 → banner → tmux 式分割窗格（同 HMI 版的六區）→ F 鍵列 → tmux 狀態列。刻意只做深色。 */
+:root{
+  --case:#060504; --bg:#110b04; --amb:#ffb43c; --amb2:#c88a2e; --amb3:#4f3512; --hot:#ffe2a3;
+  --red:#ff5b3d; --redbg:#3b1006; --warnbg:#2b1c06; --selfg:#110b04;
+  --glow:0 0 5px rgba(255,170,50,.45);
+  --f-disp:"VT323","IBM Plex Mono",monospace;
+  --f-mono:"IBM Plex Mono",Consolas,"Noto Sans TC",monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--case);color:var(--amb);font:13px/1.5 var(--f-mono);font-variant-numeric:tabular-nums;padding-block:14px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:1px dashed var(--hot);outline-offset:2px}
+
+.crt{max-width:1320px;margin:0 auto;background:var(--bg);border-radius:20px;border:2px solid #1d150b;box-shadow:inset 0 0 80px rgba(255,150,30,.07),0 0 0 10px #0b0906,0 0 0 11px #2a2016;position:relative;overflow:hidden}
+.crt::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,.26) 2px 3px)}
+.crt::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:6;background:radial-gradient(ellipse at center,transparent 58%,rgba(0,0,0,.55) 100%)}
+.screen{padding:18px 22px 14px;display:flex;flex-direction:column;gap:14px;text-shadow:var(--glow);animation:flicker 6s infinite}
+@keyframes flicker{0%,100%{opacity:1}47%{opacity:1}48%{opacity:.93}49%{opacity:1}}
+@media (max-width:720px){.crt{border-radius:12px}.screen{padding:14px 12px}.logo{font-size:38px}}
+
+.dim{color:var(--amb2)} .hot{color:var(--hot)} .red{color:var(--red)}
+.prompt{display:flex;flex-wrap:wrap;gap:0 8px;overflow-wrap:anywhere}
+.cursor{display:inline-block;width:.6em;background:var(--amb);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.banner{display:flex;flex-wrap:wrap;gap:6px 28px;align-items:flex-end;border-bottom:1px dashed var(--amb3);padding-bottom:12px}
+.logo{font:56px/0.85 var(--f-disp);letter-spacing:.02em;color:var(--hot);text-shadow:0 0 10px rgba(255,180,60,.6)}
+.logo small{display:block;font:13px/1.4 var(--f-mono);color:var(--amb2);letter-spacing:0;text-shadow:var(--glow);margin-top:8px}
+.casebox{min-width:0;display:flex;flex-direction:column;gap:4px}
+.casebox .ttl{font:26px/1 var(--f-disp)}
+.tag{display:inline-block;padding:0 6px;background:var(--red);color:var(--selfg);text-shadow:none;font-weight:600;margin-left:6px}
+.kpis{display:flex;flex-wrap:wrap;gap:2px 14px}
+.kpis b{color:var(--hot);font-weight:600}
+.kpis .r b{color:var(--red)}
+
+.panes{display:grid;gap:22px 16px;grid-template-columns:minmax(260px,300px) minmax(0,1fr) minmax(280px,320px);
+  grid-template-areas:"lots spc wafer" "chat log rc";align-items:start;padding-top:8px}
+.a-lots{grid-area:lots}.a-spc{grid-area:spc}.a-wafer{grid-area:wafer}.a-chat{grid-area:chat}.a-log{grid-area:log}.a-rc{grid-area:rc}
+@media (max-width:1100px){.panes{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"spc spc" "lots wafer" "log log" "rc chat"}}
+@media (max-width:720px){.panes{grid-template-columns:minmax(0,1fr);grid-template-areas:"spc" "lots" "log" "wafer" "rc" "chat"}}
+
+.pane{position:relative;border:1px solid var(--amb2);padding:16px 10px 10px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.pane>h2{position:absolute;top:-.8em;left:10px;margin:0;background:var(--bg);padding:0 6px;font:20px/1 var(--f-disp);color:var(--hot);white-space:nowrap}
+.pane>h2::before{content:"┤ ";color:var(--amb2)} .pane>h2::after{content:" ├";color:var(--amb2)}
+.pane .note{color:var(--amb2);font-size:12px}
+
+/* Lots */
+.lots{overflow-x:auto}
+.lrow{display:grid;grid-template-columns:9ch 13ch 5ch 6ch;gap:1ch;width:100%;min-width:max-content;padding:1px 4px;background:none;border:0;text-align:left;cursor:pointer;text-shadow:inherit;white-space:nowrap}
+.lrow.head{cursor:default;color:var(--amb2);border-bottom:1px dashed var(--amb3)}
+.lrow:not(.head):hover{background:var(--warnbg)}
+.lrow.ooc{color:var(--red)} .lrow.warn{color:var(--hot)}
+.lrow.on{background:var(--amb);color:var(--selfg);text-shadow:none}
+.lrow.on.ooc{background:var(--red)}
+.r{text-align:right}
+
+/* SPC */
+.chart-wrap{overflow-x:auto}
+.chart-wrap svg{display:block;width:100%;min-width:520px;height:auto}
+svg text{font-family:var(--f-disp);font-size:15px;fill:var(--amb2)}
+.g{stroke:var(--amb3);stroke-width:1;stroke-dasharray:2 4}
+.lim{stroke:var(--red);stroke-width:1.2;stroke-dasharray:7 5}
+.tgt{stroke:var(--amb2);stroke-width:1.2}
+svg .lim-t{fill:var(--red)} svg .tgt-t{fill:var(--amb)}
+.pl{fill:none;stroke:var(--amb);stroke-width:1.4;filter:drop-shadow(0 0 3px rgba(255,170,50,.6))}
+.pt{stroke:var(--amb);stroke-width:1.5;fill:var(--bg)}
+.pt.b{fill:var(--amb)}
+.pt.ooc{fill:var(--red);stroke:var(--red)}
+.pt.hl{stroke:var(--hot);stroke-width:4;paint-order:stroke}
+.legend{display:flex;flex-wrap:wrap;gap:2px 16px;color:var(--amb2);font-size:12px}
+
+/* Log */
+.grep{display:flex;align-items:center;gap:1ch}
+.grep input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px dashed var(--amb3);padding:2px 0;caret-color:var(--hot);text-shadow:inherit}
+.grep input::placeholder{color:var(--amb3)}
+.logbox{overflow:auto;height:300px}
+.log{min-width:620px}
+.ln{white-space:pre-wrap;padding:0 4px}
+.ln .lv{display:inline-block;width:7ch}
+.ln.ok .lv{color:var(--amb2)} .ln.info .lv{color:var(--amb)}
+.ln.warn{background:var(--warnbg)} .ln.warn .lv,.ln.warn .m{color:var(--hot)}
+.ln.alarm{background:var(--redbg)} .ln.alarm .lv,.ln.alarm .m{color:var(--red)}
+.ln.hl{box-shadow:inset 3px 0 0 var(--hot)}
+.ln .t{color:var(--amb2)}
+mark{background:var(--amb);color:var(--selfg);text-shadow:none}
+
+/* Wafer */
+.wbox{display:flex;flex-direction:column;align-items:center;gap:6px}
+.wmap{display:grid;grid-template-columns:repeat(19,15px);grid-auto-rows:15px;font:15px/15px var(--f-mono);user-select:none}
+.d{text-align:center;cursor:crosshair}
+.d.k1{color:var(--amb3)} .d.k2{color:var(--amb2)} .d.k3{color:var(--hot)} .d.k4{color:var(--red)}
+.d:not(.v):hover{background:var(--amb);color:var(--selfg)}
+.readout{min-height:1.5em;color:var(--hot);text-align:center}
+.scale{display:flex;flex-wrap:wrap;gap:2px 12px;color:var(--amb2);font-size:12px;justify-content:center}
+.scale .k4{color:var(--red)} .scale .k3{color:var(--hot)}
+
+/* Root cause */
+.cmd{display:flex;flex-direction:column;gap:6px}
+.cmd div{display:flex;flex-wrap:wrap;align-items:center;gap:0 1ch}
+.cmd select{background:var(--bg);border:1px solid var(--amb2);padding:1px 4px;text-shadow:inherit;max-width:100%}
+.cmd select:hover{border-color:var(--hot)}
+.clues{color:var(--amb2);font-size:12px}
+
+/* Chat */
+.wall{white-space:pre-wrap;overflow-wrap:anywhere}
+.wall .body{color:var(--hot);display:block;margin:2px 0 10px 2ch}
+.wall .body.boss{color:var(--red)}
+
+/* Keys */
+.tbtn{background:transparent;border:1px solid var(--amb2);padding:6px 12px;cursor:pointer;text-shadow:inherit;min-height:36px}
+.tbtn:hover{background:var(--amb);color:var(--selfg);text-shadow:none}
+.tbtn:active{background:var(--hot);color:var(--selfg)}
+.tbtn kbd{font:inherit;color:var(--hot);margin-right:6px}
+.tbtn:hover kbd{color:var(--selfg)}
+.tbtn.red{border-color:var(--red);color:var(--red)} .tbtn.red:hover{background:var(--red);color:var(--selfg)}
+.fkeys{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px dashed var(--amb3);padding-top:12px}
+.fkeys .sel{margin-right:auto;color:var(--amb2)} .fkeys .sel b{color:var(--hot)}
+.tmux{display:flex;flex-wrap:wrap;gap:0 18px;background:var(--amb);color:var(--selfg);text-shadow:none;padding:1px 8px;margin:0 -22px -14px}
+.tmux .right{margin-left:auto}
+@media (max-width:720px){.tmux{margin:0 -12px -14px}}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));max-width:min(600px,calc(100% - 32px));background:var(--bg);border:1px solid var(--amb);color:var(--hot);padding:10px 14px;z-index:20;text-shadow:var(--glow);box-shadow:0 0 0 4px var(--case),0 0 24px rgba(255,170,50,.25)}
+#toast::before{content:">>> "}
+#toast[data-kind="bad"]{border-color:var(--red);color:var(--red)}
+@media (prefers-reduced-motion:reduce){.screen,.cursor{animation:none}}
+</style>
+
+<div class="crt"><div class="screen">
+  <div class="prompt"><span class="dim">s9-1027@pe-ws07:~/case03$</span><span>./investigate --lot N9K417.1 --step PO_ET</span><span class="cursor">&nbsp;</span></div>
+
+  <header class="banner">
+    <div class="logo">FAB//NIGHT-SHIFT<small>Fab 夜班 · 曦晶半導體 Fab 9 · PE 值班終端 tty2</small></div>
+    <div class="casebox">
+      <div class="ttl">CASE 03 :: ETCH 段 Poly CD 偏移<span class="tag">!! OOC</span></div>
+      <div class="kpis">
+        <span class="r">HOLD <b>4 lots</b></span><span class="r">OOC <b>3 pts</b></span><span>YIELD IMPACT <b>-3.1%</b></span>
+        <span>10/21 WED <b id="clock">02:47:00</b></span><span>SHIFT END IN <b id="countdown">05:13:00</b></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="panes">
+    <section class="pane a-lots">
+      <h2>lots --step PO_ET</h2>
+      <div class="lots" id="lots"></div>
+      <div class="note"># ↑↓ 選取，Enter 標記到 SPC 與 log</div>
+    </section>
+
+    <section class="pane a-spc">
+      <h2>spc AEI_CD_EDGE @ ETCH-07</h2>
+      <div class="chart-wrap"><svg id="spc" viewBox="0 0 640 240" role="img" aria-label="AEI CD 管制圖，最後三點超出 UCL"></svg></div>
+      <div class="legend"><span>○ PM-A</span><span>■ PM-B</span><span class="red">● OOC</span><span>UCL 46.5 / T 45.0 / LCL 43.5 nm</span></div>
+    </section>
+
+    <section class="pane a-wafer">
+      <h2>wafermap N9K417.1#07</h2>
+      <div class="wbox">
+        <div class="wmap" id="wmap" aria-label="晶圓 CD 分布圖，邊緣一圈偏高"></div>
+        <div class="readout" id="readout">&gt; hover a die_</div>
+        <div class="scale"><span>· ≤45.5</span><span>░ ≤46.0</span><span class="k3">▓ ≤46.5</span><span class="k4">█ OOS</span></div>
+      </div>
+    </section>
+
+    <section class="pane a-log">
+      <h2>tail -f fdc_event.log</h2>
+      <div class="grep"><label for="grep" class="dim">$ grep -i</label><input id="grep" placeholder="PM-B | RF_REFL | N9K417" autocomplete="off"></div>
+      <div class="logbox"><div class="log" id="log"></div></div>
+    </section>
+
+    <section class="pane a-rc">
+      <h2>conclude</h2>
+      <div class="clues"># 線索：只有 PM-B 飄 / RF_REFL ↑ / edge 一圈偏高 / recipe 無變更</div>
+      <div class="cmd">
+        <div><span class="dim">$</span> conclude --tool <select id="rc-tool" aria-label="機台"><option value="">???</option><option>ETCH-07</option><option>ETCH-05</option><option>LITHO-03</option><option>CVD-11</option></select></div>
+        <div>&nbsp;&nbsp;--chamber <select id="rc-ch" aria-label="Chamber"><option value="">???</option><option>PM-A</option><option>PM-B</option><option>PM-C</option><option>PM-D</option></select></div>
+        <div>&nbsp;&nbsp;--cause <select id="rc-cause" aria-label="原因"><option value="">???</option><option>Focus ring 耗損到壽命</option><option>Recipe 被改過</option><option>ESC 背面氦氣異常</option><option>腔體壓力飄移</option><option>前站曝光 focus 偏移</option></select></div>
+      </div>
+      <div><button class="tbtn" id="rc-submit"><kbd>[↵]</kbd>送出結論</button></div>
+    </section>
+
+    <section class="pane a-chat">
+      <h2>write / wall</h2>
+      <div class="wall"><span class="dim">Message from kevin@fab9 on pts/5 at 02:44 ...</span><span class="body">PM-B 的 PM 上禮拜被延了，你懂的。</span><span class="dim">Broadcast message from wang.mgr@office (pts/3) (Wed Oct 21 02:46):</span><span class="body boss">CD 那批到底能不能放？8 點要報。</span><span class="dim">EOF</span></div>
+    </section>
+  </main>
+
+  <div class="fkeys">
+    <span class="sel">lot=<b id="sel-lot">N9K417.1</b></span>
+    <button class="tbtn" data-act="hold"><kbd>F1</kbd>HOLD LOT</button>
+    <button class="tbtn" data-act="release"><kbd>F2</kbd>RELEASE</button>
+    <button class="tbtn red" data-act="inhibit"><kbd>F3</kbd>INHIBIT CH</button>
+    <button class="tbtn" data-act="ticket"><kbd>F4</kbd>開單→EE</button>
+  </div>
+  <div class="tmux"><span>[fab9] 0:spc* 1:log 2:wafer 3:mail</span><span class="right">"pe-ws07" MES:online EAP:ok FDC:lag 1.2s</span></div>
+</div></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+const SPC=[["N9K385.1","A",45.1],["N9K386.1","B",44.8],["N9K387.1","A",45.3],["N9K388.1","B",45.0],["N9K389.1","A",44.7],["N9K390.1","B",45.2],["N9K391.1","A",45.0],["N9K392.1","B",45.1],["N9K393.1","A",44.6],["N9K395.1","B",45.4],["N9K396.1","A",45.2],["N9K398.1","B",45.3],["N9K399.1","A",44.9],["N9K401.1","B",45.6],["N9K402.1","A",45.0],["N9K404.1","B",45.8],["N9K405.1","A",45.2],["N9K407.1","B",45.9],["N9K408.1","A",44.8],["N9K410.1","B",46.2],["N9K411.1","A",45.1],["N9K412.1","B",46.8],["N9K415.1","B",47.1],["N9K416.1","A",45.1],["N9K417.1","B",47.4]];
+const LOTS=[
+  {id:"N9K417.1",tool:"ETCH-07",ch:"PM-B",cd:47.4,j:"ooc",st:"HOLD"},
+  {id:"N9K416.1",tool:"ETCH-07",ch:"PM-A",cd:45.1,j:"ok",st:"RUN"},
+  {id:"N9K415.1",tool:"ETCH-07",ch:"PM-B",cd:47.1,j:"ooc",st:"HOLD"},
+  {id:"N9K412.1",tool:"ETCH-07",ch:"PM-B",cd:46.8,j:"ooc",st:"HOLD"},
+  {id:"N9K410.1",tool:"ETCH-07",ch:"PM-B",cd:46.2,j:"warn",st:"HOLD"},
+  {id:"N9K409.1",tool:"ETCH-05",ch:"PM-C",cd:44.9,j:"ok",st:"RUN"}];
+const LOGS=[
+  ["00:12:03","ETCH-07","PM-B","info","STEP3 MAIN_ETCH start  RCP=PO_ET_V3  lot=N9K410.1"],
+  ["00:12:41","ETCH-07","PM-B","warn","FDC RF_REFL_PWR 21.6 W > limit 20.0 W  lot=N9K410.1"],
+  ["00:13:05","ETCH-07","PM-A","ok","FDC RF_REFL_PWR 4.1 W"],
+  ["00:47:19","ETCH-07","PM-B","ok","FDC ESC_HE_FLOW 8.9 sccm（規格 6–12）"],
+  ["01:02:33","ETCH-07","PM-B","info","EVENT WAC auto-clean 完成 2m10s"],
+  ["01:20:11","ETCH-07","PM-B","warn","FDC RF_REFL_PWR 29.8 W > limit 20.0 W  lot=N9K412.1"],
+  ["01:20:12","ETCH-07","PM-B","warn","FDC MATCH_C1_POS 71.3 %  drift +6.2 %"],
+  ["01:41:58","ETCH-05","PM-C","ok","FDC RF_REFL_PWR 3.8 W  lot=N9K409.1"],
+  ["01:58:20","ETCH-07","PM-A","ok","STEP3 MAIN_ETCH end  EPD 正常  lot=N9K416.1"],
+  ["02:05:44","ETCH-07","PM-B","alarm","FDC RF_REFL_PWR 38.0 W > limit 20.0 W  lot=N9K417.1"],
+  ["02:05:44","ETCH-07","PM-B","ok","FDC CHM_PRESS 10.02 mT（設定 10.0）"],
+  ["02:06:10","ETCH-07","PM-B","warn","CONSUMABLE FOCUS_RING RF_HRS=1,180 h（PM 上限 1,200 h）"],
+  ["02:11:37","MES","SPC","alarm","AEI_CD_EDGE 47.4 nm > UCL 46.5 → OOC  lot=N9K417.1"],
+  ["02:11:38","MES","HOLD","info","auto-hold by SPC  reason=OOC  lot=N9K417.1"],
+  ["02:31:02","ETCH-07","PM-B","info","RCP PO_ET_V3 rev.12 最後修改 09/30（本週無變更）"]];
+const LV={ok:"[ OK ]",info:"[INFO]",warn:"[WARN]",alarm:"[ALRM]"};
+
+const $=s=>document.querySelector(s);
+let selLot="N9K417.1";
+
+function drawChart(){
+  const W=640,H=240,L=46,R=82,T=14,B=30,n=SPC.length;
+  const x=i=>L+i*((W-L-R)/(n-1)), y=v=>T+(48-v)/5*(H-T-B);
+  let s="";
+  for(let v=43;v<=48;v++)s+=`<line class="g" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-8}" y="${y(v)+5}" text-anchor="end">${v.toFixed(1)}</text>`;
+  [["UCL",46.5,"lim"],["T",45,"tgt"],["LCL",43.5,"lim"]].forEach(([k,v,c])=>{s+=`<line class="${c}" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="${c}-t" x="${W-R+6}" y="${y(v)+5}">${k} ${v.toFixed(1)}</text>`});
+  s+=`<polyline class="pl" points="${SPC.map((p,i)=>x(i)+","+y(p[2])).join(" ")}"/>`;
+  SPC.forEach((p,i)=>{
+    const ooc=p[2]>46.5, c=`pt ${p[1]==="B"?"b":"a"}${ooc?" ooc":""}`, tip=`<title>${p[0]} · ETCH-07 PM-${p[1]} · ${p[2].toFixed(1)} nm</title>`;
+    s+=p[1]==="B"?`<rect class="${c}" data-lot="${p[0]}" x="${x(i)-4}" y="${y(p[2])-4}" width="8" height="8">${tip}</rect>`:`<circle class="${c}" data-lot="${p[0]}" cx="${x(i)}" cy="${y(p[2])}" r="4.2">${tip}</circle>`;
+    if(i%4===0||i===n-1)s+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle">#${i+1}</text>`;
+  });
+  $("#spc").innerHTML=s;
+}
+
+function drawLots(){
+  $("#lots").innerHTML=`<div class="lrow head"><span>LOT_ID</span><span>TOOL/CH</span><span class="r">CD</span><span>STATE</span></div>`+
+    LOTS.map(l=>`<button class="lrow ${l.j}${l.id===selLot?" on":""}" data-lot="${l.id}"><span>${l.id}</span><span>${l.tool}/${l.ch}</span><span class="r">${l.cd.toFixed(1)}</span><span>${l.st==="HOLD"?"*HOLD":" RUN"}</span></button>`).join("");
+}
+
+function esc(t){return t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function drawLog(){
+  const q=$("#grep").value.trim().toLowerCase();
+  const rows=LOGS.filter(r=>!q||r.join(" ").toLowerCase().includes(q));
+  const hi=t=>{let h=esc(t);if(q){const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");h=h.replace(re,m=>`<mark>${m}</mark>`)}return h};
+  $("#log").innerHTML=rows.length?rows.map(r=>`<div class="ln ${r[3]}${r[4].includes(selLot)?" hl":""}"><span class="t">${r[0]}</span> <span class="lv">${LV[r[3]]}</span> ${hi(r[1].padEnd(7))} ${hi(r[2].padEnd(4))} <span class="m">${hi(r[4])}</span></div>`).join(""):`<div class="ln">grep: no match for "${esc(q)}"  (exit 1)</div>`;
+}
+
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function drawWafer(){
+  const r=rng(1027),N=19,C=9,RAD=9.2,G=["","·","░","▓","█"];let h="";
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const dx=i-C,dy=j-C,d=Math.hypot(dx,dy);
+    if(d>RAD){h+=`<span class="d v"> </span>`;continue}
+    let cd=45+(r()-.5)*.6;const e=d/RAD;
+    if(e>.72)cd+=(e-.72)/.28*2.7*(.75+r()*.5);
+    if(r()<.015)cd+=1.6;
+    const k=cd>46.5?4:cd>46?3:cd>45.5?2:1;
+    h+=`<span class="d k${k}" data-x="${dx}" data-y="${-dy}" data-cd="${cd.toFixed(1)}">${G[k]}</span>`;
+  }
+  $("#wmap").innerHTML=h;
+}
+$("#wmap").addEventListener("pointerover",e=>{
+  const d=e.target.closest(".d:not(.v)");if(!d)return;
+  const cd=+d.dataset.cd,x=+d.dataset.x,y=+d.dataset.y,sg=n=>(n>0?"+":"")+n;
+  $("#readout").textContent=`> die(${sg(x)},${sg(y)}) cd=${cd.toFixed(1)}nm [${cd>46.5?"OOS":cd>46?"HIGH":"PASS"}]`;
+});
+
+function select(id){
+  selLot=id;$("#sel-lot").textContent=id;drawLots();drawLog();
+  document.querySelectorAll("#spc .pt").forEach(p=>p.classList.toggle("hl",p.dataset.lot===id));
+}
+$("#lots").addEventListener("click",e=>{const b=e.target.closest("button.lrow");if(b){select(b.dataset.lot);$(`.lrow[data-lot="${b.dataset.lot}"]`).focus()}});
+$("#lots").addEventListener("keydown",e=>{
+  if(e.key!=="ArrowDown"&&e.key!=="ArrowUp")return;e.preventDefault();
+  const i=LOTS.findIndex(l=>l.id===selLot),n=(i+(e.key==="ArrowDown"?1:-1)+LOTS.length)%LOTS.length;
+  select(LOTS[n].id);$(`.lrow[data-lot="${LOTS[n].id}"]`).focus();
+});
+$("#grep").addEventListener("input",drawLog);
+
+let tt;function toast(m,k){const t=$("#toast");t.textContent=m;t.dataset.kind=k||"";t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3600)}
+const ACT={
+  hold:()=>[`${selLot} 已 Hold，原因碼 OOC-INV（調查中）。`],
+  release:()=>["permission denied: 放行前要先填 Root cause，不然 8 點會被問爆。","bad"],
+  inhibit:()=>["ETCH-07 PM-B inhibited. 產能少一半，生管已經在打電話了。","bad"],
+  ticket:()=>["ticket EE-2610-0871 created → 設備值班。ETA 20 分鐘（樂觀估計）。"]};
+const run=a=>toast(...ACT[a]());
+document.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click",()=>run(b.dataset.act)));
+const FK={F1:"hold",F2:"release",F3:"inhibit",F4:"ticket"};
+document.addEventListener("keydown",e=>{if(FK[e.key]){e.preventDefault();run(FK[e.key])}});
+$("#rc-submit").addEventListener("click",()=>{
+  const a=$("#rc-tool").value,b=$("#rc-ch").value,c=$("#rc-cause").value;
+  if(!a||!b||!c)return toast("conclude: missing argument，三個參數都要填。","bad");
+  toast(`conclusion submitted: ${a} ${b}，${c}。等王經理簽核。`);
+});
+
+let sec=2*3600+47*60;
+const fmt=s=>[s/3600|0,(s%3600)/60|0,s%60].map(n=>String(n).padStart(2,"0")).join(":");
+setInterval(()=>{sec++;$("#clock").textContent=fmt(sec);$("#countdown").textContent=fmt(Math.max(0,8*3600-sec))},1000);
+
+drawChart();drawLots();drawLog();drawWafer();select(selLot);
+</script>

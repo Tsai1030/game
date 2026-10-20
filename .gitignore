@@ -1,0 +1,12 @@
+# dependencies & build output
+node_modules/
+dist/
+coverage/
+
+# local-only Claude Code settings
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
