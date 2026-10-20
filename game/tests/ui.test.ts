@@ -6,7 +6,8 @@ import { NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
 import { story } from '../src/data/story';
 import { gainClue } from '../src/game/effects';
 import { canOpenSettings } from '../src/game/runtime';
-import { advanceDialog, initDialog, isDialogOpen, relocalizeDialog, say } from '../src/ui/dialog';
+import { isDialogOpen } from '../src/ui/dialog';
+import { advanceScene, initScenePlayer, playScene, stopScene } from '../src/ui/scene';
 import { verb } from '../src/ui/hud';
 import { hideTitle, showTitle } from '../src/ui/title';
 import { closeWin, initWin, rerenderWin, showTab } from '../src/ui/win';
@@ -23,7 +24,8 @@ beforeEach(() => {
   closeWin();
   hideTitle();
   initWin(() => {});
-  initDialog();
+  stopScene();
+  initScenePlayer();
   setState(newState());
   syncEtch('alarm');
   settings.textSpeed = 'instant';
@@ -31,7 +33,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  while (isDialogOpen()) advanceDialog();
+  stopScene();
   setLang('zh-TW');
 });
 
@@ -44,17 +46,17 @@ const toastText = () => $('#toast').textContent;
 
 test('a dialog walks through its lines and calls onEnd once', () => {
   let ended = 0;
-  say(story.kevin, { onEnd: () => ended++ });
+  playScene('kevin', { onEnd: () => ended++ });
   expect($('#dlg-text').textContent).toBe(story.kevin[0]!.zh);
-  for (let i = 0; i < 4; i++) advanceDialog();
+  for (let i = 0; i < 4; i++) advanceScene();
   expect(isDialogOpen()).toBe(false);
   expect(ended).toBe(1);
 });
 
 test('switching language relocalizes the open dialog line', () => {
-  say(story.kevin);
+  playScene('kevin');
   setLang('en');
-  relocalizeDialog();
+
   expect($('#dlg-text').textContent).toBe(story.kevin[0]!.en);
   expect($('#dlg-who').textContent).toBe('Kevin');
 });
@@ -87,7 +89,7 @@ test('the language toggle in a window header switches language and keeps the pic
 });
 
 test('settings can be opened mid-dialog and switching there relocalizes the dialog', () => {
-  say(story.kevin);
+  playScene('kevin');
   expect(canOpenSettings()).toBe(true);
   openSettings();
   $<HTMLButtonElement>('#win [data-lang="en"]').click();

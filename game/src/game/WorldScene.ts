@@ -9,7 +9,8 @@ import { canvasPainter, gfxPainter, type Painter } from '../render/paint';
 import { drawPerson, LOOK } from '../render/person';
 import { drawMap } from '../render/tiles';
 import { floorGlow, objDyn, objStatic, STATIC_PAD } from '../render/tools';
-import { advanceDialog, isDialogOpen } from '../ui/dialog';
+import { isDialogOpen } from '../ui/dialog';
+import { advanceScene } from '../ui/scene';
 import { hideShower, setLocation, setPrompt, showShower } from '../ui/hud';
 import { toast } from '../ui/toast';
 import { doInteract } from './actions';
@@ -118,7 +119,7 @@ export class WorldScene extends Phaser.Scene {
 
   private onPointer(p: Phaser.Input.Pointer): void {
     this.game.canvas.focus({ preventScroll: true });
-    if (isDialogOpen()) return advanceDialog();
+    if (isDialogOpen()) return advanceScene();
     if (busy()) return;
     held.length = 0;
     this.mover.click(p.worldX, p.worldY);

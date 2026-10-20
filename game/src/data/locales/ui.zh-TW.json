@@ -69,6 +69,10 @@
 
   "win.close": "關閉",
   "win.langToggle": "切換語言",
+  "dlg.recognize": "這句話怪怪的？點這裡辨識話術",
+  "dlg.note": "記下",
+  "dlg.noted": "已記入證據簿",
+  "choice.locked": "條件還不夠",
   "chip.run": "RUN",
   "chip.idle": "IDLE",
   "chip.alarm": "ALARM",

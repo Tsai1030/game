@@ -10,7 +10,7 @@ import { story } from '../data/story';
 import { TOOL_INFO, type Thing } from '../data/world';
 import { gainClue, setCoffee, setEtch, solveCase } from '../game/effects';
 import { judge, type Pick3 } from '../systems/conclusion';
-import { say } from './dialog';
+import { say } from './scene';
 import { toast } from './toast';
 import { closeWin, openWin, rerenderWin, showTab } from './win';
 

@@ -35,7 +35,15 @@
         <button class="prompt" id="prompt" hidden></button>
         <div class="dialog" id="dialog" hidden>
           <canvas class="portrait" id="dlg-por" width="16" height="16" aria-hidden="true"></canvas>
-          <div><b id="dlg-who"></b><p id="dlg-text"></p></div>
+          <div class="dlg-main">
+            <b id="dlg-who"></b><p id="dlg-text"></p>
+            <div class="dlg-choices" id="dlg-choices" hidden></div>
+            <div class="dlg-pick" id="dlg-pick" hidden></div>
+          </div>
+          <div class="dlg-tools">
+            <button class="dlg-btn" id="dlg-rec" hidden>?</button>
+            <button class="dlg-btn" id="dlg-note"></button>
+          </div>
           <span class="dlg-next" aria-hidden="true">▼</span>
         </div>
         <div class="shower" id="shower" hidden>

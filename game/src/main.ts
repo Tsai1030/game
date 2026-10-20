@@ -17,7 +17,8 @@ import { busy, canOpenSettings, rt } from './game/runtime';
 import { computeViewport } from './game/viewport';
 import { WorldScene } from './game/WorldScene';
 import { COFFEE_DECAY_MS, decay } from './systems/coffee';
-import { advanceDialog, initDialog, isDialogOpen, say } from './ui/dialog';
+import { isDialogOpen } from './ui/dialog';
+import { advanceScene, initScenePlayer, say } from './ui/scene';
 import { $ } from './ui/dom';
 import { initHud, refreshHud, setClock } from './ui/hud';
 import { hideTitle, isTitleOpen, showTitle } from './ui/title';
@@ -38,11 +39,11 @@ applyDom();
 /* 2. DOM 介面 */
 const stageW = () => $('#stage').clientWidth;
 initWin(() => game.canvas?.focus({ preventScroll: true }));
-initDialog();
+initScenePlayer();
 initHud(stageW() < 700);
 initInput({
   interact: () => {
-    if (isDialogOpen()) advanceDialog();
+    if (isDialogOpen()) advanceScene();
     else if (rt.near && !busy()) doInteract(rt.near);
   },
   escape: () => {

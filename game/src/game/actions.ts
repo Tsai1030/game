@@ -3,7 +3,7 @@ import { S } from '../core/state';
 import { story, type StoryKey } from '../data/story';
 import type { Thing } from '../data/world';
 import { drink } from '../systems/coffee';
-import { say } from '../ui/dialog';
+import { say } from '../ui/scene';
 import { toast } from '../ui/toast';
 import { openEtch, openMet, openPC, openTool } from '../ui/windows';
 import { gainClue, setCoffee, setSuit } from './effects';

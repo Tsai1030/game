@@ -69,6 +69,10 @@
 
   "win.close": "Close",
   "win.langToggle": "Switch language",
+  "dlg.recognize": "Something off about this line? Click to name the tactic",
+  "dlg.note": "Note it",
+  "dlg.noted": "Added to the Evidence Log",
+  "choice.locked": "Requirements not met yet",
   "chip.run": "RUN",
   "chip.idle": "IDLE",
   "chip.alarm": "ALARM",

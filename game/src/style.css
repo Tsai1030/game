@@ -58,6 +58,17 @@ button.stat:active { transform: translate(3px, 3px); box-shadow: none; }
 .dialog b { font-weight: 400; color: var(--accent); font-size: 15px; }
 .dialog p { margin: 4px 0 0; font-size: 19px; line-height: 1.5; min-height: 3em; }
 .dlg-next { position: absolute; right: 14px; bottom: 6px; animation: blink 1s steps(2) infinite; }
+.dlg-main { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.dlg-tools { position: absolute; top: -20px; right: 14px; display: flex; gap: 6px; }
+.dlg-btn { background: var(--panel); color: var(--ink); border: 3px solid var(--edge); padding: 2px 12px; cursor: pointer; font-size: 14px; min-height: 34px; }
+.dlg-btn:hover { background: var(--hover); }
+#dlg-rec { background: var(--warn); color: var(--accent-ink); border-color: var(--warn); font: 700 16px var(--f-lbl); animation: blink 1s steps(2) infinite; }
+.dlg-choices { display: flex; flex-direction: column; gap: 6px; }
+.dlg-choices .pbtn { text-align: left; }
+.dlg-pick p { margin: 0 0 6px; color: var(--warn); font-size: 15px; }
+.pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.pick-grid button { background: var(--panel2); border: 3px solid var(--edge2); padding: 6px 8px; cursor: pointer; text-align: left; }
+.pick-grid button:hover { border-color: var(--warn); }
 .shower { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: var(--mist); overflow: hidden; z-index: 4; }
 .shower b, .shower small { position: relative; background: var(--panel); border: 3px solid var(--edge); padding: 6px 16px; }
 .shower b { font-weight: 400; font-size: 28px; }
@@ -210,5 +221,5 @@ button.d { cursor: crosshair; } button.d:hover { background: var(--edge); }
 #toast[data-kind="clue"]::before { content: "✎ "; color: var(--accent-ink); }
 
 /* 減少動態效果：系統設定或遊戲設定（html.rm）任一開啟就停用所有動畫。 */
-@media (prefers-reduced-motion: reduce) { .prompt, .dlg-next, .jets, .pm.alarm { animation: none; } }
-html.rm .prompt, html.rm .dlg-next, html.rm .jets, html.rm .pm.alarm { animation: none; }
+@media (prefers-reduced-motion: reduce) { .prompt, .dlg-next, .jets, .pm.alarm, #dlg-rec { animation: none; } }
+html.rm .prompt, html.rm .dlg-next, html.rm .jets, html.rm .pm.alarm, html.rm #dlg-rec { animation: none; }
