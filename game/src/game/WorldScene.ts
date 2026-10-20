@@ -137,7 +137,7 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     const m = this.mover;
-    m.tick(dt, held[held.length - 1], busy());
+    m.tick(dt, held[held.length - 1], busy);
 
     // 鏡頭：跟著玩家，不超出地圖；地圖比畫面小時置中。
     const VW = this.scale.width;

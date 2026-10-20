@@ -17,10 +17,25 @@ beforeEach(() => {
   });
 });
 
+const free = () => false;
+
 /** 以 10 ms 為一格推進時間。 */
 function run(seconds: number, dir?: Dir) {
-  for (let i = 0; i < Math.round(seconds / 0.01); i++) m.tick(0.01, dir, false);
+  for (let i = 0; i < Math.round(seconds / 0.01); i++) m.tick(0.01, dir, free);
 }
+
+test('the interact target never flickers between tiles on a continuous walk', () => {
+  for (let i = 0; i < 90; i++) {
+    m.tick(0.01, 'right', free);
+    expect(m.nearObj()).toBeNull();
+  }
+  expect(S.x).toBeGreaterThanOrEqual(8);
+});
+
+test('clicking your own tile does not leave a marker behind', () => {
+  m.click(3 * TS + 8, 4 * TS + 8);
+  expect(m.marker).toBeNull();
+});
 
 test('holding a direction walks one tile in 0.15 s', () => {
   run(0.16, 'down');
@@ -59,7 +74,7 @@ test('clicking a tool walks next to it and interacts once', () => {
   S.suit = true;
   const etch = OBJ.find((o) => o.id === 'ETCH-07')!;
   expect(m.click(27 * TS + 8, 4 * TS + 8)).toBe('path');
-  for (let i = 0; i < 4000 && (m.path.length || m.step || m.pending); i++) m.tick(0.05, undefined, false);
+  for (let i = 0; i < 4000 && (m.path.length || m.step || m.pending); i++) m.tick(0.05, undefined, free);
   expect(calls.interact).toEqual([etch]);
   expect(adj(etch, S.x, S.y)).toBe(true);
 });

@@ -91,9 +91,12 @@ export class Mover {
     }
   }
 
-  /** 推進時間。blocked 為 true（對話、視窗、風淋中）時不會開始新的一步，但走到一半的會走完。 */
-  tick(dt: number, held: Dir | undefined, blocked: boolean): void {
-    if (!this.step && !blocked) this.startNext(held);
+  /**
+   * 推進時間。blocked() 為 true（對話、視窗、風淋中）時不會開始新的一步，但走到一半的會走完。
+   * 走完一格後在同一個 tick 接著開始下一步，連續走路時不會有「沒在走」的空檔（否則互動提示會閃）。
+   */
+  tick(dt: number, held: Dir | undefined, blocked: () => boolean): void {
+    if (!this.step && !blocked()) this.startNext(held);
     if (this.step) {
       const stepSec = S.coffee === 0 ? STEP_SEC / 0.7 : STEP_SEC;
       this.step.t += dt / stepSec;
@@ -104,6 +107,8 @@ export class Mover {
         S.y = this.step.ty;
         this.step = null;
         this.hooks.onArrive(prevX);
+        // onArrive 可能讓狀態變成忙碌（例如走進風淋室），所以重新判斷。
+        if (!blocked()) this.startNext(held);
       }
     }
     if (this.step) {
@@ -153,8 +158,9 @@ export class Mover {
       if (p) {
         this.path = p;
         this.pending = null;
-        this.marker = { x: tx, y: ty };
-        return 'path';
+        // 點到自己腳下（路徑長度 0）時不放目的地框，否則框會一直卡在角色身上。
+        this.marker = p.length ? { x: tx, y: ty } : null;
+        return p.length ? 'path' : 'none';
       }
       return this.blocked(tx >= 15);
     }
