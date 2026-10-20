@@ -22,7 +22,7 @@ Effort uses relative sizes: S, M, L, XL. Calendar time depends on how many peopl
 
 ## 2. M0 · Foundation (S)
 
-> **Status (2026-10-20): code complete, waiting for the owner's manual playtest.** On branch `m0-foundation`: 67 automated tests pass, typecheck passes, and the build succeeds. The implementation plan and progress are in `docs/superpowers/plans/2026-10-20-m0-foundation.md`. Bun replaced Node.js (owner's directive), and the map format moved to M2 (see section 0 of the spec).
+> **Status (2026-10-20): done.** Merged into `main` after the owner's manual playtest found no problems. 73 automated tests pass, typecheck passes, and the build succeeds. The implementation plan and progress are in `docs/superpowers/plans/2026-10-20-m0-foundation.md`. Bun replaced Node.js (owner's directive), and the map format moved to M2 (see section 0 of the spec).
 
 **Work:**
 1. Run `git init` in `D:\g` and commit the current docs and mockups.
