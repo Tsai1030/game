@@ -191,3 +191,10 @@ export const TOOL_INFO: Record<ToolId, { type: Bi; st: 'RUN' | 'IDLE'; rows: [Bi
     note: { zh: '跟 LITHO-03 連線一起跑。', en: 'Runs inline with LITHO-03.' },
   },
 };
+
+const NPC_DIR0 = new Map(NPC.map((n) => [n.id, n.dir]));
+
+/** 新遊戲時把 NPC 的面向轉回初始方向（對話時會轉向玩家）。 */
+export function resetNpcs(): void {
+  for (const n of NPC) n.dir = NPC_DIR0.get(n.id);
+}

@@ -2,14 +2,14 @@ import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { getLang, setLang, t } from '../src/core/i18n';
 import { settings, SETTINGS_KEY } from '../src/core/settings';
 import { newState, S, setState } from '../src/core/state';
-import { OBJ, syncEtch } from '../src/data/world';
+import { NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
 import { story } from '../src/data/story';
 import { gainClue } from '../src/game/effects';
 import { advanceDialog, initDialog, isDialogOpen, relocalizeDialog, say } from '../src/ui/dialog';
 import { verb } from '../src/ui/hud';
 import { showTitle } from '../src/ui/title';
 import { initWin, rerenderWin, showTab } from '../src/ui/win';
-import { openPC, openSettings } from '../src/ui/windows';
+import { openEtch, openPC, openSettings, resetCaseUi } from '../src/ui/windows';
 
 const html = await Bun.file(new URL('../index.html', import.meta.url)).text();
 // 拿掉 <script>，避免 happy-dom 試著載入 main.ts。
@@ -104,6 +104,34 @@ test('a wrong cause costs a coffee and gets scolded', () => {
   $<HTMLButtonElement>('#rc-go').click();
   expect(S.coffee).toBe(2);
   expect($('#dlg-text').textContent).toBe(story.rc_wrong[0]!.zh);
+});
+
+test('a new game clears the previous conclusion picks and NPC facing', () => {
+  openPC();
+  showTab(2);
+  pick('#rc-tool', 'ETCH-07');
+  pick('#rc-ch', 'PM-B');
+  pick('#rc-cause', 'focus_ring_eol');
+  NPC[0]!.dir = 'left';
+  resetCaseUi();
+  resetNpcs();
+  openPC();
+  showTab(2);
+  expect($<HTMLSelectElement>('#rc-tool').value).toBe('');
+  expect($<HTMLSelectElement>('#rc-ch').value).toBe('');
+  expect($<HTMLSelectElement>('#rc-cause').value).toBe('');
+  expect(String(NPC[0]!.dir)).toBe('down');
+});
+
+test('grep highlighting keeps “>” readable in log lines', () => {
+  openEtch();
+  showTab(1);
+  const grep = $<HTMLInputElement>('#grep');
+  grep.value = 't';
+  grep.dispatchEvent(new Event('input', { bubbles: true }));
+  const line = $('#log .ln[data-i="1"]');
+  expect(line.textContent).toContain('21.6 W > limit 20.0 W');
+  expect(line.querySelectorAll('mark').length).toBeGreaterThan(0);
 });
 
 test('the same clue cannot be collected twice', () => {

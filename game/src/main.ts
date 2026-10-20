@@ -8,7 +8,7 @@ import { loadSettings, saveSettings, settings } from './core/settings';
 import { newState, S, setState, START_POS, type GameState } from './core/state';
 import { browserStore } from './core/storage';
 import { story } from './data/story';
-import { syncEtch, walkable } from './data/world';
+import { resetNpcs, syncEtch, walkable } from './data/world';
 import { doInteract } from './game/actions';
 import { setCoffee } from './game/effects';
 import { held, initInput } from './game/input';
@@ -22,7 +22,7 @@ import { initHud, refreshHud, setClock } from './ui/hud';
 import { hideTitle, isTitleOpen, rerenderTitle, showTitle } from './ui/title';
 import { toast } from './ui/toast';
 import { closeWin, initWin, isWinOpen, rerenderWin } from './ui/win';
-import { openClues, openSettings } from './ui/windows';
+import { openClues, openSettings, resetCaseUi } from './ui/windows';
 
 /* 1. 設定與語言 */
 loadSettings(browserStore(), {
@@ -99,6 +99,8 @@ function start(loaded: GameState | null): void {
   }
   setState(s);
   syncEtch(S.etch);
+  resetNpcs();
+  resetCaseUi();
   held.length = 0;
   hideTitle();
   setAutosave(true);

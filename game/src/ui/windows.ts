@@ -174,8 +174,18 @@ function etchStatusHTML(): string {
 function drawLog(root: HTMLElement): void {
   const q = grepQ.trim().toLowerCase();
   const rows = CASE.logs.map((r, i) => ({ r, i })).filter(({ r }) => !q || [r.t, r.src, r.ch, L(r.msg)].join(' ').toLowerCase().includes(q));
-  const re = q ? new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi') : null;
-  const hi = (s: string) => (re ? esc(s).replace(re, (m) => `<mark>${m}</mark>`) : esc(s));
+  const re = q ? new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi') : null;
+  // 先在原文上找符合的片段，再分段跳脫；直接在跳脫後的字串上標記會切壞 &gt; 這類實體。
+  const hi = (s: string) => {
+    if (!re) return esc(s);
+    let out = '';
+    let at = 0;
+    for (const m of s.matchAll(re)) {
+      out += `${esc(s.slice(at, m.index))}<mark>${esc(m[0])}</mark>`;
+      at = m.index + m[0].length;
+    }
+    return out + esc(s.slice(at));
+  };
   root.querySelector('#log')!.innerHTML = rows.length
     ? rows
         .map(({ r, i }) => `<div class="ln ${r.lv}" data-i="${i}"><span class="t">${r.t}</span> ${LV[r.lv]} ${hi(r.src.padEnd(7))} ${hi(r.ch.padEnd(4))} ${hi(L(r.msg))}</div>`)
@@ -398,4 +408,12 @@ export function openSettings(): void {
       emit('toTitle');
     },
   });
+}
+
+/** 新遊戲時清掉上一輪留下的結論選擇與 grep 關鍵字，避免直接露出答案。 */
+export function resetCaseUi(): void {
+  delete rcPick.tool;
+  delete rcPick.ch;
+  delete rcPick.cause;
+  grepQ = '';
 }
