@@ -286,3 +286,12 @@ test('the camera target never leaves the map', () => {
   const hi = followTarget(new THREE.Vector3(0, 0, 0), 99999, 99999, MAPW, MAPH, 1);
   expect([lo.x >= 0, lo.z >= 0, hi.x <= MAPW, hi.z <= MAPH]).toEqual([true, true, true, true]);
 });
+
+/* ---------- Task 8：畫質設定 ---------- */
+import { quality } from '../src/world3d/quality';
+
+test('render quality follows the stage width and the device', () => {
+  expect(quality(400, 3)).toEqual({ pixelRatio: 1.5, shadowMap: 1024, narrow: true });
+  expect(quality(1400, 1)).toEqual({ pixelRatio: 1, shadowMap: 2048, narrow: false });
+  expect(quality(1400, 3)).toEqual({ pixelRatio: 2, shadowMap: 2048, narrow: false });
+});

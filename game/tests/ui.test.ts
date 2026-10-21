@@ -383,3 +383,19 @@ test('Back on the name step returns to the title buttons', () => {
   expect($('#name-in')).toBeNull();
   expect($('#title [data-act="new"]')).not.toBeNull();
 });
+
+/* ---------- M1-3D：換地圖的淡入淡出 ---------- */
+import { fadeIn, fadeOut } from '../src/ui/fade';
+
+test('map fades darken then clear the stage, and skip entirely with Reduce motion', async () => {
+  settings.reduceMotion = false;
+  await fadeOut(10);
+  expect($('#fade').hidden).toBe(false);
+  expect($('#fade').style.opacity).toBe('1');
+  await fadeIn(10);
+  expect($('#fade').hidden).toBe(true);
+  settings.reduceMotion = true;
+  await fadeOut(200);
+  expect($('#fade').hidden).toBe(true);
+  settings.reduceMotion = false;
+});
