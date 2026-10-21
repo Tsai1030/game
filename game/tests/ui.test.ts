@@ -365,6 +365,17 @@ test('New Game asks for a name, and switching language keeps what you typed', ()
   expect(got).toBe('小明');
 });
 
+test('the Enter that confirms an IME candidate does not start the game', () => {
+  let started = 0;
+  showTitle({ canContinue: false, onContinue: () => {}, onNew: () => started++ });
+  $<HTMLButtonElement>('#title [data-act="new"]').click();
+  const input = $<HTMLInputElement>('#name-in');
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true }));
+  expect(started).toBe(0);
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  expect(started).toBe(1);
+});
+
 test('Back on the name step returns to the title buttons', () => {
   showTitle({ canContinue: false, onContinue: () => {}, onNew: () => {} });
   $<HTMLButtonElement>('#title [data-act="new"]').click();

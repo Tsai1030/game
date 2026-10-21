@@ -80,7 +80,8 @@ export function refreshNpcs(s: GameState, force = false): boolean {
     list.push(thingOf(d));
   }
   const under = list.find((o) => o.x === s.x && o.y === s.y) ?? null;
-  const key = `${MAP.id}|${list.map((o) => `${o.id}@${o.x},${o.y}`).join(';')}|${under?.id ?? ''}`;
+  const defs = list.map((o) => MAP.npcs.findIndex((d) => npcThings.get(d) === o));
+  const key = `${MAP.id}|${defs.join(',')}|${under?.id ?? ''}`;
   if (!force && key === npcKey) return false;
   npcKey = key;
   NPC = list;

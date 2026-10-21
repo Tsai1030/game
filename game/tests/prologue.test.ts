@@ -50,6 +50,8 @@ let checkText = false;
 /** 一路播到劇情結束：遇到選項就照 picks 選，遇到卡片就按 Enter，指定的台詞會先辨識話術。 */
 function play(picks: string[] = [], recognize: Record<string, string> = {}): void {
   for (let k = 0; k < 300 && (isSceneActive() || isCardOpen()); k++) {
+    // 遊戲畫面每格都會更新 NPC 清單；這裡每推進一步也更新一次。
+    refreshNpcs(S);
     if (checkText) for (const sel of ['#dlg-text', '#dlg-who', '#card']) expect({ sel, text: $(sel).textContent, cjk: CJK.test($(sel).textContent ?? '') }).toMatchObject({ cjk: false });
     if (isCardOpen()) {
       document.body.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter', bubbles: true }));
