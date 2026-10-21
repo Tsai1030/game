@@ -132,13 +132,17 @@ export class Mover {
     return best;
   }
 
-  click(wx: number, wy: number): ClickResult {
+  /**
+   * 點擊世界座標 (wx, wy)（像素）。3D 畫面點選時直接帶入點到的物件 hit（點到地板是 null）；
+   * 沒帶時用舊的 2D 判定（Phaser 版，M1-3D Task 9 移除）。
+   */
+  click(wx: number, wy: number, picked?: Thing | null): ClickResult {
     const tx = Math.floor(wx / TS);
     const ty = Math.floor(wy / TS);
     const sx = this.step ? this.step.tx : S.x;
     const sy = this.step ? this.step.ty : S.y;
     const walk = (x: number, y: number) => walkable(x, y, S.suit);
-    const hit = this.pick(wx, wy);
+    const hit = picked !== undefined ? picked : this.pick(wx, wy);
     if (hit) {
       if (!this.step && adj(hit, S.x, S.y)) {
         this.hooks.onInteract(hit);

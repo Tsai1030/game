@@ -87,3 +87,10 @@ test('stepping east into the air shower reports the previous x', () => {
   expect([S.x, S.y]).toEqual([14, 18]);
   expect(calls.arrive).toContain(13);
 });
+
+test('a 3D click can name the clicked object directly', () => {
+  const etch07 = OBJ.find((o) => o.id === 'ETCH-07')!;
+  setState({ ...ch2State(), suit: true, x: 27, y: 7 });
+  m.reset();
+  expect(['path', 'interact']).toContain(m.click(0, 0, etch07));
+});

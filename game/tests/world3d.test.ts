@@ -243,3 +243,46 @@ test('the player stands where the mover is, and dispose empties the scene', () =
   w.dispose();
   expect(w.scene.children.length).toBe(0);
 });
+
+/* ---------- Task 7：相機與點選 ---------- */
+import { followTarget, makeCamera, placeCamera } from '../src/world3d/camera';
+import { pickAt } from '../src/world3d/pick';
+import { MH as MAPH, MW as MAPW } from '../src/data/world';
+
+/** 在 M03 建好場景、相機對準 (tx, tz)，回傳點選某個世界座標點的結果。 */
+function pickWorld(tx: number, tz: number, p: THREE.Vector3) {
+  setState(ch2State());
+  loadMap('M03');
+  const w = new WorldModel();
+  w.build();
+  w.scene.updateMatrixWorld(true);
+  const cam = makeCamera(16 / 9, false);
+  placeCamera(cam, new THREE.Vector3(tx, 0, tz));
+  const ndc = p.clone().project(cam);
+  const r = pickAt(cam, ndc.x, ndc.y, w.pickables());
+  w.dispose();
+  return r;
+}
+
+test('clicking a tool picks the tool', () => {
+  const r = pickWorld(27.5, 4.5, new THREE.Vector3(27.5, 1.45, 6.0));
+  expect(r && 'thing' in r && r.thing.id).toBe('ETCH-07');
+});
+
+test('clicking the front of a tall stocker picks the stocker, not the floor behind it', () => {
+  const r = pickWorld(41, 12, new THREE.Vector3(41, 1.5, 15.0));
+  expect(r && 'thing' in r && r.thing.id).toBe('STK-01');
+});
+
+test('clicking the floor gives that tile, and outside the map gives nothing', () => {
+  const r = pickWorld(10, 7, new THREE.Vector3(10.5, 0, 7.5));
+  expect(r && 'wx' in r && [Math.floor(r.wx / 16), Math.floor(r.wy / 16)]).toEqual([10, 7]);
+  expect(pickWorld(4, 4, new THREE.Vector3(-3, 0, -3))).toBeNull();
+});
+
+test('the camera target never leaves the map', () => {
+  loadMap('M03');
+  const lo = followTarget(new THREE.Vector3(0, 0, 0), -999, -999, MAPW, MAPH, 1);
+  const hi = followTarget(new THREE.Vector3(0, 0, 0), 99999, 99999, MAPW, MAPH, 1);
+  expect([lo.x >= 0, lo.z >= 0, hi.x <= MAPW, hi.z <= MAPH]).toEqual([true, true, true, true]);
+});
