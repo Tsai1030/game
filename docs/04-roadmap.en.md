@@ -13,6 +13,7 @@ Effort uses relative sizes: S, M, L, XL. Calendar time depends on how many peopl
 |---|---|---|---|---|
 | M0 | Foundation | Version control, dev environment, moving the prototype into the real architecture | S | Plays the same as the prototype, but as real code |
 | M1 | v0.1 playable slice | Scope A: Prologue + Chapter 2 + story systems + Chinese/English switching | L | A complete slice people can playtest |
+| M1-3D | 3D renderer | Replace the Phaser 2D world with three.js Smooth 3D (owner's choice, 2026-10-21); runs between M1-2a and M1-2b | M | The same game, drawn in real 3D |
 | M2 | Playtest and polish | Industry review, playtest feedback, art decision, audio | M | Revised v0.2 |
 | M3 | Scope B | Chapters 1 and 3, equipment engineer gameplay | L | v0.3 |
 | M4 | Scope C | Chapters 4–7, install engineer gameplay, 5 endings | XL | Full first year, v0.9 |
@@ -42,6 +43,8 @@ Effort uses relative sizes: S, M, L, XL. Calendar time depends on how many peopl
 ---
 
 ## 3. M1 · v0.1 playable slice (L)
+
+> **M1-3D (2026-10-21):** in progress. Plan: `docs/superpowers/plans/2026-10-21-m1-3d-renderer.md`.
 
 > **Status (2026-10-21): M1-1 (story engine) code complete, waiting for the owner's playtest; M1-2 (content) next.** M1 is split in two. M1-1 adds the story systems and runs Chapter 2's existing lines through them: YAML scenes with choices, responses, asking, conditions and effects; sanity with forced leave and Burnout; Tactic Recognition and the 7-card Codex; the Evidence Log, where Chapter 2's LINE reports log E-C2-01 to E-C2-04; and save format v2, which migrates v1 saves. The owner also chose oblique tools with a visible side face from three mockups (`mockups/tools-3d.html`). 123 automated tests pass, typecheck passes, and the build succeeds. Plan and progress: `docs/superpowers/plans/2026-10-20-m1a-story-engine.md`. M1-2 covers maps 2 and 3, the new characters, Prologue S1–S8, C2-07 to C2-10, the end-of-demo card and the acceptance pass.
 >

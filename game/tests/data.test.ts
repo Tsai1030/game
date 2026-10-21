@@ -129,3 +129,9 @@ test('source files contain no raw control characters', async () => {
   }
   expect(bad).toEqual([]);
 });
+
+test('three.js is pinned to the prototype version', async () => {
+  const pkg = await Bun.file(new URL('../package.json', import.meta.url)).json();
+  expect(pkg.dependencies.three).toBe('0.160.0');
+  expect(pkg.devDependencies['@types/three']).toBe('0.160.0');
+});

@@ -18,8 +18,8 @@ These were the open questions in the concept document. The owner asked Claude to
 | 4 | Sanity at zero | **First time triggers a forced-leave event; second time triggers the Burnout ending** | Gives the player one more chance, and says that resting is legitimate |
 | 5 | Process-detail review | **One etch process or equipment engineer reviews using the checklist in Appendix B** | The owner doesn't have a process background |
 | 6 | Dialogue realism | **Claude writes the first pass; real lines are collected anonymously in M2 to replace them** | Get it working first, then get it true |
-| 7 | Tech | **TypeScript + Vite + Phaser 3; maps in Tiled; UI in the DOM** | Phaser provides tilemaps, scenes, camera, animation, and audio out of the box. The DOM is the easiest place for text-heavy UI, and the prototype proved it works |
-| 8 | Art | **v0.1 keeps the prototype's code-drawn pixel style. M2 decides whether to hire an artist or buy assets** | The black tools with LEDs are already approved; finish the game first |
+| 7 | Tech | **TypeScript + Vite + three.js (Smooth 3D world); maps defined in code; UI in the DOM** (revised 2026-10-21: the owner chose real 3D over Phaser 2D after the `mockups/tools-threejs.html` prototype) | three.js gives real depth, lighting, shadows and glowing LEDs; the game logic never depended on Phaser, so only the drawing layer changes |
+| 8 | Art | **Smooth 3D: black metal tool bodies with rim edges, glowing LEDs (bloom), shadows, low-poly characters; dialogue portraits stay 16×16 pixel art** (revised 2026-10-21, owner's choice over "Pixel 3D") | The owner wanted tools that feel solid, with real depth; M2 can still bring in an artist for models |
 | 9 | Version control | **Run `git init` before starting** | The project isn't under version control yet |
 | 10 | Package manager and tests | **Bun for everything (`bun install`, `bun test`), never npm** (owner's directive, 2026-10-20) | The owner's preference; Bun has a built-in test runner and reads the YAML scripts natively |
 | 11 | Map format | **Maps are defined in code until M2; Tiled comes in with the M2 art decision** (decided during M0) | Tiles are drawn in code today, so there is no tileset image for Tiled to use yet |
@@ -48,7 +48,7 @@ These were the open questions in the concept document. The owner asked Claude to
 |---|---|
 | Language | TypeScript |
 | Build | Vite |
-| Engine | Phaser 3 (pin a stable version number at kickoff) |
+| Engine | three.js 0.160.0 (pinned; replaces Phaser 3 from M1-3D) |
 | Map editor | Until M2: defined in code (`src/data/world.ts`); from M2: Tiled (exports `.tmj`) |
 | Text UI | DOM layered over the canvas (HUD, dialogue, tool windows, Codex, Evidence Log) |
 | Script format | YAML with Chinese and English side by side |
@@ -97,7 +97,7 @@ D:\g\
 
 ### 2.5 Display and performance
 
-- 16×16 px tiles. Integer pixel scaling: 4× at viewport widths ≥1500 px, 3× at ≥840 px, otherwise 2× (same as the prototype).
+- 3D world, 1 tile = 1 unit. An orthographic camera looks down at a fixed 3/4 angle and follows the player; it shows about 13 tiles of height on wide screens and 11 on phones. Render resolution is capped at 2× (1.5× on phones).
 - Target 60 fps. LEDs aren't drawn for tools outside the camera view.
 - Supported browsers: the latest two versions of Chrome, Edge, Firefox, and Safari.
 
@@ -289,10 +289,10 @@ In the effects column, "San" is sanity and "Rel" is relationship.
 
 | Item | v0.1 spec |
 |---|---|
-| Tiles | 16×16 px, prototype palette (dark night shift) |
-| Characters | Code-drawn chibi figures, four directions, two-frame walk; cleanroom suit and street clothes |
+| Tiles | 3D floor with the prototype's tile textures (dark night shift); back walls tall, front walls low so the player is never hidden |
+| Characters | Low-poly 3D figures in the same colors, four directions, swinging walk; cleanroom suit and street clothes |
 | Portraits | 16×16 pixel grids shown enlarged (from the prototype); may move to 32×32 in M2 depending on the art decision |
-| Tools | Black bodies, rim light, LED dots, running lights, light towers (from the prototype) |
+| Tools | 3D black bodies with rim edges, glowing LED dots (bloom), running lights, light towers; an alarming tool lights the floor red |
 | Fonts | DotGothic16 (body text in both languages), Silkscreen (English labels), Noto Sans TC (fallback for missing glyphs), IBM Plex Mono (FDC terminal) |
 | UI | Black pixel windows with white borders (from the prototype) |
 | Audio | None in v0.1; added in M2 |
