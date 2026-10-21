@@ -158,3 +158,27 @@ test('the open locker shows the hanging suit until you put it on', () => {
   m.update(0, false);
   expect(m.group.getObjectByName('suit')!.visible).toBe(false);
 });
+
+/* ---------- Task 5：人物 ---------- */
+import { LOOK } from '../src/data/looks';
+import { buildPerson } from '../src/world3d/person';
+
+test('every look builds a person inside 0.7 × 0.7 × 1.4', () => {
+  for (const [id, look] of Object.entries(LOOK)) {
+    const b = boxOf(buildPerson(look).group);
+    const ok = b.max.x - b.min.x <= 0.75 && b.max.z - b.min.z <= 0.75 && Math.abs(b.max.y - 1.4) <= 0.05 && b.min.y >= -0.001;
+    expect({ id, ok }).toEqual({ id, ok: true });
+  }
+});
+
+test('people turn to face where they walk, and stand still when not moving', () => {
+  const p = buildPerson(LOOK.office);
+  p.setDir('left');
+  expect(p.group.rotation.y).toBeCloseTo(-Math.PI / 2);
+  p.setDir('down');
+  expect(p.group.rotation.y).toBeCloseTo(0);
+  p.setWalk(0.25, true);
+  expect(p.group.getObjectByName('legL')!.rotation.x).not.toBe(0);
+  p.setWalk(0.25, false);
+  expect(p.group.getObjectByName('legL')!.rotation.x).toBe(0);
+});
