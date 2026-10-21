@@ -1,12 +1,13 @@
 import asksRaw from './story/asks.yaml';
 import ch02 from './story/ch02.yaml';
 import labelsRaw from './story/labels.yaml';
+import prologueStory from './story/prologue.yaml';
 import worldStory from './story/world.yaml';
 import type { AskTopic, Labels, Scene } from './script';
 import type { Trigger } from '../systems/triggers';
 
 type StoryFile = { scenes?: Record<string, Scene>; triggers?: Trigger[] };
-const FILES: Record<string, StoryFile> = { ch02: ch02 as StoryFile, world: worldStory as StoryFile };
+const FILES: Record<string, StoryFile> = { prologue: prologueStory as StoryFile, ch02: ch02 as StoryFile, world: worldStory as StoryFile };
 
 export const SPEAKERS = ['sys', 'me', 'boss', 'kevin', 'fse', 'fang', 'amy', 'guard'] as const;
 export type Speaker = (typeof SPEAKERS)[number];

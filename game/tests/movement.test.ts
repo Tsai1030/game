@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from 'bun:test';
 import { ch2State, S, setState, type Dir } from '../src/core/state';
-import { adj, OBJ, TS, type Thing } from '../src/data/world';
+import { adj, loadMap, OBJ, TS, type Thing } from '../src/data/world';
 import { Mover } from '../src/game/movement';
 
 let calls: { arrive: number[]; interact: Thing[]; warn: number; unreachable: number };
@@ -8,6 +8,7 @@ let m: Mover;
 
 beforeEach(() => {
   setState(ch2State());
+  loadMap('M03');
   calls = { arrive: [], interact: [], warn: 0, unreachable: 0 };
   m = new Mover({
     onArrive: (px) => calls.arrive.push(px),

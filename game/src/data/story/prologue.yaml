@@ -1,0 +1,125 @@
+# 序章：第一天（2026/08/24 週一）。內容依 docs/02-story §5，數值依 docs/03-spec §7.1。
+triggers:
+  - { scene: p_s2, map: M02, if: { chapter: prologue, notFlag: seen_p_s2 } }
+  - { scene: p_s3, map: M03, if: { chapter: prologue, notFlag: seen_p_s3 } }
+
+scenes:
+  # P-S1 · 07:20 警衛室：移動、對話教學。
+  p_s1:
+    - effect: { time: "07:20", flag: seen_p_s1 }
+    - line: { id: p_s1-1, speaker: sys, zh: "第一天・2026/08/24（一）07:20。曦晶半導體 Fab 9，警衛室。", en: "Day one · Mon 2026-08-24, 07:20. Xijing Semiconductor, Fab 9, security gate." }
+    - line: { id: p_s1-2, speaker: me, zh: "提早四十分鐘到。新人第一天，總不能遲到。", en: "Forty minutes early. You can't be late on your first day." }
+    - line: { id: p_s1-3, speaker: sys, zh: "方向鍵／WASD 走路，點地板也會自動走過去。靠近人按 E 或空白鍵說話。", en: "Arrow keys or WASD to walk, or click the floor. Press E or Space next to someone to talk." }
+    - line: { id: p_s1-4, speaker: sys, zh: "先去左邊的警衛崗亭換臨時通行證。", en: "First, get a temporary badge at the guard booth on the left." }
+
+  p_guard:
+    - line: { id: p_guard-1, speaker: guard, zh: "新人？證件給我。這張是臨時通行證，一個月內要換正式的。", en: "New hire? ID, please. This is your temporary badge. Swap it for a permanent one within a month." }
+    - line: { id: p_guard-2, speaker: guard, zh: "手機拿出來。鏡頭貼這張。", en: "Phone out. This sticker goes over the camera." }
+    - line: { id: p_guard-3, speaker: sys, zh: "警衛在你的手機鏡頭貼上一張防拍貼紙，上面印著「破損即記點」。", en: "The guard presses a tamper sticker over your phone camera. It says “Damaged = demerit.”" }
+    - line: { id: p_guard-4, speaker: guard, zh: "每天進出都會檢查。撕掉就記點，記滿三點就……你自己想。", en: "We check it every day, in and out. Peel it and you get a demerit. Three of those and… you figure it out." }
+    - line: { id: p_guard-5, speaker: guard, zh: "新訓教室從閘門進去直走。", en: "Orientation is straight ahead, through the gates." }
+    - effect: { flag: p_badge }
+
+  # P-S2 · 08:00 新訓教室：互動教學。
+  p_s2:
+    - effect: { time: "08:00", flag: seen_p_s2 }
+    - line: { id: p_s2-1, speaker: sys, zh: "08:00，新訓教室。", en: "08:00. The orientation room." }
+    - line: { id: p_s2-2, speaker: amy, zh: "大家好，我是人資的 Amy。今天早上先看安全影片：化學品、緊急沖淋、地震疏散。", en: "Hi everyone, I'm Amy from HR. This morning we'll watch the safety videos: chemicals, emergency showers, earthquake evacuation." }
+    - line: { id: p_s2-3, speaker: sys, zh: "三個小時的影片之後，是資安規定，再來是公司的核心價值：「誠信、創新、當責」。", en: "Three hours of videos later come the infosec rules, then the company values: “Integrity, Innovation, Accountability.”" }
+    - line: { id: p_s2-4, speaker: me, zh: "（舉手）請問……製程的部分，誰會教我們？", en: "(raising your hand) Um… who teaches us the process side?" }
+    - line: { id: p_s2-5, speaker: amy, zh: "技術的部分，進單位你主管會教你。", en: "Your manager will teach you the technical stuff in your unit." }
+    - line: { id: p_s2-6, speaker: sys, zh: "你領到一本 300 頁的《新人手冊》。沒有一頁在講你的工作。", en: "You receive a 300-page New Hire Handbook. Not one page is about your actual job." }
+    - line: { id: p_s2-7, speaker: sys, zh: "走到東西旁邊按 E 可以查看。結束後，從右下角的門去廠區報到。", en: "Walk up to something and press E to look at it. When you're done, report to the site through the door at the bottom right." }
+    - effect: { flag: p_orient_done }
+
+  # P-S3 · 10:30 辦公室：沒有電腦，2,000 頁 SOP。
+  p_s3:
+    - effect: { time: "10:30", flag: seen_p_s3 }
+    - line: { id: p_s3-1, speaker: sys, zh: "10:30，製程整合處 ETCH 製程課。王經理在開會。", en: "10:30. ETCH Process Section, Process Integration. Manager Wang is in a meeting." }
+    - line: { id: p_s3-2, speaker: me, zh: "我的位子是左上角那個。先去看看，再找學長打聲招呼。", en: "My desk is the one at the top left. I'll check it out, then say hi to my mentor." }
+
+  p_kevin:
+    - line: { id: p_kevin-1, speaker: kevin, zh: "（沒抬頭）你先看 SOP。", en: "(without looking up) Start with the SOPs." }
+    - line: { id: p_kevin-2, speaker: sys, zh: "共用槽裡有 2,000 頁的 SOP。最新的檔名是 ETCH_SOP_final_v3_new(2)_edited.pdf。", en: "The shared drive holds 2,000 pages of SOPs. The newest file is named ETCH_SOP_final_v3_new(2)_edited.pdf." }
+    - effect: { flag: p_s3_kevin }
+    - if: { flag: [p_s3_desk, p_s3_kevin], notFlag: seen_p_s4 }
+      then:
+        - goto: p_s4
+
+  p_boss:
+    - line: { id: p_boss-1, speaker: boss, zh: "（講電話中）……對，新人今天報到。……嗯，我會盯。", en: "(on the phone) …Yes, the new hire started today. …Mm, I'll keep an eye on them." }
+
+  # P-S4 · 11:45 王經理：不懂就要問；我們是一家人（兩句自動記入證據簿）。
+  p_s4:
+    - effect: { time: "11:45", flag: seen_p_s4 }
+    - effect: { flag: p_wang_back }
+    - line: { id: p_s4-1, speaker: sys, zh: "11:45，王經理開完會回來了。", en: "11:45. Manager Wang is back from his meeting." }
+    - line: { id: p_s4-2, speaker: boss, zh: "歡迎歡迎。這裡不是學校，沒人會手把手教你。不懂就要問，要主動。", en: "Welcome, welcome. This isn't school. Nobody's going to hold your hand. If you don't know something, go ask. Be proactive.", evidence: true }
+    - line: { id: p_s4-3, speaker: boss, zh: "中午跟大家一起吃飯吧。我們這裡就像一個大家庭。", en: "Come to lunch with everyone. We're one big family here.", evidence: true }
+    - effect: { time: "13:30", flag: task_hold }
+    - line: { id: p_s4-4, speaker: sys, zh: "13:30。王經理又補了一句：「下午把 hold lot 搞懂。」", en: "13:30. Manager Wang adds: “Figure out what holding a lot means this afternoon.”" }
+    - line: { id: p_s4-5, speaker: sys, zh: "可以問的人：Kevin 學長、王經理，還有技術員休息室的芳姐（沿著走廊往下走）。", en: "People you could ask: Kevin, Manager Wang, or Fang-jie in the technicians' break room (down the corridor)." }
+
+  # P-S5 · 13:30 問人小遊戲。
+  p_ask_boss:
+    - ask: { npc: boss, topic: hold_lot }
+    - line: { id: p_ask_boss-1, speaker: me, zh: "（……我明明查過才來問的。）", en: "(…I did look it up before asking.)" }
+
+  p_ask_kevin:
+    - ask: { npc: kevin, topic: hold_lot }
+    - effect: { rel: { kevin: -2 } }
+
+  p_ask_fang:
+    - ask: { npc: fang, topic: hold_lot }
+    - effect: { rel: { fang: 5 } }
+    - effect: { flag: skill_asking_well }
+    - effect: { flag: knows_hold_lot }
+    - card: { kind: notice, zh: "解鎖技能：會問問題。之後問人時，可以選「先說我查過什麼」，對方會比較願意回答。", en: "Skill unlocked: Asking Well. From now on, when you ask someone, you can choose “Say what I already checked”, and they'll be more willing to answer." }
+    - goto: p_s6
+
+  # P-S6 · 15:00 課會：人身攻擊、比較；話術辨識教學。
+  p_s6:
+    - effect: { time: "15:00", flag: p_in_meeting }
+    - effect: { warp: { map: M03, x: 8, y: 15, dir: up } }
+    - line: { id: p_s6-1, speaker: sys, zh: "15:00，課會。會議室。", en: "15:00. Section meeting, meeting room." }
+    - line: { id: p_s6-2, speaker: boss, zh: "新人。你說說看，這張 SPC 有什麼問題？", en: "New hire. Tell us what's wrong with this SPC chart." }
+    - line: { id: p_s6-3, speaker: me, zh: "呃……最後三點一直往上，可能要注意……趨勢？", en: "Uh… the last three points keep going up, so maybe… a trend to watch?" }
+    - card: { kind: notice, zh: "有些話聽了就是不太對勁。台詞旁出現「？」時，按下去，從圖鑑選一張話術卡標記它。選對了，這句話對你的傷害減半。", en: "Some lines just feel off. When a “?” appears next to a line, press it and tag the line with a card from the Codex. Pick the right one and the line hurts you half as much." }
+    - line: { id: p_s6-4, speaker: boss, zh: "這個也不會？你學校在學什麼？", en: "You don't know this? What did they teach you in school?", tactic: personal_attack, sanity: -10, evidence: meeting }
+    - line: { id: p_s6-5, speaker: boss, zh: "（轉過頭去）Kevin 當年第一週就看得懂了。", en: "(turning away) Kevin could read these in his first week.", tactic: comparison, sanity: -6 }
+    - line: { id: p_s6-6, speaker: kevin, zh: "……", en: "…" }
+    - effect: { unflag: p_in_meeting }
+    - goto: p_s7
+
+  # P-S7 · 18:30 下班：為你好；留下或準時走。
+  p_s7:
+    - effect: { time: "18:30", warp: { map: M03, x: 3, y: 4, dir: up } }
+    - line: { id: p_s7-1, speaker: sys, zh: "18:30，下班時間。辦公室裡沒有人站起來。", en: "18:30. Quitting time. Nobody in the office stands up." }
+    - line: { id: p_s7-2, speaker: boss, zh: "新人不用急著走，留下來多學一點。", en: "New hires don't need to rush off. Stay and learn a bit.", tactic: for_your_good, sanity: -5 }
+    - choice:
+        - id: stay
+          zh: "留下來"
+          en: "Stay"
+          do:
+            - effect: { sanity: -5, rel: { boss: 5 }, flag: p_stayed }
+            - line: { id: p_s7-3, speaker: me, zh: "（……好吧。）", en: "(…Fine.)" }
+            - line: { id: p_s7-4, speaker: sys, zh: "你留到 21:40。沒有人教你任何東西。", en: "You stay until 21:40. Nobody teaches you anything." }
+        - id: leave
+          zh: "「我先回去整理筆記，明天 7:30 到。」"
+          en: "“I'll head home and organize my notes. I'll be in at 7:30 tomorrow.”"
+          do:
+            - effect: { sanity: 8, rel: { boss: -10 }, flag: p_left_on_time }
+            - line: { id: p_s7-5, speaker: boss, zh: "……嗯。", en: "…Hm." }
+            - line: { id: p_s7-6, speaker: sys, zh: "王經理的臉沉了一下，但沒說什麼。", en: "Manager Wang's face tightens, but he says nothing." }
+    - goto: p_s8
+
+  # P-S8 · 23:10 租屋處：LINE 群組；證據簿解鎖；接第 2 章。
+  p_s8:
+    - effect: { time: "23:10", warp: { map: M04, x: 5, y: 4, dir: up } }
+    - line: { id: p_s8-1, speaker: sys, zh: "23:10，租屋處。手機跳出 LINE 群組邀請：「Fab9 ETCH 相親相愛一家人」。", en: "23:10. Your rented room. A LINE group invite pops up: “Fab9 ETCH One Big Happy Family”." }
+    - line: { id: p_s8-2, speaker: boss, zh: "（LINE）明天 8 點晨會，新人做 5 分鐘自我介紹。要有數據。", en: "(LINE) 8 a.m. stand-up tomorrow. New hire gives a 5-minute self-intro. With data.", tactic: family, sanity: -5, evidence: chat }
+    - line: { id: p_s8-3, speaker: sys, zh: "第一天，你學到三件事：不懂要問；問了會被念；不問會出事。", en: "Day one. You learned three things: if you don't know, ask. If you ask, you get scolded. If you don't ask, something breaks." }
+    - effect: { flag: ev_unlocked }
+    - effect: { flag: p_day_done }
+    - card: { kind: notice, zh: "解鎖證據簿（J）。今天的對話都留下了時間紀錄。這本簿子，之後會救你。", en: "Evidence Log unlocked (J). Today's conversations are saved with timestamps. This log will save you later." }
+    - goto: ch2_start

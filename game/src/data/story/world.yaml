@@ -22,11 +22,14 @@ scenes:
   guard:
     - line: { id: guard-1, speaker: guard, zh: "通行證要一直掛在身上，進出都要刷。", en: "Keep your badge on you at all times. Tap it every time you go in or out." }
   amy:
-    - line: { id: amy-1, speaker: amy, zh: "影片還有三支喔，先坐好。", en: "Three more videos to go. Have a seat." }
+    - line: { id: amy-1, speaker: amy, zh: "有問題可以寄信到人資信箱喔，我們三個工作天內回覆。", en: "If you have questions, email the HR inbox. We reply within three working days." }
   # 序章：自己的座位、無塵衣置物櫃。
   p_pc:
     - line: { id: p_pc-1, speaker: sys, zh: "螢幕在，主機不在。桌上貼著一張便利貼：「帳號申請中，約 3 個工作天。」", en: "There's a monitor but no computer. A sticky note on the desk: “Account requested. About 3 working days.”" }
     - line: { id: p_pc-2, speaker: me, zh: "……那我今天要做什麼？", en: "…So what am I supposed to do today?" }
     - effect: { flag: p_s3_desk }
+    - if: { flag: [p_s3_desk, p_s3_kevin], notFlag: seen_p_s4 }
+      then:
+        - goto: p_s4
   p_locker:
     - line: { id: p_locker-1, speaker: sys, zh: "無塵衣要等安全訓練和門禁開通才能領。新人今天還進不了 Fab。", en: "You can't get a cleanroom suit until your safety training and access card come through. New hires can't enter the fab yet." }

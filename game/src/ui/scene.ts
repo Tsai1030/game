@@ -7,6 +7,7 @@ import { browserStore } from '../core/storage';
 import { CASE, type ClueId } from '../data/case';
 import { CODEX } from '../data/codex';
 import { ASKS, LABELS, SCENES } from '../data/story';
+import { syncEtch } from '../data/world';
 import { busy } from '../game/runtime';
 import { ScriptRunner, type Frame, type RunnerEvent } from '../systems/script';
 import { hideCard, showCard } from './cards';
@@ -36,6 +37,8 @@ function handle(ev: RunnerEvent): void {
 function render(f: Frame): void {
   const evs = runner?.events() ?? [];
   for (const ev of evs) handle(ev);
+  // 劇情可能改了 ETCH-07 的狀態（例如進入第 2 章時開始告警）。
+  syncEtch(S.etch);
   refreshHud();
   const zero = evs.find((e) => e.kind === 'zero');
   if (zero?.kind === 'zero' && zero.outcome === 'burnout') return burnout();

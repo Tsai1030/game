@@ -17,6 +17,7 @@ export const LOOK: Record<LookId, Look> = {
   suit: { suit: true },
   boss: { hair: '#8a8898', top: '#f4f2fa', bottom: '#4a4670', tie: true },
   kevin: { suit: true },
+  kevinDay: { hair: '#3a2e2a', top: '#5a6a8a', bottom: '#2b2d3a' },
   fse: { suit: true, glove: '#f08a2a' },
   fang: { hair: '#1e1a24', top: '#2f7d74', bottom: '#2b2d3a' },
   amy: { hair: '#6b4a32', top: '#e8a0b4', bottom: '#7a7f92' },

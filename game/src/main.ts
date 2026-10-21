@@ -6,7 +6,7 @@ import { applyDom, setLang, t, type Lang } from './core/i18n';
 import { switchLang } from './core/lang';
 import { clearSave, readSave } from './core/save';
 import { loadSettings, settings } from './core/settings';
-import { ch2State, isNightShift, S, setState, type GameState } from './core/state';
+import { isNightShift, newState, S, setState, type GameState } from './core/state';
 import { browserStore } from './core/storage';
 import { SCENES } from './data/story';
 import { resetNpcs, syncEtch } from './data/world';
@@ -107,8 +107,7 @@ window.addEventListener('resize', () => {
 /* 4. 標題畫面、新遊戲與繼續 */
 function start(loaded: GameState | null, name = ''): void {
   stopScene();
-  // 序章完成前（Task 10），新遊戲先從第 2 章開始。
-  const s = loaded ?? { ...ch2State(), name };
+  const s = loaded ?? { ...newState(), name };
   if (!loaded) clearSave(browserStore());
   setState(s);
   placeLoaded(S);
@@ -123,7 +122,7 @@ function start(loaded: GameState | null, name = ''): void {
   emit('reset');
   saveNow();
   if (!loaded) {
-    playScene('intro');
+    playScene('p_s1');
     return;
   }
   // 存檔停在某段劇情開頭時，從那段開頭重播（劇情進行中不會存檔，效果不會重複）。

@@ -12,7 +12,7 @@ export type Kind =
   | 'etch' | 'cvd' | 'met' | 'wet' | 'stk' | 'litho' | 'track';
 export type ToolSt = 'run' | 'idle' | 'alarm' | 'inhibit';
 export type Act = 'pc' | 'say' | 'coffee' | 'locker' | 'tool' | 'etch07' | 'met' | 'npc';
-export type LookId = 'office' | 'suit' | 'boss' | 'kevin' | 'fse' | 'fang' | 'amy' | 'guard';
+export type LookId = 'office' | 'suit' | 'boss' | 'kevin' | 'kevinDay' | 'fse' | 'fang' | 'amy' | 'guard';
 
 /** 地圖上佔格子的東西：物件或 NPC。 */
 export interface Thing {

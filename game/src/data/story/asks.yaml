@@ -1,2 +1,29 @@
-# 問人主題：topic → npc → { full, partial, refuse }。序章的內容在 M1-2 加入。
-{}
+# 問人主題：topic → npc → { full, partial, refuse }。關係 ≥20 完整回答、0–19 部分、<0 拒絕（見 systems/relations.ts）。
+# P-S5：什麼是 Hold lot。
+hold_lot:
+  boss:
+    full:
+      - { id: ask-hold-boss-f1, speaker: boss, zh: "Hold 就是把 lot 停住，不讓它往下一站走，等工程師判斷完再決定放不放。", en: "Holding a lot means stopping it so it can't move to the next step. It waits until an engineer decides whether to release it." }
+    partial:
+      - { id: ask-hold-boss-p1, speaker: boss, zh: "這種小事也要問？你自己先查過了嗎？", en: "You need to ask about this? Did you even look it up first?", tactic: double_bind, sanity: -8 }
+    refuse:
+      - { id: ask-hold-boss-r1, speaker: boss, zh: "這種小事也要問？你自己先查過了嗎？", en: "You need to ask about this? Did you even look it up first?", tactic: double_bind, sanity: -8 }
+      - { id: ask-hold-boss-r2, speaker: sys, zh: "王經理轉回去看他的螢幕。", en: "Manager Wang turns back to his screen." }
+  kevin:
+    full:
+      - { id: ask-hold-kevin-f1, speaker: kevin, zh: "Hold 就是把 lot 卡住不讓它走。MES 上狀態會變紅，要有人 release 才會繼續。", en: "Holding means the lot is stuck and can't move on. It turns red in MES and only continues once someone releases it." }
+    partial:
+      - { id: ask-hold-kevin-p1, speaker: kevin, zh: "SOP 第三章。", en: "Chapter 3 of the SOP." }
+      - { id: ask-hold-kevin-p2, speaker: sys, zh: "Kevin 學長在趕報告，連頭都沒轉。", en: "Kevin is rushing a report and doesn't even turn around." }
+    refuse:
+      - { id: ask-hold-kevin-r1, speaker: kevin, zh: "我在趕報告，晚點。", en: "I'm rushing a report. Later." }
+  fang:
+    full:
+      - { id: ask-hold-fang-f1, speaker: fang, zh: "Hold 喔？來，我做給你看。", en: "Holding? Come here, I'll show you." }
+      - { id: ask-hold-fang-f2, speaker: sys, zh: "芳姐在 MES 上叫出一批 lot，按下 Hold，狀態變成紅色；再按 Release，lot 又往下一站流。", en: "Fang-jie pulls up a lot in MES and hits Hold. Its status turns red. She hits Release, and the lot moves on to the next step." }
+      - { id: ask-hold-fang-f3, speaker: fang, zh: "Hold 住的貨不會動，要有人判斷完才能放。判斷錯了，整批報廢都有可能。", en: "A held lot doesn't move until someone makes the call. Make the wrong call and the whole lot could get scrapped." }
+      - { id: ask-hold-fang-f4, speaker: fang, zh: "還有，下次問人之前，先說你自己查過什麼。大家會比較願意教你。", en: "And next time, before you ask someone, tell them what you already checked. People will be much more willing to teach you." }
+    partial:
+      - { id: ask-hold-fang-p1, speaker: fang, zh: "就是把 lot 停住，等人判斷。我現在有點忙，你晚點再來，我做給你看。", en: "It means stopping a lot until someone makes the call. I'm a bit busy now. Come back later and I'll show you." }
+    refuse:
+      - { id: ask-hold-fang-r1, speaker: fang, zh: "我現在走不開，晚點再來找我。", en: "I can't step away right now. Come find me later." }

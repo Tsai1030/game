@@ -72,7 +72,7 @@ test('the site has a corridor, a meeting room, a break room and the unchanged fa
 test('NPCs on the site depend on the chapter', () => {
   loadMap('M03');
   refreshNpcs(newState());
-  expect(NPC.map((n) => n.id).sort()).toEqual(['fang']);
+  expect(NPC.map((n) => n.id).sort()).toEqual(['fang', 'kevin']);
   refreshNpcs(ch2State());
   expect(NPC.map((n) => n.id).sort()).toEqual(['boss', 'fang', 'fse', 'kevin']);
 });

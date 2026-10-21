@@ -56,14 +56,31 @@ scenes:
     - line: { id: fse-2, speaker: fse, zh: "ETCH-07？原廠 part 要等三週喔～", en: "ETCH-07? OEM parts take three weeks~" }
     - line: { id: fse-3, speaker: fse, zh: "不過 focus ring 你們倉庫應該有庫存啦。", en: "Your warehouse should have focus rings in stock, though." }
 
+  # 序章接第 2 章（C2-01）：章節卡、換到夜班、回到辦公室。
+  ch2_start:
+    - card: { kind: chapter, zh: "第 2 章 · Case 03 之夜｜兩個月後", en: "Chapter 2 · The Night of Case 03 | Two months later" }
+    - effect: { chapter: ch2, time: "02:47", etch: alarm, warp: { map: M03, x: 3, y: 4, dir: up } }
+    - include: intro
+
   say_desk2:
+    - if: { chapter: prologue }
+      then:
+        - line: { id: say_desk2-p1, speaker: me, zh: "Kevin 學長的桌上堆滿報告，最上面那份是〈ETCH 段月報 v7〉。", en: "Kevin's desk is buried in reports. The one on top says “ETCH monthly report v7”." }
+        - goto: say_end
     - line: { id: say_desk2-1, speaker: me, zh: "桌上有三杯沒喝完的咖啡，還有一張寫著「PM-B ??」的便利貼。", en: "Three half-finished coffees on the desk, and a sticky note that says “PM-B ??”." }
   say_desk3:
     - line: { id: say_desk3-1, speaker: me, zh: "螢幕保護程式在跑：「良率就是生命」。", en: "The screensaver reads: “Yield is life.”" }
   say_desk4:
     - line: { id: say_desk4-1, speaker: me, zh: "抽屜裡有一包沒拆的泡麵。值班人的好朋友。", en: "An unopened pack of instant noodles in the drawer. The night shift's best friend." }
   say_bossdesk:
+    - if: { chapter: prologue }
+      then:
+        - line: { id: say_bossdesk-p1, speaker: me, zh: "桌上貼著一張便條：「8/24 新人報到」，旁邊畫了一個問號。", en: "A note on the desk: “8/24 new hire starts”, with a question mark drawn next to it." }
+        - goto: say_end
     - line: { id: say_bossdesk-1, speaker: me, zh: "桌上放著 8 點晨會的簡報，標題是「ETCH CD 異常說明」……內容還是空的。", en: "The slides for the 8 a.m. stand-up sit on the desk, titled “ETCH CD Excursion Explained”… They're still blank." }
+
+  # 查看物件時用來提早結束的空劇情。
+  say_end: []
 
   locker_on:
     - line: { id: locker_on-1, speaker: me, zh: "頭套、口罩、連身衣、兩層手套、無塵鞋……鏡子裡出現一隻兔寶寶。", en: "Hood, mask, coverall, two pairs of gloves, cleanroom boots… A bunny stares back from the mirror." }
