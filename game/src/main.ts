@@ -6,7 +6,7 @@ import { applyDom, setLang, t, type Lang } from './core/i18n';
 import { switchLang } from './core/lang';
 import { clearSave, readSave } from './core/save';
 import { loadSettings, settings } from './core/settings';
-import { newState, S, setState, START_POS, type GameState } from './core/state';
+import { ch2State, isNightShift, S, setState, START_POS, type GameState } from './core/state';
 import { browserStore } from './core/storage';
 import { SCENES } from './data/story';
 import { resetNpcs, syncEtch, walkable } from './data/world';
@@ -106,7 +106,8 @@ window.addEventListener('resize', () => {
 /* 4. 標題畫面、新遊戲與繼續 */
 function start(loaded: GameState | null): void {
   stopScene();
-  const s = loaded ?? newState();
+  // 序章完成前（Task 10），新遊戲先從第 2 章開始。
+  const s = loaded ?? ch2State();
   if (!loaded) clearSave(browserStore());
   if (!walkable(s.x, s.y, s.suit)) {
     s.x = START_POS.x;
@@ -165,7 +166,7 @@ setInterval(() => {
   setClock(S.sec);
 }, 1000);
 setInterval(() => {
-  if (isTitleOpen() || S.coffee === 0) return;
+  if (isTitleOpen() || !isNightShift(S) || S.coffee === 0) return;
   setCoffee(decay(S.coffee));
   if (S.coffee === 0) toast(t('toast.coffeeEmpty'), 'bad');
 }, COFFEE_DECAY_MS);

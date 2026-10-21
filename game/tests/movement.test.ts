@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'bun:test';
-import { newState, S, setState, type Dir } from '../src/core/state';
+import { ch2State, S, setState, type Dir } from '../src/core/state';
 import { adj, OBJ, TS, type Thing } from '../src/data/world';
 import { Mover } from '../src/game/movement';
 
@@ -7,7 +7,7 @@ let calls: { arrive: number[]; interact: Thing[]; warn: number; unreachable: num
 let m: Mover;
 
 beforeEach(() => {
-  setState(newState());
+  setState(ch2State());
   calls = { arrive: [], interact: [], warn: 0, unreachable: 0 };
   m = new Mover({
     onArrive: (px) => calls.arrive.push(px),
@@ -53,7 +53,7 @@ test('with no coffee a step takes 0.15 / 0.7 s', () => {
   run(0.16, 'down');
   expect([S.x, S.y]).toEqual([3, 4]);
   m.reset();
-  setState({ ...newState(), coffee: 0 });
+  setState({ ...ch2State(), coffee: 0 });
   run(0.22, 'down');
   expect([S.x, S.y]).toEqual([3, 5]);
 });
@@ -80,7 +80,7 @@ test('clicking a tool walks next to it and interacts once', () => {
 });
 
 test('stepping east into the air shower reports the previous x', () => {
-  setState({ ...newState(), suit: true, x: 13, y: 18 });
+  setState({ ...ch2State(), suit: true, x: 13, y: 18 });
   m.reset();
   run(0.16, 'right');
   expect([S.x, S.y]).toEqual([14, 18]);

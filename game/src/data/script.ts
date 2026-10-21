@@ -1,12 +1,15 @@
 import type { Bi } from '../core/i18n';
-import type { EvidenceItem, EvidenceSource, NpcId, TacticId } from '../core/state';
+import type { Chapter, Dir, EtchState, EvidenceItem, EvidenceSource, MapId, NpcId, TacticId } from '../core/state';
 import type { ResponseId } from '../systems/responses';
 import type { Line } from './story';
 
 /** 條件：列出的每一項都要成立。 */
 export interface Cond {
-  flag?: string;
-  notFlag?: string;
+  /** 這些旗標全部要有（單一或清單）。 */
+  flag?: string | string[];
+  /** 這些旗標全部不能有（單一或清單）。 */
+  notFlag?: string | string[];
+  chapter?: Chapter;
   /** 這些證據全部到手。 */
   evidence?: string[];
   /** 這些證據至少到手 n 筆。 */
@@ -27,6 +30,12 @@ export interface Effect {
   coffee?: number;
   clue?: string;
   suit?: boolean;
+  /** 把時鐘設成 'HH:MM'。 */
+  time?: string;
+  chapter?: Chapter;
+  etch?: EtchState;
+  /** 瞬移到某張地圖的某一格（例如劇情跳到會議室）。 */
+  warp?: { map: MapId; x: number; y: number; dir?: Dir };
 }
 
 /** 一句台詞；可以標上話術（可辨識）、理智變化、自動記入證據簿。 */

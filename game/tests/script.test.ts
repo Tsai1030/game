@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from 'bun:test';
 import { newState, type GameState } from '../src/core/state';
 import type { AskTopic, Labels, Scene, ScriptLine } from '../src/data/script';
-import { evalCond, ScriptRunner, type RunnerEvent } from '../src/systems/script';
+import { applyEffect, evalCond, ScriptRunner, type RunnerEvent } from '../src/systems/script';
 
 const L = (id: string, extra: Partial<ScriptLine> = {}): { line: ScriptLine } => ({
   line: { id, speaker: 'boss', zh: `${id}-zh`, en: `${id}-en`, ...extra },
@@ -97,6 +97,27 @@ test('goto jumps, include runs another scene inline, if/else branches on clues',
   r.start('b');
   r.advance();
   expect(lineId()).toBe('ready');
+});
+
+test('effects set the time, chapter and ETCH-07 state', () => {
+  applyEffect(s, { time: '15:00', chapter: 'ch2', etch: 'alarm' });
+  expect([s.sec, s.chapter, s.etch]).toEqual([54000, 'ch2', 'alarm']);
+});
+
+test('a warp moves the player and emits exactly one warp event', () => {
+  const ev = applyEffect(s, { warp: { map: 'M04', x: 5, y: 4 } });
+  expect([s.map, s.x, s.y, s.dir]).toEqual(['M04', 5, 4, 'up']);
+  expect(ev).toEqual([{ kind: 'warp', map: 'M04', x: 5, y: 4, dir: 'up' }]);
+});
+
+test('flag lists need every flag; notFlag lists need none; chapter must match', () => {
+  s.flags = ['a'];
+  expect(evalCond(s, { flag: ['a', 'b'] })).toBe(false);
+  s.flags = ['a', 'b'];
+  expect(evalCond(s, { flag: ['a', 'b'] })).toBe(true);
+  expect(evalCond(s, { notFlag: ['c', 'b'] })).toBe(false);
+  expect(evalCond(s, { chapter: 'prologue' })).toBe(true);
+  expect(evalCond(s, { chapter: 'ch2' })).toBe(false);
 });
 
 test('evalCond checks every present key', () => {

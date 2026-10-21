@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { getLang, setLang, t } from '../src/core/i18n';
 import { settings, SETTINGS_KEY } from '../src/core/settings';
-import { newState, S, setState } from '../src/core/state';
+import { ch2State, newState, S, setState } from '../src/core/state';
 import { NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
 import { SCENES } from '../src/data/story';
 import { doInteract } from '../src/game/actions';
@@ -29,7 +29,7 @@ beforeEach(() => {
   initWin(() => {});
   stopScene();
   initScenePlayer();
-  setState(newState());
+  setState(ch2State());
   syncEtch('alarm');
   settings.textSpeed = 'instant';
   localStorage.clear();
@@ -175,6 +175,20 @@ test('grep highlighting keeps “>” readable in log lines', () => {
   const line = $('#log .ln[data-i="1"]');
   expect(line.textContent).toContain('21.6 W > limit 20.0 W');
   expect(line.querySelectorAll('mark').length).toBeGreaterThan(0);
+});
+
+test('the shift-end countdown shows only on the night shift', () => {
+  setState(newState());
+  refreshHud();
+  expect($('#shift-stat').hidden).toBe(true);
+  setState(ch2State());
+  refreshHud();
+  expect($('#shift-stat').hidden).toBe(false);
+});
+
+test('a new game starts the prologue at the security gate', () => {
+  expect(newState()).toMatchObject({ v: 3, map: 'M01', x: 10, y: 10, chapter: 'prologue', sec: 26400, etch: 'fixed', name: '' });
+  expect(ch2State()).toMatchObject({ map: 'M03', x: 3, y: 4, chapter: 'ch2', sec: 2 * 3600 + 47 * 60, etch: 'alarm' });
 });
 
 test('the sanity bar shows the current value', () => {

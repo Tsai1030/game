@@ -1,5 +1,5 @@
 import type { Bi } from '../core/i18n';
-import type { EvidenceItem, GameState, NpcId, TacticId } from '../core/state';
+import type { Dir, EvidenceItem, GameState, MapId, NpcId, TacticId } from '../core/state';
 import type { AskTopic, Beat, Cond, Effect, Labels, Scene, ScriptLine } from '../data/script';
 import { addClue } from './clues';
 import { COFFEE_MAX } from './coffee';
@@ -18,7 +18,8 @@ export type RunnerEvent =
   | { kind: 'zero'; outcome: 'forcedLeave' | 'burnout' }
   | { kind: 'codex'; id: TacticId }
   | { kind: 'evidence'; item: EvidenceItem }
-  | { kind: 'clue'; id: string };
+  | { kind: 'clue'; id: string }
+  | { kind: 'warp'; map: MapId; x: number; y: number; dir: Dir };
 
 export interface RunnerEnv {
   state(): GameState;
@@ -31,8 +32,10 @@ export interface RunnerEnv {
 
 /** 條件判斷：列出的每一項都要成立。 */
 export function evalCond(s: GameState, c: Cond): boolean {
-  if (c.flag !== undefined && !s.flags.includes(c.flag)) return false;
-  if (c.notFlag !== undefined && s.flags.includes(c.notFlag)) return false;
+  const list = (v: string | string[]) => (Array.isArray(v) ? v : [v]);
+  if (c.flag !== undefined && !list(c.flag).every((f) => s.flags.includes(f))) return false;
+  if (c.notFlag !== undefined && list(c.notFlag).some((f) => s.flags.includes(f))) return false;
+  if (c.chapter !== undefined && s.chapter !== c.chapter) return false;
   if (c.evidence && !hasEvidence(s.evidence, c.evidence)) return false;
   if (c.evidenceMin && countEvidence(s.evidence, c.evidenceMin.ids) < c.evidenceMin.n) return false;
   if (c.clues !== undefined && s.clues.length < c.clues) return false;
@@ -69,6 +72,17 @@ export function applyEffect(s: GameState, e: Effect, recognized = false): Runner
   if (e.suit !== undefined) {
     s.suit = e.suit;
     if (e.suit) s.everSuit = true;
+  }
+  if (e.time !== undefined) {
+    const [h, m] = e.time.split(':').map(Number);
+    s.sec = (h ?? 0) * 3600 + (m ?? 0) * 60;
+  }
+  if (e.chapter !== undefined) s.chapter = e.chapter;
+  if (e.etch !== undefined) s.etch = e.etch;
+  if (e.warp) {
+    const { map, x, y, dir = 'up' } = e.warp;
+    Object.assign(s, { map, x, y, dir });
+    out.push({ kind: 'warp', map, x, y, dir });
   }
   if (e.sanity !== undefined) sanityDelta(s, e.sanity, recognized, out);
   return out;

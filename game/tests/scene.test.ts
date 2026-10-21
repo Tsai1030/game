@@ -4,7 +4,7 @@ import { L as tr, setLang, t } from '../src/core/i18n';
 import { switchLang } from '../src/core/lang';
 import { SAVE_KEY } from '../src/core/save';
 import { settings } from '../src/core/settings';
-import { newState, S, setState } from '../src/core/state';
+import { ch2State, S, setState } from '../src/core/state';
 import { CODEX } from '../src/data/codex';
 import { SCENES } from '../src/data/story';
 import { advanceScene, initScenePlayer, isSceneActive, playScene, pumpQueue, stopScene } from '../src/ui/scene';
@@ -37,7 +37,7 @@ beforeEach(() => {
   document.body.innerHTML = body;
   stopScene();
   initScenePlayer();
-  setState(newState());
+  setState(ch2State());
   settings.textSpeed = 'instant';
   localStorage.clear();
 });

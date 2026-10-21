@@ -5,6 +5,13 @@ export type EtchState = 'alarm' | 'inhibit' | 'fixed';
 export const MAP_IDS = ['M01', 'M02', 'M03', 'M04'] as const;
 export type MapId = (typeof MAP_IDS)[number];
 
+/** 章節：序章（第一天，白天）、第 2 章（Case 03 之夜，夜班）。 */
+export const CHAPTERS = ['prologue', 'ch2'] as const;
+export type Chapter = (typeof CHAPTERS)[number];
+
+/** 名字最多幾個字。 */
+export const NAME_MAX = 12;
+
 /** 有關係值的角色。 */
 export const NPC_IDS = ['boss', 'kevin', 'fse', 'fang', 'amy', 'bear'] as const;
 export type NpcId = (typeof NPC_IDS)[number];
@@ -27,7 +34,12 @@ export interface EvidenceItem {
 
 /** 需要存檔的遊戲狀態。暫時的移動與路徑狀態放在 Mover。 */
 export interface GameState {
-  v: 2;
+  v: 3;
+  /** 目前所在的地圖。 */
+  map: MapId;
+  chapter: Chapter;
+  /** 玩家取的名字；空字串表示用預設名。 */
+  name: string;
   x: number;
   y: number;
   dir: Dir;
@@ -53,22 +65,29 @@ export interface GameState {
 
 export const SHIFT_START = 2 * 3600 + 47 * 60;
 export const SHIFT_END = 8 * 3600;
+/** 第 2 章開場站的位置（M03 的 PE 工作站前）。 */
 export const START_POS = { x: 3, y: 4 } as const;
+/** 序章開場：M01 警衛室門口、早上 07:20。 */
+export const PROLOGUE_START = { map: 'M01', x: 10, y: 10, sec: 7 * 3600 + 20 * 60 } as const;
 export const REL_START: Record<NpcId, number> = { boss: 0, kevin: 10, fse: 10, fang: 20, amy: 0, bear: 0 };
 
+/** 新遊戲：序章開場。 */
 export function newState(): GameState {
   return {
-    v: 2,
-    x: START_POS.x,
-    y: START_POS.y,
+    v: 3,
+    map: PROLOGUE_START.map,
+    chapter: 'prologue',
+    name: '',
+    x: PROLOGUE_START.x,
+    y: PROLOGUE_START.y,
     dir: 'up',
     suit: false,
     everSuit: false,
     coffee: 3,
     clues: [],
     solved: false,
-    etch: 'alarm',
-    sec: SHIFT_START,
+    etch: 'fixed',
+    sec: PROLOGUE_START.sec,
     sanity: 80,
     zeroCount: 0,
     rel: { ...REL_START },
@@ -78,6 +97,14 @@ export function newState(): GameState {
     scene: null,
   };
 }
+
+/** 第 2 章開場（02:47，ETCH-07 告警）；舊存檔與只測第 2 章的測試用。 */
+export function ch2State(): GameState {
+  return { ...newState(), map: 'M03', chapter: 'ch2', x: START_POS.x, y: START_POS.y, dir: 'up', sec: SHIFT_START, etch: 'alarm' };
+}
+
+/** 夜班才有咖啡遞減和「距下班」倒數。 */
+export const isNightShift = (s: GameState): boolean => s.chapter === 'ch2';
 
 /** 目前的遊戲狀態。其他模組拿到的是即時綁定，setState 之後會看到新物件。 */
 export let S: GameState = newState();

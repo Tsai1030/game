@@ -1,5 +1,5 @@
 import { esc, L, t } from '../core/i18n';
-import { fmtClock, S, SHIFT_END, TACTIC_IDS } from '../core/state';
+import { fmtClock, isNightShift, S, SHIFT_END, TACTIC_IDS } from '../core/state';
 import type { Thing } from '../data/world';
 import { QUEST } from '../systems/quest';
 import { $ } from './dom';
@@ -30,6 +30,7 @@ export function refreshHud(): void {
   cups.innerHTML = [0, 1, 2, 3, 4].map((i) => `<i class="${i < S.coffee ? '' : 'e'}"></i>`).join('');
   cups.setAttribute('aria-label', t('hud.coffeeAria', { n: S.coffee }));
   $('#clue-n').textContent = `${S.clues.length}/5`;
+  $('#shift-stat').hidden = !isNightShift(S);
   const san = $('#sanity');
   san.className = `sanity ${S.sanity > 50 ? 'ok' : S.sanity > 25 ? 'warn' : 'bad'}`;
   san.setAttribute('aria-label', t('hud.sanityAria', { n: S.sanity }));

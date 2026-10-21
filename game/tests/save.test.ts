@@ -22,25 +22,28 @@ test('a written save reads back identically', () => {
 
 test('malformed or out-of-range saves are reported as corrupt', () => {
   const good = newState();
-  const bad = ['{', { ...good, v: 3 }, { ...good, coffee: 6 }, { ...good, dir: 'north' }, { ...good, clues: [1] }];
+  const bad = ['{', { ...good, v: 4 }, { ...good, coffee: 6 }, { ...good, dir: 'north' }, { ...good, clues: [1] }];
   for (const b of bad) {
     const store = memStore({ [SAVE_KEY]: typeof b === 'string' ? b : JSON.stringify(b) });
     expect(readSave(store)).toEqual({ kind: 'corrupt' });
   }
 });
 
-test('an M0 (v1) save migrates to v2 with defaults', () => {
+test('an M0 (v1) save migrates to v3 with defaults', () => {
   const v1 = { v: 1, x: 20, y: 5, dir: 'up', suit: true, everSuit: true, coffee: 2, clues: ['spc'], solved: false, etch: 'alarm', sec: 11000 };
   const r = readSave(memStore({ [SAVE_KEY]: JSON.stringify(v1) }));
   expect(r.kind).toBe('ok');
   if (r.kind !== 'ok') return;
-  expect(r.state).toMatchObject({ v: 2, x: 20, suit: true, clues: ['spc'], sanity: 80, zeroCount: 0, codex: [], evidence: [], flags: ['ev_unlocked'], scene: null });
+  expect(r.state).toMatchObject({ v: 3, map: 'M03', chapter: 'ch2', name: '', x: 20, suit: true, clues: ['spc'], sanity: 80, zeroCount: 0, codex: [], evidence: [], flags: ['ev_unlocked'], scene: null });
   expect(r.state.rel).toEqual(REL_START);
 });
 
 const item: EvidenceItem = { id: 'E-C2-01', time: '03:05', source: 'chat', speaker: 'me', zh: '甲', en: 'A' };
-const fullV2 = (): GameState => ({
+const fullV3 = (): GameState => ({
   ...newState(),
+  map: 'M02',
+  chapter: 'prologue',
+  name: '小明',
   sanity: 42,
   zeroCount: 1,
   rel: { ...REL_START, boss: -30 },
@@ -50,20 +53,33 @@ const fullV2 = (): GameState => ({
   scene: 'intro',
 });
 
-test('a full v2 state round-trips', () => {
-  const store = memStore();
-  writeSave(store, fullV2());
-  expect(readSave(store)).toEqual({ kind: 'ok', state: fullV2() });
+test('an M1-1 (v2) save migrates to v3 in Chapter 2 on M03', () => {
+  const { map: _m, chapter: _c, name: _n, ...rest } = fullV3();
+  const v2 = { ...rest, v: 2 };
+  const r = readSave(memStore({ [SAVE_KEY]: JSON.stringify(v2) }));
+  expect(r.kind).toBe('ok');
+  if (r.kind !== 'ok') return;
+  expect(r.state).toMatchObject({ v: 3, map: 'M03', chapter: 'ch2', name: '', sanity: 42, evidence: [item], flags: ['ev_unlocked'] });
 });
 
-test('invalid v2 fields are reported as corrupt', () => {
+test('a full v3 state round-trips', () => {
+  const store = memStore();
+  writeSave(store, fullV3());
+  expect(readSave(store)).toEqual({ kind: 'ok', state: fullV3() });
+});
+
+test('invalid v3 fields are reported as corrupt', () => {
   const bad = [
-    { ...fullV2(), sanity: 101 },
-    { ...fullV2(), zeroCount: 3 },
-    { ...fullV2(), rel: { ...REL_START, boss: 200 } },
-    { ...fullV2(), codex: ['nope'] },
-    { ...fullV2(), evidence: [{ ...item, en: undefined }] },
-    { ...fullV2(), flags: [1] },
+    { ...fullV3(), sanity: 101 },
+    { ...fullV3(), zeroCount: 3 },
+    { ...fullV3(), rel: { ...REL_START, boss: 200 } },
+    { ...fullV3(), codex: ['nope'] },
+    { ...fullV3(), evidence: [{ ...item, en: undefined }] },
+    { ...fullV3(), flags: [1] },
+    { ...fullV3(), map: 'M99' },
+    { ...fullV3(), chapter: 'ch9' },
+    { ...fullV3(), name: 'x'.repeat(13) },
+    { ...fullV3(), name: 'a' },
   ];
   for (const b of bad) expect(readSave(memStore({ [SAVE_KEY]: JSON.stringify(b) }))).toEqual({ kind: 'corrupt' });
 });
