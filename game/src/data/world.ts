@@ -5,9 +5,11 @@ import { MAPS, type Exit, type MapDef, type NpcDef } from './maps';
 
 export const TS = 16;
 
-/** # 牆 · . 辦公室地毯 · , Fab 地板 · y 黃光區 · = 更衣室 · D 門 · A 風淋室 · g 玻璃牆 */
-export type Tile = '#' | '.' | ',' | 'y' | '=' | 'D' | 'A' | 'g';
-export type Kind = 'desk' | 'coffee' | 'plant' | 'locker' | 'bench' | 'etch' | 'cvd' | 'met' | 'wet' | 'stk' | 'litho' | 'track';
+/** # 牆 · . 地毯 · , Fab 地板 · y 黃光區 · = 更衣室 · D 門 · A 風淋室 · g 玻璃牆 · l 大廳石材 · w 木地板 */
+export type Tile = '#' | '.' | ',' | 'y' | '=' | 'D' | 'A' | 'g' | 'l' | 'w';
+export type Kind =
+  | 'desk' | 'coffee' | 'plant' | 'locker' | 'bench' | 'table' | 'board' | 'sofa' | 'vending' | 'booth' | 'gate' | 'screen' | 'bed'
+  | 'etch' | 'cvd' | 'met' | 'wet' | 'stk' | 'litho' | 'track';
 export type ToolSt = 'run' | 'idle' | 'alarm' | 'inhibit';
 export type Act = 'pc' | 'say' | 'coffee' | 'locker' | 'tool' | 'etch07' | 'met' | 'npc';
 export type LookId = 'office' | 'suit' | 'boss' | 'kevin' | 'fse';
@@ -44,7 +46,7 @@ export let NPC: Thing[] = [];
 export let ACTS: Thing[] = [];
 export let BLK: (Thing | null)[][] = [];
 
-const FLOOR = new Set<Tile>(['.', ',', 'y', '=', 'D']);
+const FLOOR = new Set<Tile>(['.', ',', 'y', '=', 'D', 'l', 'w']);
 
 /** NPC 定義對應的地圖物件；同一筆定義一直用同一個物件，面向才會保留。 */
 const npcThings = new Map<NpcDef, Thing>();

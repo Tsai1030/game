@@ -18,6 +18,14 @@ function tile(p: Painter, i: number, j: number): void {
     p.rect(C.carpet2, X + 11, Y + 11, 2, 2);
   } else if (ch === ',') floor(C.fab, C.fab2, C.fabDot);
   else if (ch === 'y') floor(C.yel, C.yel2, C.yelDot);
+  else if (ch === 'l') floor(C.lobby, C.lobby2, C.lobbyDot);
+  else if (ch === 'w') {
+    // 木地板：一條條木板，接縫錯開。
+    p.rect(C.floorW, X, Y, 16, 16);
+    for (const r of [0, 4, 8, 12]) p.rect(C.floorW2, X, Y + r, 16, 1);
+    p.rect(C.floorW2, X + ((j * 7 + i * 5) % 12) + 2, Y + 1, 1, 3);
+    p.rect(C.floorW2, X + ((j * 3 + i * 11) % 12) + 2, Y + 9, 1, 3);
+  }
   else if (ch === '=') {
     p.rect(C.gown, X, Y, 16, 16);
     p.rect(C.gown2, X, Y, 16, 1);

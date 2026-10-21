@@ -1,14 +1,15 @@
-import { hasClue, S } from '../core/state';
+import { S } from '../core/state';
 import { hashStr, rng } from '../core/random';
 import { TS, type Thing } from '../data/world';
 import { C, HALO1, HALO2, hexA, LEDC, type LedColor } from './palette';
-import { disc, txt, txtW, type Painter } from './paint';
+import { FURN_TOP, furnDyn, furnStatic } from './furniture';
+import { boxGeo, drawBox, sideTop, surface, type Faces, type Geo, type Rect, type Surface } from './oblique';
+import { txt, txtW, type Painter } from './paint';
 
 /** 靜態貼圖四周預留的空間（燈號塔高出佔地格 26 px、陰影向右下延伸）。 */
 export const STATIC_PAD = { x: 6, top: 26, bottom: 6 } as const;
 
 type ToolKind = 'etch' | 'cvd' | 'met' | 'wet' | 'stk' | 'litho' | 'track';
-type Rect = [number, number, number, number];
 
 /** 各機種的正面高度 hz，以及頂面高出佔地格的距離 lift（px）。 */
 const DIM: Record<ToolKind, { hz: number; lift: number }> = {
@@ -26,97 +27,32 @@ const TOWER = 14;
 /** 物件畫面上高出佔地格的高度；點擊判定和頭上的箭頭都用這個。 */
 export const VISUAL_TOP: Partial<Record<string, number>> = {
   ...Object.fromEntries(Object.entries(DIM).map(([k, d]) => [k, d.lift + TOWER])),
-  desk: 14,
-  locker: 13,
-  coffee: 11,
+  ...FURN_TOP,
 };
 
 const isTool = (o: Thing) => o.kind in DIM;
 
-/** 斜角視角：頂面每往後 4 列向右偏 1 px，看得到右側面。 */
-const SHEAR = 0.25;
-const shift = (v: number) => Math.round(v * SHEAR);
+/** 機台各面的顏色。 */
+const TOOL_FACES: Faces = {
+  line: C.tLine,
+  top0: C.tTop0,
+  top1: C.tTop1,
+  top2: C.tTop2,
+  rimHi: C.tRimHi,
+  edge: C.tEdge,
+  face: C.tFace,
+  face1: C.tFace1,
+  faceHi: C.tFaceHi,
+  faceLo: C.tFaceLo,
+  kick: C.tKick,
+  kickHi: C.tKickHi,
+  side: C.tSide,
+  side1: C.tSide1,
+  sideEdge: C.tSideEdge,
+};
 
-/**
- * 機台幾何。hz 正面高、T 頂面深（列數）、side 右側面寬、sw 正面與頂面寬；
- * tx 正面左緣、ty 頂面最後一列、fy 正面第一列、by 佔地格底邊。
- */
-export function toolGeo(o: Thing, X = 0, Y = 0) {
-  const { hz, lift } = DIM[o.kind as ToolKind];
-  const W = o.w * TS;
-  const H = o.h * TS;
-  const T = H + lift - hz;
-  const side = shift(T - 1);
-  const by = Y + H;
-  const fy = by - hz;
-  return { W, H, hz, T, side, sw: W - 2 - side, tx: X + 1, ty: fy - T, fy, by };
-}
-type Geo = ReturnType<typeof toolGeo>;
-
-/** 右側面第 c 欄（1 起算）最上面那一列：頂面右緣剛好蓋不到的地方。 */
-const sideTop = (g: Geo, c: number) => g.fy - Math.ceil((c - 0.5) / SHEAR);
-
-/** 頂面座標 (u, r)：u 從頂面左緣往右、r 從頂面最後一列往前，轉成斜切後的畫面座標。 */
-function surface(g: Geo) {
-  const pt = (u: number, r: number): [number, number] => {
-    const v = g.T - 1 - r;
-    return [g.tx + u + shift(v), g.fy - 1 - v];
-  };
-  const rects = (u: number, r: number, w: number, h: number): Rect[] => {
-    const out: Rect[] = [];
-    for (let i = 0; i < h; i++) {
-      const [x, y] = pt(u, r + i);
-      const last = out[out.length - 1];
-      if (last && last[0] === x && last[1] + last[3] === y) last[3]++;
-      else out.push([x, y, w, 1]);
-    }
-    return out;
-  };
-  const rect = (p: Painter, col: string, u: number, r: number, w: number, h: number) => {
-    for (const q of rects(u, r, w, h)) p.rect(col, ...q);
-  };
-  const round = (p: Painter, col: string, cu: number, cr: number, rad: number) => {
-    for (let y = -rad; y <= rad; y++) {
-      const w = Math.floor(Math.sqrt(rad * rad - y * y) + 0.5);
-      rect(p, col, cu - w, cr + y, w * 2 + 1, 1);
-    }
-  };
-  return { pt, rects, rect, round };
-}
-type Surface = ReturnType<typeof surface>;
-
-/** 機身：落地陰影、外框、右側面、頂面（後暗前亮）、正面與踢腳板。 */
-function body(p: Painter, g: Geo, s: Surface): void {
-  const { tx, sw, T, fy, by, hz, side } = g;
-  p.rect(C.shadow, tx + 2, by, sw + side + 2, 3);
-  for (let c = 1; c <= side + 2; c++) p.rect(C.shadow2, tx + sw - 1 + c, by - Math.ceil((c - 0.5) / SHEAR), 2, 4);
-  for (const q of s.rects(-1, 0, sw + 2, T)) p.rect(C.tLine, ...q);
-  const [bx, byy] = s.pt(-1, 0);
-  p.rect(C.tLine, bx, byy - 1, sw + 2, 1);
-  p.rect(C.tLine, tx - 1, fy, sw + 2, hz + 1);
-  for (let c = 1; c <= side + 1; c++) p.rect(C.tLine, tx + sw - 1 + c, sideTop(g, Math.min(c, side)) - 1, 1, hz + 2);
-  for (let c = 1; c <= side; c++) {
-    const x = tx + sw - 1 + c;
-    const y = sideTop(g, c);
-    p.rect(c % 3 === 0 ? C.tSide1 : C.tSide, x, y, 1, hz);
-    p.rect(C.tSideEdge, x, y, 1, 1);
-    p.rect(C.tKick, x, y + hz - 3, 1, 3);
-  }
-  const b = Math.max(1, (T / 3) | 0);
-  s.rect(p, C.tTop0, 0, 0, sw, b);
-  s.rect(p, C.tTop1, 0, b, sw, b);
-  s.rect(p, C.tTop2, 0, 2 * b, sw, T - 2 * b);
-  s.rect(p, C.tRimHi, 0, 0, sw, 1);
-  s.rect(p, C.tRimHi, 0, 0, 1, T);
-  s.rect(p, C.tSideEdge, sw - 1, 1, 1, T - 1);
-  s.rect(p, C.tEdge, 0, T - 1, sw, 1);
-  p.rect(C.tFace, tx, fy, sw, hz);
-  p.rect(C.tFace1, tx, fy, sw, 2);
-  p.rect(C.tFaceHi, tx, fy, 1, hz);
-  p.rect(C.tFaceLo, tx + sw - 1, fy, 1, hz);
-  p.rect(C.tKick, tx, by - 3, sw, 3);
-  p.rect(C.tKickHi, tx, by - 3, sw, 1);
-}
+/** 機台幾何（見 oblique.ts 的 boxGeo）。 */
+export const toolGeo = (o: Thing, X = 0, Y = 0): Geo => boxGeo(o, DIM[o.kind as ToolKind], X, Y);
 
 /** 頂面往下凹的槽（腔體、槽體）：左上暗、右下亮。 */
 function well(p: Painter, s: Surface, u: number, r: number, w: number, h: number): void {
@@ -183,7 +119,7 @@ function toolLayout(p: Painter, o: Thing, X: number, Y: number): ToolLayout {
   const g = toolGeo(o, X, Y);
   const s = surface(g);
   const { tx, sw, T, fy, by, hz, side } = g;
-  body(p, g, s);
+  drawBox(p, g, s, TOOL_FACES, C.shadow, C.shadow2);
   const L: ToolLayout = { pms: [], tower: { x: 0, ys: [0, 0, 0] }, glow: [], zones: [], strip: [], sy: by - 2 };
   const top = (u: number, r: number, w: number, h: number) => L.zones.push([u, r, w, h, s.pt]);
   L.zones.push([1, 3, side, hz - 7, (c, yy) => [tx + sw - 1 + c, sideTop(g, c) + yy]]);
@@ -431,87 +367,14 @@ export function floorGlow(p: Painter, o: Thing, X: number, Y: number, t: number,
   p.rect(C.alarmGlow, X - 6, Y - 10, o.w * TS + 12, o.h * TS + 16);
 }
 
-function deskMonitorX(o: Thing, X: number): number {
-  return X + ((o.w * TS) >> 1) - 7;
-}
-
 /** 物件不會變的部分：畫一次成貼圖。 */
 export function objStatic(p: Painter, o: Thing, X: number, Y: number): void {
-  const W = o.w * TS;
-  if (isTool(o)) {
-    toolLayout(p, o, X, Y);
-    return;
-  }
-  switch (o.kind) {
-    case 'desk': {
-      p.rect(C.shadow, X + 2, Y + 12, W, 3);
-      p.rect(C.line, X, Y - 2, W, 16);
-      p.rect(C.wood, X + 1, Y - 1, W - 2, 9);
-      p.rect(C.wood2, X + 1, Y + 8, W - 2, 5);
-      if (o.id === 'desk2')
-        for (let k = 0; k < 3; k++) {
-          p.rect(C.line, X + 3 + k * 5, Y, 4, 5);
-          p.rect(C.white, X + 4 + k * 5, Y + 1, 2, 3);
-        }
-      if (o.pc) {
-        const mx = deskMonitorX(o, X);
-        p.rect(C.line, mx, Y - 13, 14, 12);
-        p.rect(C.mon, mx + 1, Y - 12, 12, 10);
-        p.rect(C.screen, mx + 2, Y - 11, 10, 7);
-        p.rect(C.line, mx + 6, Y - 1, 2, 1);
-        p.rect(C.front, mx - 1, Y + 2, 16, 3);
-        p.rect(C.line, mx - 1, Y + 5, 16, 1);
-      }
-      return;
-    }
-    case 'locker': {
-      p.rect(C.line, X, Y - 12, W, 27);
-      p.rect(C.metal, X + 1, Y - 11, W - 2, 25);
-      for (let x = X + 16; x < X + W - 1; x += 16) p.rect(C.metal2, x, Y - 11, 1, 25);
-      for (let x = X + 12; x < X + W; x += 16) p.rect(C.line, x, Y - 1, 1, 3);
-      for (let x = X + 4; x < X + W - 6; x += 16) for (let k = 0; k < 3; k++) p.rect(C.metal2, x, Y - 8 + k * 2, 6, 1);
-      p.rect(C.line, X + 33, Y - 10, 14, 23);
-      return;
-    }
-    case 'coffee':
-      p.rect(C.shadow, X + 3, Y + 13, 12, 3);
-      p.rect(C.line, X + 2, Y - 10, 12, 25);
-      p.rect(C.metal, X + 3, Y - 9, 10, 23);
-      p.rect(C.screen, X + 5, Y - 7, 6, 3);
-      p.rect(C.redDim, X + 10, Y - 2, 2, 2);
-      p.rect(C.line, X + 5, Y + 3, 6, 6);
-      p.rect(C.white, X + 6, Y + 5, 4, 4);
-      return;
-    case 'plant':
-      p.rect(C.shadow, X + 3, Y + 13, 10, 3);
-      disc(p, X + 8, Y + 1, 6, C.line);
-      disc(p, X + 8, Y + 1, 5, C.leaf);
-      disc(p, X + 6, Y - 1, 2, C.leaf2);
-      disc(p, X + 10, Y + 2, 2, C.leaf2);
-      p.rect(C.line, X + 3, Y + 6, 10, 9);
-      p.rect(C.pot, X + 4, Y + 7, 8, 7);
-      return;
-    case 'bench':
-      p.rect(C.shadow, X + 2, Y + 12, W, 3);
-      p.rect(C.line, X, Y + 2, W, 10);
-      p.rect(C.wood, X + 1, Y + 3, W - 2, 5);
-      p.rect(C.wood2, X + 1, Y + 8, W - 2, 3);
-      return;
-    default:
-      return;
-  }
+  if (isTool(o)) toolLayout(p, o, X, Y);
+  else furnStatic(p, o, X, Y);
 }
 
 /** 物件會變的部分：每格重畫。p 是一般圖層，glow 是 ADD 混色的發光層。 */
 export function objDyn(p: Painter, glow: Painter, o: Thing, X: number, Y: number, t: number, reduce: boolean): void {
-  if (isTool(o)) return toolDyn(p, glow, o, X, Y, t, reduce);
-  if (o.kind === 'desk' && o.id === 'pc' && !hasClue('spc') && (reduce || Math.floor(t * 2) % 2 === 0)) {
-    p.rect(C.red, deskMonitorX(o, X) + 2, Y - 11, 10, 7);
-  } else if (o.kind === 'locker' && !S.suit) {
-    p.rect(C.suit, X + 36, Y - 8, 8, 18);
-    p.rect(C.suit2, X + 39, Y - 8, 2, 18);
-    p.rect(C.visor, X + 37, Y - 6, 6, 2);
-  } else if (o.kind === 'coffee' && !reduce && Math.floor(t) % 2 === 1) {
-    p.rect(C.red, X + 10, Y - 2, 2, 2);
-  }
+  if (isTool(o)) toolDyn(p, glow, o, X, Y, t, reduce);
+  else furnDyn(p, o, X, Y, t, reduce);
 }

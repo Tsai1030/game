@@ -6,7 +6,7 @@ import { MAPS } from '../src/data/maps';
 const start = { x: 3, y: 4 };
 const etch07 = () => OBJ.find((o) => o.id === 'ETCH-07')!;
 
-const TILE_CHARS = new Set(['#', '.', ',', 'y', '=', 'D', 'A', 'g']);
+const TILE_CHARS = new Set(['#', '.', ',', 'y', '=', 'D', 'A', 'g', 'l', 'w']);
 
 test('every map is well formed', () => {
   for (const m of Object.values(MAPS)) {
