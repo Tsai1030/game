@@ -10,7 +10,7 @@ import { drawPerson, LOOK } from '../render/person';
 import { drawMap } from '../render/tiles';
 import { floorGlow, objDyn, objStatic, STATIC_PAD } from '../render/tools';
 import { isDialogOpen } from '../ui/dialog';
-import { advanceScene } from '../ui/scene';
+import { advanceScene, pumpQueue } from '../ui/scene';
 import { hideShower, setLocation, setPrompt, showShower } from '../ui/hud';
 import { toast } from '../ui/toast';
 import { doInteract } from './actions';
@@ -137,6 +137,8 @@ export class WorldScene extends Phaser.Scene {
         toast(t('toast.showerDone'));
       }
     }
+    // 排隊中的劇情（例如 LINE 回報）等玩家空下來再播。
+    pumpQueue();
     const m = this.mover;
     m.tick(dt, held[held.length - 1], busy);
 

@@ -6,8 +6,8 @@ import { fmtClock, S } from '../core/state';
 import { browserStore } from '../core/storage';
 import { CASE, type ClueId } from '../data/case';
 import { CODEX } from '../data/codex';
-import type { Scene } from '../data/script';
-import { ASKS, LABELS, SCENES, type Line } from '../data/story';
+import { ASKS, LABELS, SCENES } from '../data/story';
+import { busy } from '../game/runtime';
 import { ScriptRunner, type Frame, type RunnerEvent } from '../systems/script';
 import { hideCard, showCard } from './cards';
 import { closeDialog, finishTyping, hideRecognize, initDialog, openDialog, renderChoices, renderLine } from './dialog';
@@ -19,14 +19,9 @@ let activeId: string | null = null;
 let params: Params | undefined;
 let onEnd: (() => void) | undefined;
 const queue: string[] = [];
-/** 過渡用：舊的 say() 呼叫轉成臨時劇情（Task 9 移除）。 */
-const extra: Record<string, Scene> = {};
 
 export const isSceneActive = (): boolean => runner !== null;
 
-const scenes = () => ({ ...SCENES, ...extra });
-/** 以 '__' 開頭的是臨時劇情，不記進存檔（讀檔時無法重播）。 */
-const persistable = (id: string) => !id.startsWith('__');
 
 function handle(ev: RunnerEvent): void {
   if (ev.kind === 'codex') toast(`${t('codex.correct', { name: L(CODEX[ev.id].name) })} ${L(CODEX[ev.id].what)}`, 'clue');
@@ -107,13 +102,13 @@ export function playScene(id: string, opts: { params?: Params; onEnd?: () => voi
     queueScene(id);
     return;
   }
-  if (persistable(id)) S.scene = id;
+  S.scene = id;
   saveNow();
   pauseAutosave(true);
   activeId = id;
   params = opts.params;
   onEnd = opts.onEnd;
-  runner = new ScriptRunner({ state: () => S, clock: () => fmtClock(S.sec).slice(0, 5), scenes: scenes(), asks: ASKS, labels: LABELS });
+  runner = new ScriptRunner({ state: () => S, clock: () => fmtClock(S.sec).slice(0, 5), scenes: SCENES, asks: ASKS, labels: LABELS });
   openDialog();
   render(runner.start(id));
 }
@@ -147,9 +142,9 @@ export function queueScene(id: string): void {
   if (activeId !== id && !queue.includes(id)) queue.push(id);
 }
 
-/** 由遊戲迴圈在不忙時呼叫。 */
+/** 由遊戲迴圈每格呼叫；對話、視窗、劇情卡、風淋等忙碌狀態時先不播。 */
 export function pumpQueue(): void {
-  if (runner) return;
+  if (runner || busy()) return;
   const id = queue.shift();
   if (id) playScene(id);
 }
@@ -166,12 +161,6 @@ export function stopScene(): void {
     pauseAutosave(false);
   }
   queue.length = 0;
-}
-
-/** 過渡用：把一串台詞當成臨時劇情播放（Task 9 移除）。 */
-export function say(lines: Line[], opts: { params?: Params; onEnd?: () => void } = {}): void {
-  extra.__say = lines.map((l, i) => ({ line: { ...l, id: `__say-${i}` } }));
-  playScene('__say', opts);
 }
 
 export function initScenePlayer(): void {

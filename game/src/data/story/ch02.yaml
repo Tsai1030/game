@@ -88,6 +88,7 @@ scenes:
     - line: { id: c2_report_spc-1, speaker: me, zh: "（LINE 給王經理）N9K417.1 OOC，正在查 ETCH-07 PM-B。", en: "(LINE to Manager Wang) N9K417.1 OOC, checking ETCH-07 PM-B." }
     - evidence: { id: E-C2-02, time: "03:40", source: chat, speaker: boss, zh: "你自己看著辦，8 點前要有結論。", en: "Handle it yourself. I need a conclusion by 8." }
     - line: { id: c2_report_spc-2, speaker: boss, zh: "（LINE）你自己看著辦，8 點前要有結論。", en: "(LINE) Handle it yourself. I need a conclusion by 8." }
+    - effect: { flag: seen_c2_report_spc }
 
   # C2-06：拿到 focus ring 線索後，你在 LINE 回報王經理（證據 E-C2-03、E-C2-04）。
   c2_report_ring:
@@ -95,3 +96,4 @@ scenes:
     - line: { id: c2_report_ring-1, speaker: me, zh: "（LINE 給王經理）PM-B focus ring 1,180h，疑似到壽命，建議更換。", en: "(LINE to Manager Wang) PM-B focus ring at 1,180 h, likely end of life, recommend replacing." }
     - evidence: { id: E-C2-04, time: "05:10", source: chat, speaker: boss, zh: "嗯。", en: "Mm." }
     - line: { id: c2_report_ring-2, speaker: boss, zh: "（LINE，已讀很久之後）嗯。", en: "(LINE, long after reading it) Mm." }
+    - effect: { flag: seen_c2_report_ring }

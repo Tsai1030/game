@@ -7,11 +7,10 @@ import { S, TACTIC_IDS, type EvidenceSource, type TacticId } from '../core/state
 import { browserStore } from '../core/storage';
 import { CASE, type ClueId, type LogLevel } from '../data/case';
 import { CODEX } from '../data/codex';
-import { story } from '../data/story';
 import { TOOL_INFO, type Thing } from '../data/world';
 import { gainClue, setCoffee, setEtch, solveCase } from '../game/effects';
 import { judge, type Pick3 } from '../systems/conclusion';
-import { say } from './scene';
+import { playScene } from './scene';
 import { toast } from './toast';
 import { closeWin, openWin, rerenderWin, showTab } from './win';
 
@@ -106,11 +105,11 @@ function submitRC(): void {
   closeWin();
   if (v === 'wrong') {
     setCoffee(S.coffee - 1);
-    say(story.rc_wrong);
+    playScene('rc_wrong');
     return;
   }
   solveCase();
-  say(story.rc_solved, { params: { n: S.clues.length, c: S.coffee } });
+  playScene('rc_solved', { params: { n: S.clues.length, c: S.coffee } });
 }
 
 function rcOn(root: HTMLElement): void {

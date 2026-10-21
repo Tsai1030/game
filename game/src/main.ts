@@ -8,17 +8,17 @@ import { clearSave, readSave } from './core/save';
 import { loadSettings, settings } from './core/settings';
 import { newState, S, setState, START_POS, type GameState } from './core/state';
 import { browserStore } from './core/storage';
-import { story } from './data/story';
+import { SCENES } from './data/story';
 import { resetNpcs, syncEtch, walkable } from './data/world';
 import { doInteract } from './game/actions';
-import { setCoffee } from './game/effects';
+import { requeueReports, setCoffee } from './game/effects';
 import { held, initInput } from './game/input';
 import { busy, canOpenSettings, rt } from './game/runtime';
 import { computeViewport } from './game/viewport';
 import { WorldScene } from './game/WorldScene';
 import { COFFEE_DECAY_MS, decay } from './systems/coffee';
 import { isDialogOpen } from './ui/dialog';
-import { advanceScene, initScenePlayer, say } from './ui/scene';
+import { advanceScene, initScenePlayer, playScene, stopScene } from './ui/scene';
 import { $ } from './ui/dom';
 import { initHud, refreshHud, setClock } from './ui/hud';
 import { hideTitle, isTitleOpen, showTitle } from './ui/title';
@@ -105,6 +105,7 @@ window.addEventListener('resize', () => {
 
 /* 4. 標題畫面、新遊戲與繼續 */
 function start(loaded: GameState | null): void {
+  stopScene();
   const s = loaded ?? newState();
   if (!loaded) clearSave(browserStore());
   if (!walkable(s.x, s.y, s.suit)) {
@@ -122,7 +123,11 @@ function start(loaded: GameState | null): void {
   setClock(S.sec);
   emit('reset');
   saveNow();
-  if (!loaded) say(story.intro);
+  if (!loaded) return playScene('intro');
+  // 存檔停在某段劇情開頭時，從那段開頭重播（劇情進行中不會存檔，效果不會重複）。
+  if (S.scene && SCENES[S.scene]) playScene(S.scene);
+  else S.scene = null;
+  requeueReports();
 }
 
 function openTitle(): void {
@@ -139,6 +144,7 @@ function openTitle(): void {
 on('toTitle', () => {
   saveNow();
   setAutosave(false);
+  stopScene();
   openTitle();
 });
 

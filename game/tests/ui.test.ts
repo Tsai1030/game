@@ -3,13 +3,14 @@ import { getLang, setLang, t } from '../src/core/i18n';
 import { settings, SETTINGS_KEY } from '../src/core/settings';
 import { newState, S, setState } from '../src/core/state';
 import { NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
-import { story } from '../src/data/story';
+import { SCENES } from '../src/data/story';
+import { doInteract } from '../src/game/actions';
 import { CODEX } from '../src/data/codex';
 import { switchLang } from '../src/core/lang';
-import { gainClue } from '../src/game/effects';
+import { gainClue, requeueReports } from '../src/game/effects';
 import { canOpenSettings } from '../src/game/runtime';
 import { isDialogOpen } from '../src/ui/dialog';
-import { advanceScene, initScenePlayer, playScene, stopScene } from '../src/ui/scene';
+import { advanceScene, initScenePlayer, playScene, pumpQueue, stopScene } from '../src/ui/scene';
 import { refreshHud, verb } from '../src/ui/hud';
 import { hideTitle, showTitle } from '../src/ui/title';
 import { closeWin, initWin, rerenderWin, showTab } from '../src/ui/win';
@@ -45,11 +46,23 @@ const pick = (id: string, value: string) => {
   sel.dispatchEvent(new Event('change', { bubbles: true }));
 };
 const toastText = () => $('#toast').textContent;
+/** 劇情裡的台詞（只看最外層的 line 段落）。 */
+const lines = (id: string) => SCENES[id]!.flatMap((b) => ('line' in b ? [b.line] : []));
+const line = (id: string, i = 0) => lines(id)[i]!;
+/** 一路按下去直到對話框關掉，回傳看過的每一句。 */
+const playThrough = () => {
+  const seen: string[] = [];
+  for (let k = 0; k < 50 && isDialogOpen(); k++) {
+    seen.push($('#dlg-text').textContent ?? '');
+    advanceScene();
+  }
+  return seen;
+};
 
 test('a dialog walks through its lines and calls onEnd once', () => {
   let ended = 0;
   playScene('kevin', { onEnd: () => ended++ });
-  expect($('#dlg-text').textContent).toBe(story.kevin[0]!.zh);
+  expect($('#dlg-text').textContent).toBe(line('kevin').zh);
   for (let i = 0; i < 4; i++) advanceScene();
   expect(isDialogOpen()).toBe(false);
   expect(ended).toBe(1);
@@ -59,7 +72,7 @@ test('switching language relocalizes the open dialog line', () => {
   playScene('kevin');
   setLang('en');
 
-  expect($('#dlg-text').textContent).toBe(story.kevin[0]!.en);
+  expect($('#dlg-text').textContent).toBe(line('kevin').en);
   expect($('#dlg-who').textContent).toBe('Kevin');
 });
 
@@ -95,7 +108,7 @@ test('settings can be opened mid-dialog and switching there relocalizes the dial
   expect(canOpenSettings()).toBe(true);
   openSettings();
   $<HTMLButtonElement>('#win [data-lang="en"]').click();
-  expect($('#dlg-text').textContent).toBe(story.kevin[0]!.en);
+  expect($('#dlg-text').textContent).toBe(line('kevin').en);
   expect($('#win .win-h b').textContent).toBe('Settings');
 });
 
@@ -121,7 +134,7 @@ test('submitting the right answer with 3 clues solves the case', () => {
   $<HTMLButtonElement>('#rc-go').click();
   expect(S.solved).toBe(true);
   expect(OBJ.find((o) => o.id === 'ETCH-07')!.st).toBe('run');
-  expect($('#dlg-text').textContent).toBe(story.rc_solved[0]!.zh);
+  expect($('#dlg-text').textContent).toBe(line('rc_solved').zh);
 });
 
 test('a wrong cause costs a coffee and gets scolded', () => {
@@ -133,7 +146,7 @@ test('a wrong cause costs a coffee and gets scolded', () => {
   pick('#rc-cause', 'recipe_changed');
   $<HTMLButtonElement>('#rc-go').click();
   expect(S.coffee).toBe(2);
-  expect($('#dlg-text').textContent).toBe(story.rc_wrong[0]!.zh);
+  expect($('#dlg-text').textContent).toBe(line('rc_wrong').zh);
 });
 
 test('a new game clears the previous conclusion picks and NPC facing', () => {
@@ -209,6 +222,46 @@ test('the codex shows locked cards and opens unlocked ones', () => {
   switchLang('en');
   expect($('#win [data-card="family"]').textContent).toBe(CODEX.family.name.en);
   expect($('#win-b').textContent).toContain(CODEX.family.todo.en);
+});
+
+test('talking to Kevin plays his scene and then gives the PM clue', () => {
+  doInteract(NPC.find((n) => n.id === 'kevin')!);
+  expect($('#dlg-text').textContent).toBe(line('kevin').zh);
+  expect(playThrough()).toHaveLength(4);
+  expect(S.clues).toContain('pm');
+});
+
+test('the boss with 3 clues plays the main lines, then the ready lines', () => {
+  S.clues = ['spc', 'fdc', 'ring'];
+  doInteract(NPC.find((n) => n.id === 'boss')!);
+  expect(playThrough()).toEqual([...lines('boss_main'), ...lines('boss_ready')].map((l) => l.zh));
+});
+
+test('the first SPC clue queues a LINE report that plays once, after the window closes', () => {
+  openPC();
+  gainClue('spc');
+  pumpQueue();
+  expect(isDialogOpen()).toBe(false);
+  closeWin();
+  pumpQueue();
+  expect($('#dlg-text').textContent).toBe(line('c2_report_spc').zh);
+  playThrough();
+  expect(S.evidence.map((e) => e.id)).toEqual(['E-C2-01', 'E-C2-02']);
+  pumpQueue();
+  expect(isDialogOpen()).toBe(false);
+});
+
+test('a report that was queued but never played comes back after Continue', () => {
+  gainClue('ring');
+  stopScene();
+  requeueReports();
+  pumpQueue();
+  expect($('#dlg-text').textContent).toBe(line('c2_report_ring').zh);
+  playThrough();
+  stopScene();
+  requeueReports();
+  pumpQueue();
+  expect(isDialogOpen()).toBe(false);
 });
 
 test('the same clue cannot be collected twice', () => {

@@ -1,12 +1,11 @@
 import { t } from '../core/i18n';
 import { S } from '../core/state';
-import { story, type StoryKey } from '../data/story';
 import type { Thing } from '../data/world';
 import { drink } from '../systems/coffee';
-import { say } from '../ui/scene';
+import { playScene } from '../ui/scene';
 import { toast } from '../ui/toast';
 import { openEtch, openMet, openPC, openTool } from '../ui/windows';
-import { gainClue, setCoffee, setSuit } from './effects';
+import { setCoffee, setSuit } from './effects';
 
 /** 轉身面向物件。 */
 function faceTo(o: Thing): void {
@@ -20,18 +19,14 @@ function talk(n: Thing): void {
   const dx = S.x - n.x;
   const dy = S.y - n.y;
   n.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
-  if (n.id === 'boss') {
-    if (S.solved) return say(story.boss_solved);
-    return say([...(S.suit ? story.boss_suit : []), ...story.boss_main, ...(S.clues.length >= 3 ? story.boss_ready : story.boss_more)]);
-  }
-  if (n.id === 'kevin') return say(story.kevin, { onEnd: () => gainClue('pm') });
-  say(story.fse);
+  // 劇情內容（含條件分支、給線索）都在 ch02.yaml。
+  playScene(n.id);
 }
 
 function doLocker(): void {
   if (!S.suit) {
     setSuit(true);
-    say(story.locker_on);
+    playScene('locker_on');
   } else {
     setSuit(false);
     toast(t('toast.suitOff'));
@@ -40,9 +35,9 @@ function doLocker(): void {
 
 function doCoffee(): void {
   const r = drink(S.coffee);
-  if (!r.ok) return say(story.coffee_full);
+  if (!r.ok) return playScene('coffee_full');
   setCoffee(r.coffee);
-  say(story.coffee_ok);
+  playScene('coffee_ok');
 }
 
 /** 和物件或 NPC 互動（行為與原型的 doInteract 相同）。 */
@@ -63,7 +58,7 @@ export function doInteract(o: Thing): void {
     case 'coffee':
       return doCoffee();
     case 'say':
-      if (o.say) say(story[o.say as StoryKey]);
+      if (o.say) playScene(o.say);
       return;
     default:
       return;
