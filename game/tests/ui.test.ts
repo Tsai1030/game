@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { getLang, setLang, t } from '../src/core/i18n';
 import { settings, SETTINGS_KEY } from '../src/core/settings';
 import { ch2State, newState, S, setState } from '../src/core/state';
-import { NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
+import { loadMap, NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
 import { SCENES } from '../src/data/story';
 import { doInteract } from '../src/game/actions';
 import { CODEX } from '../src/data/codex';
@@ -30,6 +30,7 @@ beforeEach(() => {
   stopScene();
   initScenePlayer();
   setState(ch2State());
+  loadMap('M03');
   syncEtch('alarm');
   settings.textSpeed = 'instant';
   localStorage.clear();
@@ -182,6 +183,7 @@ test('the shift-end countdown shows only on the night shift', () => {
   refreshHud();
   expect($('#shift-stat').hidden).toBe(true);
   setState(ch2State());
+  loadMap('M03');
   refreshHud();
   expect($('#shift-stat').hidden).toBe(false);
 });

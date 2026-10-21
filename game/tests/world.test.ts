@@ -1,6 +1,8 @@
 import { expect, test } from 'bun:test';
 import { bfs } from '../src/systems/path';
-import { ACTS, adj, loadMap, MAP, MH, MW, OBJ, region, syncEtch, TOOL_INFO, walkable } from '../src/data/world';
+import { ACTS, adj, loadMap, MAP, MH, MW, NPC, OBJ, refreshNpcs, region, syncEtch, TOOL_INFO, walkable } from '../src/data/world';
+import { ch2State, newState } from '../src/core/state';
+import type { NpcDef } from '../src/data/maps';
 import { MAPS } from '../src/data/maps';
 import { SCENES } from '../src/data/story';
 
@@ -65,6 +67,35 @@ test('the site has a corridor, a meeting room, a break room and the unchanged fa
     ['ETCH-05', 17, 3], ['ETCH-07', 25, 3], ['CVD-11', 33, 3], ['MET-02', 17, 11],
     ['WET-02', 25, 11], ['STK-01', 39, 10], ['LITHO-03', 20, 21], ['TRACK-03', 30, 21],
   ]);
+});
+
+test('NPCs on the site depend on the chapter', () => {
+  loadMap('M03');
+  refreshNpcs(newState());
+  expect(NPC.map((n) => n.id).sort()).toEqual(['fang']);
+  refreshNpcs(ch2State());
+  expect(NPC.map((n) => n.id).sort()).toEqual(['boss', 'fang', 'fse', 'kevin']);
+});
+
+test('a conditional NPC appears once its flag is set and never blocks the player’s own tile', () => {
+  loadMap('M03');
+  const def: NpcDef = { id: 't_npc', look: 'boss', x: 5, y: 5, dir: 'down', talk: 'boss', when: { flag: 't_flag' } };
+  MAP.npcs.unshift(def);
+  try {
+    const s = { ...ch2State(), x: 5, y: 5 };
+    refreshNpcs(s);
+    expect(NPC.some((n) => n.id === 't_npc')).toBe(false);
+    s.flags = ['t_flag'];
+    refreshNpcs(s);
+    expect(NPC.some((n) => n.id === 't_npc')).toBe(true);
+    expect(walkable(5, 5, false)).toBe(true);
+    s.y = 6;
+    refreshNpcs(s);
+    expect(walkable(5, 5, false)).toBe(false);
+  } finally {
+    MAP.npcs.shift();
+    refreshNpcs(ch2State());
+  }
 });
 
 test('every scene a map names exists', () => {

@@ -5,6 +5,7 @@ import { MAPS } from '../src/data/maps';
 import { drawMap } from '../src/render/tiles';
 import { GL, parseColor, txt, type Painter } from '../src/render/paint';
 import { drawPerson, LOOK } from '../src/render/person';
+import { PORTRAITS, type PortraitId } from '../src/render/portraits';
 import { C } from '../src/render/palette';
 import { buildLeds, objDyn, objStatic, STATIC_PAD, toolGeo, VISUAL_TOP } from '../src/render/tools';
 import { furnFaces, furnGeo } from '../src/render/furniture';
@@ -61,6 +62,15 @@ test('every object’s static drawing fits its padded texture', () => {
     const w = o.w * TS + STATIC_PAD.x * 2;
     const h = o.h * TS + STATIC_PAD.top + STATIC_PAD.bottom;
     expect({ id: o.id, outside: inside(p.rects, w, h) }).toEqual({ id: o.id, outside: [] });
+  }
+});
+
+test('Fang-jie, Amy and the guard have looks and 16×16 portraits', () => {
+  for (const id of ['fang', 'amy', 'guard']) {
+    expect(LOOK[id as LookId]).toBeDefined();
+    const [rows] = PORTRAITS[id as PortraitId];
+    expect(rows.length).toBe(16);
+    expect(rows.every((r) => r.length === 16)).toBe(true);
   }
 });
 

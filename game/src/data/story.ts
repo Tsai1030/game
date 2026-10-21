@@ -4,7 +4,7 @@ import labelsRaw from './story/labels.yaml';
 import worldStory from './story/world.yaml';
 import type { AskTopic, Labels, Scene } from './script';
 
-export const SPEAKERS = ['sys', 'me', 'boss', 'kevin', 'fse'] as const;
+export const SPEAKERS = ['sys', 'me', 'boss', 'kevin', 'fse', 'fang', 'amy', 'guard'] as const;
 export type Speaker = (typeof SPEAKERS)[number];
 
 /** 一句對話；文字中英並排。 */

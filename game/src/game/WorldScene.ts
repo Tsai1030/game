@@ -3,7 +3,7 @@ import { on } from '../core/bus';
 import { t } from '../core/i18n';
 import { settings } from '../core/settings';
 import { S } from '../core/state';
-import { MAP, MH, MW, NPC, OBJ, region, T, TS, type LookId } from '../data/world';
+import { MAP, MH, MW, NPC, OBJ, refreshNpcs, region, T, TS, type LookId } from '../data/world';
 import { drawArrow, drawMarker, drawOht } from '../render/oht';
 import { canvasPainter, gfxPainter, type Painter } from '../render/paint';
 import { drawPerson, LOOK } from '../render/person';
@@ -89,10 +89,7 @@ export class WorldScene extends Phaser.Scene {
           drawPerson(canvasPainter(tex.context), 0, 7, d, f === 2 ? 1 : 0, f > 0, LOOK[id]);
           tex.refresh();
         }
-    for (const n of NPC) {
-      const img = this.add.image(n.x * TS, n.y * TS - 7, `p_${n.look}_${n.dir}_0`).setOrigin(0).setDepth((n.y + 1) * TS);
-      this.npcImg.set(n.id, img);
-    }
+    this.syncNpcs();
     this.player = this.add.image(0, 0, 'p_office_up_0').setOrigin(0);
     this.overG = this.add.graphics().setDepth(1e6);
     this.overP = gfxPainter(this.overG);
@@ -101,6 +98,21 @@ export class WorldScene extends Phaser.Scene {
     const off = on('reset', () => this.resetWorld());
     this.events.once('shutdown', off);
     this.resetWorld();
+  }
+
+  /** 讓畫面上的 NPC 人物跟目前的 NPC 清單一致。 */
+  private syncNpcs(): void {
+    const ids = new Set(NPC.map((n) => n.id));
+    for (const [id, img] of this.npcImg) {
+      if (ids.has(id)) continue;
+      img.destroy();
+      this.npcImg.delete(id);
+    }
+    for (const n of NPC) {
+      const img = this.npcImg.get(n.id) ?? this.add.image(0, 0, `p_${n.look}_${n.dir}_0`).setOrigin(0);
+      img.setPosition(n.x * TS, n.y * TS - 7).setDepth((n.y + 1) * TS);
+      this.npcImg.set(n.id, img);
+    }
   }
 
   /** 新遊戲或讀檔之後：清掉移動狀態、風淋、地點名稱。 */
@@ -167,7 +179,9 @@ export class WorldScene extends Phaser.Scene {
       .setTexture(`p_${look}_${S.dir}_${frame}`)
       .setPosition(Math.round(m.px), Math.round(m.py) - 7)
       .setDepth(m.py + TS + 0.5);
-    for (const n of NPC) this.npcImg.get(n.id)!.setTexture(`p_${n.look}_${n.dir}_0`);
+    // 劇情旗標改變時，NPC 可能出現或消失。
+    if (refreshNpcs(S)) this.syncNpcs();
+    for (const n of NPC) this.npcImg.get(n.id)?.setTexture(`p_${n.look}_${n.dir}_0`);
 
     const near = busy() ? null : m.nearObj();
     if (near !== rt.near) {

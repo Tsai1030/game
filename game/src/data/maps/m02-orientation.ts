@@ -27,7 +27,7 @@ export const M02: MapDef = {
     { id: 'otable5', kind: 'table', x: 7, y: 9, w: 4, h: 1 },
     { id: 'otable6', kind: 'table', x: 12, y: 9, w: 4, h: 1 },
   ],
-  npcs: [],
+  npcs: [{ id: 'amy', look: 'amy', x: 9, y: 3, dir: 'down', talk: 'amy', when: { chapter: 'prologue' } }],
   exits: [{ x: 15, y: 11, to: 'M03', at: { x: 12, y: 1, dir: 'down' }, if: { flag: 'p_orient_done' }, locked: 'p_orient_locked' }],
   regions: [],
   start: { x: 2, y: 10, dir: 'up' },

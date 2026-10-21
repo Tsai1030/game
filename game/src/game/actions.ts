@@ -19,8 +19,8 @@ function talk(n: Thing): void {
   const dx = S.x - n.x;
   const dy = S.y - n.y;
   n.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
-  // 劇情內容（含條件分支、給線索）都在 ch02.yaml。
-  playScene(n.id);
+  // 每個 NPC 定義指定自己的劇情（同一人在不同章節說不同的話）。
+  playScene(n.talk ?? n.id);
 }
 
 function doLocker(): void {

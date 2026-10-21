@@ -12,3 +12,14 @@ scenes:
     - line: { id: say_mes-1, speaker: sys, zh: "MES 終端機。一整排 lot，有幾批標著 HOLD。", en: "The MES terminal. A long list of lots, a few of them marked HOLD." }
   say_room_desk:
     - line: { id: say_room_desk-1, speaker: me, zh: "筆電還開著，新人手冊攤在旁邊，一頁都還沒看。", en: "The laptop is still on. The new-hire handbook lies open next to it, unread." }
+  # NPC 的基本對話；序章依劇情進度另外指定（prologue.yaml）。
+  fang:
+    - if: { chapter: prologue }
+      then:
+        - line: { id: fang-1, speaker: fang, zh: "新來的喔？有不懂的來問我，我做給你看。", en: "New here? If you don't get something, ask me. I'll show you." }
+      else:
+        - line: { id: fang-2, speaker: fang, zh: "夜班喔？ETCH-07 那台今天叫好幾次了，你小心點。", en: "Night shift, huh? ETCH-07 has been alarming all night. Watch yourself." }
+  guard:
+    - line: { id: guard-1, speaker: guard, zh: "通行證要一直掛在身上，進出都要刷。", en: "Keep your badge on you at all times. Tap it every time you go in or out." }
+  amy:
+    - line: { id: amy-1, speaker: amy, zh: "影片還有三支喔，先坐好。", en: "Three more videos to go. Have a seat." }

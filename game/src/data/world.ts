@@ -12,7 +12,7 @@ export type Kind =
   | 'etch' | 'cvd' | 'met' | 'wet' | 'stk' | 'litho' | 'track';
 export type ToolSt = 'run' | 'idle' | 'alarm' | 'inhibit';
 export type Act = 'pc' | 'say' | 'coffee' | 'locker' | 'tool' | 'etch07' | 'met' | 'npc';
-export type LookId = 'office' | 'suit' | 'boss' | 'kevin' | 'fse';
+export type LookId = 'office' | 'suit' | 'boss' | 'kevin' | 'fse' | 'fang' | 'amy' | 'guard';
 
 /** 地圖上佔格子的東西：物件或 NPC。 */
 export interface Thing {
@@ -56,15 +56,22 @@ const thingOf = (d: NpcDef): Thing => {
   return o;
 };
 
-function rebuildBlocks(): void {
+/** skip：站在玩家腳下的 NPC 先不擋路，等玩家走開再擋。 */
+function rebuildBlocks(skip: Thing | null): void {
   BLK = Array.from({ length: MH }, () => Array<Thing | null>(MW).fill(null));
   for (const o of [...OBJ, ...NPC]) {
+    if (o === skip) continue;
     for (let j = o.y; j < o.y + o.h; j++) for (let i = o.x; i < o.x + o.w; i++) BLK[j]![i] = o;
   }
 }
 
-/** 依目前劇情狀態決定這張地圖上有哪些 NPC（每個 id 取第一筆條件成立的定義）。 */
-export function refreshNpcs(s: GameState): void {
+let npcKey = '';
+
+/**
+ * 依劇情狀態決定這張地圖上有哪些 NPC（每個 id 取第一筆條件成立的定義）。
+ * 每格都可以呼叫；結果沒變就不重建，回傳 false。
+ */
+export function refreshNpcs(s: GameState, force = false): boolean {
   const seen = new Set<string>();
   const list: Thing[] = [];
   for (const d of MAP.npcs) {
@@ -72,9 +79,14 @@ export function refreshNpcs(s: GameState): void {
     seen.add(d.id);
     list.push(thingOf(d));
   }
+  const under = list.find((o) => o.x === s.x && o.y === s.y) ?? null;
+  const key = `${MAP.id}|${list.map((o) => `${o.id}@${o.x},${o.y}`).join(';')}|${under?.id ?? ''}`;
+  if (!force && key === npcKey) return false;
+  npcKey = key;
   NPC = list;
   ACTS = [...OBJ.filter((o) => o.act), ...NPC];
-  rebuildBlocks();
+  rebuildBlocks(under);
+  return true;
 }
 
 /** 換成另一張地圖。 */
@@ -84,7 +96,7 @@ export function loadMap(id: MapId): void {
   MH = T.length;
   MW = T[0]!.length;
   OBJ = MAP.objects;
-  refreshNpcs(S);
+  refreshNpcs(S, true);
 }
 
 loadMap('M03');
