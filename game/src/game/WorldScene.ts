@@ -142,6 +142,7 @@ export class WorldScene extends Phaser.Scene {
   /** 新遊戲或讀檔之後：清掉移動狀態、風淋、地點名稱。 */
   private resetWorld(): void {
     this.mover.reset();
+    this.syncNpcs();
     rt.shower = 0;
     rt.near = null;
     hideShower();
@@ -177,6 +178,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    // 已經換到別張地圖、等著重建場景：舊地圖的圖層不能再用。
+    if (MAP.id !== this.shownMap) return;
     const dt = Math.min(0.05, delta / 1000);
     const tt = time / 1000;
     const reduce = settings.reduceMotion;
@@ -192,6 +195,8 @@ export class WorldScene extends Phaser.Scene {
     pumpQueue();
     const m = this.mover;
     m.tick(dt, held[held.length - 1], busy);
+    // 「減少動態」時，踩到門會在 tick 裡直接換地圖。
+    if (MAP.id !== this.shownMap) return;
 
     // 鏡頭：跟著玩家，不超出地圖；地圖比畫面小時置中。
     const VW = this.scale.width;

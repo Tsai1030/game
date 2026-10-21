@@ -47,7 +47,7 @@ function render(): void {
   if (input) {
     input.oninput = () => (draft = input.value);
     input.onkeydown = (e) => {
-      if (e.key === 'Enter') o.onNew(cleanName(draft));
+      if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) o.onNew(cleanName(draft));
     };
   }
   el.onclick = (e) => {
