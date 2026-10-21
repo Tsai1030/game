@@ -1,0 +1,523 @@
+<title>Fab 夜班立體機台</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Silkscreen:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap">
+<style>
+  /* 版面：一欄由上而下，四個同一場景的畫法依序比較；遊戲畫面本身就是深色，所以只做深色。 */
+  :root {
+    --bg: #07070b; --panel: #0e0d14; --panel2: #15131d; --edge: #3f3a55; --edge-hi: #e8e3f3;
+    --ink: #f1ecfa; --muted: #9b94b2; --accent: #5fd0c4; --rec: #f2b544;
+    --f-px: "DotGothic16", "Noto Sans TC", system-ui, sans-serif;
+    --f-lbl: "Silkscreen", "DotGothic16", ui-monospace, monospace;
+    --f-body: "Noto Sans TC", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink); font: 15px/1.65 var(--f-body);
+    padding-block: 24px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  header { display: flex; flex-direction: column; gap: 8px; }
+  h1 { font: 400 clamp(26px, 4vw, 36px)/1.2 var(--f-px); margin: 0; text-wrap: balance; }
+  h1 small { display: block; font: 400 13px var(--f-lbl); letter-spacing: .08em; color: var(--muted); margin-top: 6px; }
+  .lead { margin: 0; max-width: 68ch; color: var(--muted); }
+  .lead b { color: var(--ink); font-weight: 400; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn { font: 400 14px var(--f-px); background: var(--panel); color: var(--ink); border: 3px solid var(--edge); padding: 4px 14px; min-height: 38px; cursor: pointer; }
+  .btn:hover { border-color: var(--edge-hi); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn[aria-pressed="true"] { background: var(--accent); color: #06060a; border-color: var(--accent); }
+  .opt { display: flex; flex-direction: column; gap: 12px; background: var(--panel); border: 3px solid var(--edge); box-shadow: inset 0 0 0 3px var(--panel), inset 0 0 0 4px #24212f; padding: 16px; }
+  .opt.rec { border-color: var(--rec); }
+  .opt-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+  .tag { font: 700 12px var(--f-lbl); letter-spacing: .08em; padding: 2px 8px; border: 2px solid var(--edge); color: var(--muted); }
+  .opt.rec .tag.r { border-color: var(--rec); color: var(--rec); }
+  .opt-h h2 { margin: 0; font: 400 21px/1.3 var(--f-px); }
+  .opt-h h2 span { font: 400 12px var(--f-lbl); letter-spacing: .06em; color: var(--muted); margin-left: 8px; }
+  .stage { background: #050507; border: 3px solid #1c1a26; display: flex; justify-content: center; overflow: hidden; }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; max-width: 100%; height: auto; }
+  .notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .notes li { background: var(--panel2); border: 2px solid #24212f; padding: 10px 12px; min-width: 0; }
+  .notes b { display: block; font: 700 11px var(--f-lbl); letter-spacing: .08em; color: var(--accent); margin-bottom: 2px; }
+  .notes p { margin: 0; font-size: 14px; }
+  .notes p + p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .solo { margin: 0; font-size: 14px; color: var(--muted); }
+  footer { color: var(--muted); font-size: 13px; max-width: 72ch; display: flex; flex-direction: column; gap: 6px; }
+  footer p { margin: 0; }
+  @media (max-width: 720px) { .notes { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>立體機台：四種畫法<small>TOOL DEPTH · FOUR WAYS TO DRAW THE SAME BAY</small></h1>
+    <p class="lead">同一個 ETCH 區角落（左起 ETCH-05、告警中的 ETCH-07、WET-02、STK-01，中間站著一位兔寶寶裝工程師當比例尺），用四種方式畫。最上面是<b>目前遊戲裡的樣子</b>，下面三種都還是像素、黑色機身、滿滿的閃爍 LED，只差在立體感怎麼做。</p>
+    <p class="lead">The same corner of the etch bay, drawn four ways. The top one is <b>what the game draws today</b>. The other three keep the pixel art, the black tool bodies and the blinking LEDs, and differ only in how they add depth.</p>
+    <div class="bar">
+      <button class="btn" id="pause" aria-pressed="false">暫停燈號 · Pause LEDs</button>
+    </div>
+  </header>
+
+  <section class="opt" data-v="now">
+    <div class="opt-h"><span class="tag">NOW</span><h2>現況：薄正面<span>CURRENT · THIN FRONT</span></h2></div>
+    <div class="stage"><canvas width="800" height="320" aria-label="目前的機台畫法 / Current tool drawing"></canvas></div>
+    <p class="solo">頂面加 10px 正面，正面和頂面顏色幾乎一樣，看起來像貼在地上的板子。 / A top face with a 10px front in nearly the same color, so the tools read as flat plates on the floor.</p>
+  </section>
+
+  <section class="opt" data-v="a">
+    <div class="opt-h"><span class="tag">A</span><h2>厚機身<span>THICK BODY · 3/4 TOP-DOWN</span></h2></div>
+    <div class="stage"><canvas width="800" height="320" aria-label="版本 A：厚機身 / Option A: thick body"></canvas></div>
+    <ul class="notes">
+      <li><b>LOOK 看起來</b><p>正面加高、頂面前緣一條亮邊、右下有落地陰影，腔體是往下凹的槽。像站在機台前一步往下看。</p><p>A taller front, a bright top edge, a cast shadow, and chambers set into the top. Like looking down from one step away.</p></li>
+      <li><b>CHANGE 改動</b><p>只改機台的繪圖程式。佔地格、碰撞和點擊範圍都不用動。</p><p>Only the tool drawing code changes. Footprints, collisions and click areas stay as they are.</p></li>
+      <li><b>TRADE-OFF 取捨</b><p>立體感中等，風險最低，和人物、地圖的視角最搭。</p><p>Medium depth and the lowest risk. It matches the characters and map best.</p></li>
+    </ul>
+  </section>
+
+  <section class="opt" data-v="b">
+    <div class="opt-h"><span class="tag">B</span><h2>斜角側面<span>OBLIQUE · SIDE FACE SHOWS</span></h2></div>
+    <div class="stage"><canvas width="800" height="320" aria-label="版本 B：斜角側面 / Option B: oblique with side face"></canvas></div>
+    <ul class="notes">
+      <li><b>LOOK 看起來</b><p>頂面往右上斜，多看得到右側面，側面也有 LED。像桌上的小模型。</p><p>The top leans up and to the right, so the right side shows, with LEDs on it too. Like a desk model.</p></li>
+      <li><b>CHANGE 改動</b><p>要新增斜切的畫法；桌子、置物櫃、咖啡機也得跟著斜，不然視角會打架。</p><p>Needs a new sheared drawing helper. Desks, lockers and the coffee machine have to follow, or the angles clash.</p></li>
+      <li><b>TRADE-OFF 取捨</b><p>立體感最強，但人物和地板是正俯視，混在一起最不協調。</p><p>The strongest depth, but it clashes most with the straight top-down characters and floor.</p></li>
+    </ul>
+  </section>
+
+  <section class="opt rec" data-v="c">
+    <div class="opt-h"><span class="tag r">C · 推薦 RECOMMENDED</span><h2>多層次<span>LAYERED RELIEF</span></h2></div>
+    <div class="stage"><canvas width="800" height="320" aria-label="版本 C：多層次 / Option C: layered relief"></canvas></div>
+    <ul class="notes">
+      <li><b>LOOK 看起來</b><p>A 的機身，再讓腔體、晶圓盒、燈號塔各自凸起、有自己的影子；LED 會在地上映出一點光。</p><p>A's body, plus raised chambers, FOUPs and signal tower, each with its own shadow. The LEDs throw a little light on the floor.</p></li>
+      <li><b>CHANGE 改動</b><p>和 A 一樣只改繪圖，但細節多一倍；燈號塔變高，頭上的提示箭頭要往上挪幾格像素。</p><p>Drawing code only, like A, with about twice the detail. The tower is taller, so the overhead marker moves up a few pixels.</p></li>
+      <li><b>TRADE-OFF 取捨</b><p>最精緻、最像真的機台，視角也和 A 一樣協調；代價是畫面比較忙。</p><p>The most detailed and the closest to real tools, with A's matching angle. The cost is a busier screen.</p></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>選好之後只會動機台的繪圖（和燈號塔高度），故事引擎那條線照常進行，不受影響。也可以混搭，例如「C 的凸起腔體，但不要地上反光」。</p>
+    <p>Once you pick, only the tool drawing (and the tower height) changes; the story-engine work carries on unaffected. Mixing works too, for example “C's raised chambers without the floor glow”.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const TS = 16, LW = 400, LH = 160;
+  const C = {
+    line: '#0a0910', shadow: 'rgba(0,0,0,.45)', wall: '#242136', wallTop: '#34304a', wallEdge: '#4a4566',
+    fab: '#1a1922', fab2: '#25232f', fabDot: '#302e3e', yel: '#2e2712', yel2: '#3d3318', yelDot: '#4d401f', yelText: '#6b5a2a',
+    win: '#5fd0e0', winDim: '#5c6178', red: '#ff4d45', redDim: '#6a2329', amber: '#f2b544', off: '#34304a', pod: '#2fa39c',
+    liquid: '#3a8fb8', glassHi: '#7fd0e0', white: '#ffffff', skin: '#f2c9a0', suit: '#f4f5ff', suit2: '#b9bdd6', glove: '#3d6fd6',
+    tTop: '#0c0d12', tRim: '#3a3f5a', tRim2: '#1e2130', tFront: '#07080b', tFront2: '#2a2e42', tPanel: '#161821', tPanel2: '#242736', tLabel: '#7f87a6',
+    alarmGlow: 'rgba(255,77,69,.14)', pmHalo: 'rgba(255,77,69,.22)',
+  };
+  // 新畫法用的明暗：光從左上來，頂面亮、正面暗、右側面最暗。
+  const K = {
+    line: '#040407', top0: '#141722', top1: '#181b28', top2: '#1d2130', rimHi: '#3e4560', rimLo: '#0b0d13',
+    edge: '#7a83a8', edge2: '#3a4058', front: '#0a0b11', front1: '#12141d', frontHi: '#1d2030', frontLo: '#040507',
+    kick: '#030305', kickHi: '#20243a', seam: '#030406', seamHi: '#191c28',
+    well: '#06070b', wellSh: '#010102', wellHi: '#2a2e40', side: '#11131d', side1: '#151824', sideEdge: '#4f5776',
+    podTop: '#4cc9c0', pod: '#2fa39c', podFront: '#1b625e', glass: '#08141b', glassHi: '#1f4352',
+    blockTop: '#1c1f2c', blockTopHi: '#454c6a', blockFront: '#0b0c12', label: '#7f87a6',
+    shadow: 'rgba(0,0,0,.6)', shadow2: 'rgba(0,0,0,.32)', liquidDeep: '#22617f',
+  };
+  const LEDC = { g: '#5dff7a', c: '#5ff0ff', a: '#ffc04a', b: '#6b9bff', r: '#ff4d45', w: '#e8f0ff' };
+  const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+  const HALO1 = {}, HALO2 = {};
+  for (const k in LEDC) { HALO1[k] = hexA(LEDC[k], 0.35); HALO2[k] = hexA(LEDC[k], 0.12); }
+
+  const GL = {
+    A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111',
+    F: '111100110100100', H: '101101111101101', I: '111010010010111', K: '101101110101101', L: '100100100100111',
+    M: '101111111101101', N: '110101101101101', O: '010101101101010', R: '110101110101101', S: '011100010001110',
+    T: '111010010010010', W: '101101111111101', Y: '101101010010010', '0': '111101101101111', '1': '010110010010111',
+    '2': '110001010100111', '5': '111100110001110', '7': '111001010010010', '9': '111101111001110', '-': '000000111000000', ' ': '000000000000000',
+  };
+  const txt = (p, s, x, y, col) => { for (let k = 0; k < s.length; k++) { const g = GL[s[k]] || GL[' ']; for (let i = 0; i < 15; i++) if (g[i] === '1') p.rect(col, x + k * 4 + (i % 3), y + ((i / 3) | 0), 1, 1); } };
+  const disc = (p, cx, cy, r, col) => { for (let y = -r; y <= r; y++) { const w = Math.floor(Math.sqrt(r * r - y * y) + 0.5); p.rect(col, cx - w, cy + y, w * 2 + 1, 1); } };
+  const painter = (ctx) => ({ rect(col, x, y, w, h) { ctx.fillStyle = col; ctx.fillRect(x, y, w, h); } });
+
+  const TOOLS = [
+    { id: 'ETCH-05', kind: 'etch', x: 1, y: 3, w: 5, h: 3, st: 'run' },
+    { id: 'ETCH-07', kind: 'etch', x: 7, y: 3, w: 5, h: 3, st: 'alarm' },
+    { id: 'WET-02', kind: 'wet', x: 13, y: 4, w: 6, h: 2, st: 'idle' },
+    { id: 'STK-01', kind: 'stk', x: 20, y: 2, w: 4, h: 5, st: 'run' },
+  ];
+
+  /* ---------- 共用：LED 產生與動態層 ---------- */
+  function rng(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function hashStr(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+  // 區塊：[x, y, w, h, map?]；map 把區塊內座標轉成畫面座標（斜角版的頂面、側面要用）。
+  function genLeds(o, zones) {
+    const r = rng(hashStr(o.id));
+    const pal = o.id === 'ETCH-07' ? 'ggcccbwarrr' : 'gggcccbbwa';
+    const L = [], used = new Set();
+    for (const [zx, zy, zw, zh, map] of zones) {
+      if (zw <= 0 || zh <= 0) continue;
+      const n = Math.min(50, Math.max(3, Math.round((zw * zh) / 10)));
+      for (let k = 0; k < n; k++) {
+        const u = zx + Math.floor(r() * zw), v = zy + Math.floor(r() * zh);
+        const [x, y] = map ? map(u, v) : [u, v];
+        const key = x * 7919 + y;
+        if (used.has(key)) continue;
+        used.add(key);
+        const q = r(), col = pal[Math.floor(r() * pal.length)];
+        L.push({ x, y, col, kind: q < 0.22 ? 'steady' : q < 0.62 ? 'blink' : 'flick', rate: 0.4 + r() * 2.6, ph: r(), duty: 0.25 + r() * 0.55 });
+      }
+    }
+    return L;
+  }
+  const pmFrame = (n, x, y, w = 14, h = 11) => ({ n, rects: [[x + 1, y + 1, w - 2, 1], [x + 1, y + h - 2, w - 2, 1], [x + 1, y + 1, 1, h - 2], [x + w - 2, y + 1, 1, h - 2]], lx: x + ((w - 3) >> 1), ly: y + ((h - 5) >> 1), halo: [x - 3, y - 3, w + 6, h + 6] });
+  const fract = (v) => v - Math.floor(v);
+  function pmColor(o, n, blink) {
+    if (o.id !== 'ETCH-07') return C.win;
+    if (n === 'B') return blink ? C.red : C.redDim;
+    return n === 'C' ? C.winDim : C.win;
+  }
+  function drawDyn(p, g, o, info, t, reduce, refl) {
+    const blink = reduce || Math.floor(t * 2.5) % 2 === 0;
+    const sk = o.st === 'alarm' ? 'r' : o.st === 'inhibit' ? 'a' : 'c';
+    for (const pm of info.pms) {
+      const col = pmColor(o, pm.n, blink);
+      for (const [x, y, w, h] of pm.rects) p.rect(col, x, y, w, h);
+      txt(p, pm.n, pm.lx, pm.ly, col);
+      if (o.id === 'ETCH-07' && pm.n === 'B' && blink) g.rect(C.pmHalo, ...pm.halo);
+    }
+    for (const l of info.leds) {
+      const on = reduce ? l.kind !== 'flick'
+        : l.kind === 'steady' || (l.kind === 'blink' ? fract(t * l.rate + l.ph) < l.duty : fract(Math.sin((Math.floor(t * 12) + l.ph * 977) * 12.9898) * 43758.5453) > 0.45);
+      if (!on) continue;
+      const k = l.col === 'r' && o.st !== 'alarm' ? 'g' : l.col;
+      g.rect(HALO2[k], l.x - 2, l.y - 2, 5, 5);
+      g.rect(HALO1[k], l.x - 1, l.y - 1, 3, 3);
+      g.rect(LEDC[k], l.x, l.y, 1, 1);
+    }
+    const S = info.strip;
+    if (refl) g.rect(hexA(LEDC[sk], 0.07), refl.x, refl.y, refl.w, 4);
+    if (reduce) for (const x of S.xs) g.rect(hexA(LEDC[sk], 0.35), x, S.y, 2, 1);
+    else {
+      const n = S.xs.length, head = Math.floor(t * 12) % n;
+      for (let d = 0; d < 4; d++) {
+        const x = S.xs[(head - d + n) % n];
+        g.rect(HALO2[sk], x - 1, S.y - 1, 4, 3);
+        g.rect(hexA(LEDC[sk], 0.9 - d * 0.22), x, S.y, 2, 1);
+        if (refl && d === 0) g.rect(hexA(LEDC[sk], 0.16), x - 2, refl.y + 1, 6, 2);
+      }
+    }
+    const tw = info.tower;
+    const lamps = [[o.st === 'alarm' && blink, 'r', tw.ys[0]], [o.st === 'idle', 'a', tw.ys[1]], [o.st === 'run', 'g', tw.ys[2]]];
+    for (const [lit, k, ly] of lamps) {
+      if (!lit) continue;
+      g.rect(HALO2[k], tw.x - 3, ly - 3, 9, 8);
+      g.rect(HALO1[k], tw.x - 1, ly - 1, 5, 4);
+      g.rect(LEDC[k], tw.x, ly, 3, 2);
+      if (refl && k === 'r') g.rect(hexA(LEDC.r, 0.1), refl.x, refl.y, refl.w, 4);
+    }
+  }
+  const stripXs = (x0, x1) => { const xs = []; for (let x = x0; x < x1; x += 3) xs.push(x); return xs; };
+
+  /* ---------- 現況：照搬遊戲目前的 toolStatic ---------- */
+  function drawNow(p, o) {
+    const X = o.x * TS, Y = o.y * TS, W = o.w * TS, H = o.h * TS, stk = o.kind === 'stk', FH = stk ? 22 : 10;
+    const tx = X + 1, ty = Y - 5, tw = W - 2, th = H + 4 - FH;
+    const info = { pms: [], leds: [], strip: { xs: stripXs(X + 3, X + W - 3), y: Y + H - 2 }, tower: { x: X + W - 7, ys: [Y - 20, Y - 18, Y - 16] } };
+    p.rect(C.shadow, X + 3, Y + H - 2, W, 4);
+    p.rect(C.line, X, Y - 6, W, H + 6);
+    p.rect(C.tTop, tx, ty, tw, th);
+    p.rect(C.tRim, tx, ty, tw, 1); p.rect(C.tRim, tx, ty, 1, th); p.rect(C.tRim2, tx + tw - 1, ty, 1, th);
+    p.rect(C.tFront, tx, Y + H - FH, tw, FH - 1); p.rect(C.tFront2, tx, Y + H - FH, tw, 1);
+    let zones;
+    if (o.kind === 'etch') {
+      const cx = tx + (tw >> 1), cy = ty + 21;
+      p.rect(C.tPanel, tx + 4, ty + th - 9, tw - 8, 7); p.rect(C.tPanel2, cx - 2, ty + th - 7, 4, 3);
+      p.rect(C.line, cx - 7, cy - 6, 14, 13); p.rect(C.tPanel, cx - 6, cy - 5, 12, 11); p.rect(C.tPanel2, cx - 1, cy - 3, 2, 7);
+      for (const [n, x, y] of [['A', cx - 25, cy - 3], ['B', cx - 17, cy - 19], ['C', cx + 3, cy - 19], ['D', cx + 11, cy - 3]]) {
+        p.rect(C.line, x, y, 14, 11); p.rect(C.tPanel, x + 1, y + 1, 12, 9);
+        info.pms.push(pmFrame(n, x, y));
+      }
+      zones = [[tx + 2, ty + 2, 9, th - 12], [tx + tw - 11, ty + 2, 8, th - 12], [tx + 6, ty + th - 8, tw - 12, 1], [tx + 37, ty + 2, 4, 8]];
+    } else if (o.kind === 'wet') {
+      for (let k = 0; k < 5; k++) { const x = tx + 5 + k * 18; p.rect(C.line, x, ty + 4, 15, 12); p.rect(C.liquid, x + 1, ty + 5, 13, 10); p.rect(C.glassHi, x + 2, ty + 6, 4, 1); }
+      p.rect(C.tPanel2, tx + 4, ty + th - 4, tw - 8, 2);
+      zones = [[tx + 3, ty + 1, tw - 6, 2], [tx + 3, ty + 18, tw - 6, 3]];
+    } else {
+      for (let k = 0; k < 5; k++) p.rect(C.tPanel, tx + 3, ty + 6 + k * 10, tw - 6, 1);
+      for (let r = 0; r < 2; r++) for (let k = 0; k < 5; k++) { const x = tx + 3 + k * 12, y = Y + H - FH + 3 + r * 9; p.rect(C.line, x, y, 9, 7); p.rect(C.pod, x + 1, y + 1, 7, 5); }
+      zones = [[tx + 3, ty + 3, tw - 6, 44]];
+    }
+    const foups = o.kind === 'etch' ? 3 : o.kind === 'wet' ? 1 : 0;
+    for (let k = 0; k < foups; k++) { const x = X + 5 + k * 11; p.rect(C.line, x, Y + H - FH - 4, 10, 9); p.rect(C.pod, x + 1, Y + H - FH - 3, 8, 7); p.rect(C.line, x + 2, Y + H - FH - 1, 6, 1); }
+    const lx0 = X + 5 + foups * 11, w = o.id.length * 4 - 1;
+    txt(p, o.id, stk ? X + ((W - w) >> 1) : lx0 + ((X + W - 6 - lx0 - w) >> 1), stk ? ty + th - 9 : Y + H - FH + 2, C.tLabel);
+    const px = X + W - 7;
+    p.rect(C.line, px + 1, Y - 14, 1, 9); p.rect(C.line, px - 1, Y - 21, 5, 8);
+    for (const ly of [Y - 20, Y - 18, Y - 16]) p.rect(C.off, px, ly, 3, 2);
+    info.leds = genLeds(o, zones);
+    return info;
+  }
+
+  /* ---------- A／C：3/4 俯視厚機身 ---------- */
+  const DIM = { etch: { hz: 18, lift: 12 }, wet: { hz: 14, lift: 10 }, stk: { hz: 50, lift: 12 } };
+  const SH = 0.25; // 斜角版：每往後 4 列向右 1 px
+
+  function geo(o, oblique) {
+    const X = o.x * TS, Y = o.y * TS, W = o.w * TS, H = o.h * TS, { hz, lift } = DIM[o.kind];
+    const by = Y + H, fy = by - hz, T = H + lift - hz, tx = X + 1;
+    const side = oblique ? Math.round(T * SH) : 0;
+    return { X, Y, W, H, hz, tx, by, fy, T, side, sw: W - 2 - side, ty: fy - T };
+  }
+  // 頂面座標 (u, r)：u 從頂面左緣算，r 從頂面最後面那列算。
+  function surface(G, oblique) {
+    const pt = oblique ? (u, r) => { const v = G.T - 1 - r; return [G.tx + u + Math.round(v * SH), G.fy - 1 - v]; } : (u, r) => [G.tx + u, G.ty + r];
+    const rects = (u, r, w, h) => {
+      if (!oblique) return [[G.tx + u, G.ty + r, w, h]];
+      const out = [];
+      for (let i = 0; i < h; i++) { const [x, y] = pt(u, r + i); out.push([x, y, w, 1]); }
+      return out;
+    };
+    return { pt, rects, rect: (p, col, u, r, w, h) => { for (const q of rects(u, r, w, h)) p.rect(col, ...q); } };
+  }
+
+  function body(p, G, s, oblique, layered) {
+    const { tx, sw, T, fy, by, hz, side } = G;
+    // 落地陰影
+    p.rect(K.shadow, tx + 2, by, sw + side + 2, 3);
+    if (!oblique) p.rect(K.shadow2, tx + sw + 1, G.ty + 6, 3, by - G.ty - 3);
+    else for (let c = 1; c <= side + 2; c++) p.rect(K.shadow2, tx + sw - 1 + c, by - Math.round((c - 0.5) / SH), 2, 4);
+    // 外框
+    for (const q of s.rects(-1, -1, sw + 2, T + 1)) p.rect(K.line, ...q);
+    p.rect(K.line, tx - 1, fy, sw + 2, hz + 1);
+    if (oblique) {
+      for (let c = 1; c <= side + 1; c++) { const y0 = fy - Math.round((c - 0.5) / SH); p.rect(K.line, tx + sw - 1 + c, y0 - 1, 1, hz + 2); }
+      for (let c = 1; c <= side; c++) {
+        const y0 = fy - Math.round((c - 0.5) / SH), x = tx + sw - 1 + c;
+        p.rect(c % 3 === 0 ? K.side1 : K.side, x, y0, 1, hz);
+        p.rect(K.sideEdge, x, y0, 1, 1);
+        p.rect(K.kick, x, y0 + hz - 3, 1, 3);
+      }
+    }
+    // 頂面：後暗前亮三段
+    const b = Math.max(1, (T / 3) | 0);
+    s.rect(p, K.top0, 0, 0, sw, T);
+    s.rect(p, K.top1, 0, b, sw, T - b);
+    s.rect(p, K.top2, 0, 2 * b, sw, T - 2 * b);
+    s.rect(p, K.rimHi, 0, 0, sw, 1);
+    s.rect(p, K.rimHi, 0, 0, 1, T);
+    s.rect(p, oblique ? K.sideEdge : K.rimLo, sw - 1, 1, 1, T - 1);
+    if (layered) s.rect(p, K.edge2, 0, T - 2, sw, 1);
+    s.rect(p, K.edge, 0, T - 1, sw, 1);
+    // 正面
+    p.rect(K.front, tx, fy, sw, hz);
+    p.rect(K.front1, tx, fy, sw, 2);
+    p.rect(K.frontHi, tx, fy, 1, hz);
+    p.rect(K.frontLo, tx + sw - 1, fy, 1, hz);
+    p.rect(K.kick, tx, by - 3, sw, 3);
+    p.rect(K.kickHi, tx, by - 3, sw, 1);
+  }
+
+  const well = (p, s, u, r, w, h) => {
+    s.rect(p, K.line, u, r, w, h);
+    s.rect(p, K.well, u + 1, r + 1, w - 2, h - 2);
+    s.rect(p, K.wellSh, u + 1, r + 1, w - 2, 1);
+    s.rect(p, K.wellSh, u + 1, r + 1, 1, h - 2);
+    s.rect(p, K.wellHi, u + 1, r + h - 2, w - 2, 1);
+    s.rect(p, K.wellHi, u + w - 2, r + 1, 1, h - 2);
+  };
+  // 凸起的小方塊（C 用）：頂面 d 列、正面 hgt 列，自帶陰影。
+  const block = (p, x, y, w, d, hgt) => {
+    p.rect(K.shadow, x + 1, y + d + hgt, w + 1, 2);
+    p.rect(K.shadow2, x + w + 1, y + 2, 2, d + hgt);
+    p.rect(K.line, x - 1, y - 1, w + 2, d + hgt + 2);
+    p.rect(K.blockTop, x, y, w, d);
+    p.rect(K.blockTopHi, x, y, w, 1);
+    p.rect(K.blockTopHi, x, y, 1, d);
+    p.rect(K.edge, x, y + d - 1, w, 1);
+    p.rect(K.blockFront, x, y + d, w, hgt);
+  };
+  const foup = (p, x, y, layered) => {
+    if (layered) p.rect(K.shadow, x + 1, y + 10, 11, 2);
+    p.rect(K.line, x - 1, y - 1, 12, 11);
+    p.rect(K.podTop, x, y, 10, 4);
+    p.rect(K.pod, x, y + 4, 10, 5);
+    p.rect(K.podFront, x, y + 7, 10, 2);
+    if (layered) { p.rect(C.white, x + 1, y, 3, 1); p.rect(K.line, x + 3, y + 5, 4, 1); }
+  };
+  function tower(p, bx, by_, layered) {
+    if (layered) p.rect(K.shadow, bx - 1, by_ + 1, 5, 2);
+    p.rect(K.line, bx - 1, by_ - 8, 3, 9);
+    p.rect(K.rimHi, bx, by_ - 8, 1, 8);
+    p.rect(K.line, bx - 3, by_ - 17, 7, 10);
+    p.rect(C.off, bx - 2, by_ - 16, 5, 8);
+    if (layered) {
+      p.rect(K.blockTopHi, bx - 2, by_ - 17, 5, 1);
+      p.rect('#4a4566', bx - 2, by_ - 16, 1, 8);
+      p.rect('#1f1c2b', bx + 2, by_ - 16, 1, 8);
+    }
+    return { x: bx - 1, ys: [by_ - 15, by_ - 13, by_ - 11] };
+  }
+
+  function drawDepth(p, o, oblique, layered) {
+    const G = geo(o, oblique), s = surface(G, oblique), { tx, sw, T, fy, by, hz, side } = G;
+    body(p, G, s, oblique, layered);
+    const info = { pms: [], leds: [], strip: { xs: stripXs(tx + 2, tx + sw - 3), y: by - 2 } };
+    const zones = [];
+    const top = (u, r, w, h) => zones.push([u, r, w, h, s.pt]);
+    if (oblique && side > 0) zones.push([1, 3, side, hz - 7, (c, yy) => [tx + sw - 1 + c, fy - Math.round((c - 0.5) / SH) + yy]]);
+    if (o.kind === 'etch') {
+      const cx = sw >> 1, cy = 21, lw = Math.min(7, cx - 30);
+      if (layered) {
+        const [x, y] = s.pt(cx - 7, cy - 7); block(p, x, y, 14, 10, 3); p.rect(K.blockTopHi, x + 6, y + 2, 2, 5);
+      } else { well(p, s, cx - 7, cy - 6, 14, 13); s.rect(p, K.wellHi, cx - 1, cy - 3, 2, 7); }
+      for (const [n, u, r] of [['A', cx - 27, cy - 1], ['B', cx - 18, cy - 18], ['C', cx + 4, cy - 18], ['D', cx + 13, cy - 1]]) {
+        if (layered) {
+          const [x, y] = s.pt(u, r); block(p, x, y, 14, 9, 4);
+          info.pms.push(pmFrame(n, x, y, 14, 9));
+          zones.push([x + 2, y + 10, 10, 2]);
+        } else {
+          well(p, s, u, r, 14, 11);
+          const f = pmFrame(n, 0, 0);
+          const [x, y] = s.pt(u, r);
+          info.pms.push({ n, rects: [...s.rects(u + 1, r + 1, 12, 1), ...s.rects(u + 1, r + 9, 12, 1), ...s.rects(u + 1, r + 1, 1, 9), ...s.rects(u + 12, r + 1, 1, 9)], lx: x + f.lx + (oblique ? 1 : 0), ly: y + f.ly, halo: [x - 3, y - 3, 20, 17] });
+        }
+      }
+      top(2, 3, lw, T - 10); top(sw - 2 - lw, 3, lw, T - 10);
+      top(42, T - 5, sw - 46, 1);
+      for (let k = 0; k < 3; k++) { const [x, y] = s.pt(4 + k * 12, T - 6); foup(p, x, y, layered); }
+      // 正面：左邊名牌、右邊兩片 LED 面板
+      txt(p, o.id, tx + 5, fy + 8, K.label);
+      for (const px of [tx + 40, tx + 40 + ((sw - 44) >> 1)]) {
+        const pw = ((sw - 44) >> 1) - 2;
+        if (layered) {
+          p.rect(K.wellSh, px, fy + 3, pw, hz - 7); p.rect(K.well, px + 1, fy + 4, pw - 1, hz - 8); p.rect(K.wellHi, px + 1, fy + hz - 5, pw - 1, 1);
+        } else { p.rect(K.seam, px - 2, fy + 2, 1, hz - 5); p.rect(K.seamHi, px - 1, fy + 2, 1, hz - 5); }
+        zones.push([px + 2, fy + 5, pw - 3, hz - 10]);
+      }
+    } else if (o.kind === 'wet') {
+      for (let k = 0; k < 5; k++) {
+        const u = 4 + k * 18;
+        if (u + 15 > sw - 2) break;
+        if (layered) {
+          const [x, y] = s.pt(u, 3); block(p, x, y, 15, 3, 2);
+          p.rect(K.line, x + 1, y + 5, 13, 11); p.rect(K.liquidDeep, x + 2, y + 6, 11, 9); p.rect(C.liquid, x + 2, y + 9, 11, 6); p.rect(C.glassHi, x + 3, y + 10, 4, 1);
+        } else {
+          well(p, s, u, 4, 15, 14);
+          s.rect(p, C.liquid, u + 1, 6, 13, 10); s.rect(p, C.glassHi, u + 2, 8, 4, 1);
+        }
+      }
+      top(3, 1, sw - 6, 2);
+      txt(p, o.id, tx + 5, fy + 5, K.label);
+      if (layered) { p.rect(K.wellSh, tx + 30, fy + 2, sw - 34, hz - 6); p.rect(K.well, tx + 31, fy + 3, sw - 35, hz - 7); }
+      zones.push([tx + 32, fy + 4, sw - 38, hz - 9]);
+    } else {
+      for (let k = 0; 6 + k * 10 < T - 4; k++) { s.rect(p, K.seam, 3, 6 + k * 10, sw - 6, 1); s.rect(p, K.seamHi, 3, 7 + k * 10, sw - 6, 1); }
+      if (layered) { const [x, y] = s.pt(8, 18); block(p, x, y, sw - 16, 4, 3); }
+      top(2, 3, 4, T - 8); top(sw - 6, 3, 4, T - 8);
+      // 正面大窗，看得到裡面兩排晶圓盒
+      p.rect(K.line, tx + 3, fy + 3, sw - 6, hz - 13);
+      p.rect(K.glass, tx + 4, fy + 4, sw - 8, hz - 15);
+      if (layered) { p.rect(K.wellSh, tx + 4, fy + 4, sw - 8, 1); p.rect(K.wellSh, tx + 4, fy + 4, 1, hz - 15); }
+      for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) {
+        const x = tx + 7 + k * 13, y = fy + 6 + r * 11;
+        if (x + 9 > tx + sw - 5) continue;
+        p.rect(K.line, x - 1, y - 1, 11, 10); p.rect(K.podTop, x, y, 9, 3); p.rect(K.pod, x, y + 3, 9, 4); p.rect(K.podFront, x, y + 6, 9, 2);
+      }
+      for (let k = 0; k < 6; k++) p.rect(K.glassHi, tx + sw - 14 + k, fy + 6 + k * 3, 1, 3);
+      txt(p, o.id, tx + 5, by - 9, K.label);
+      zones.push([tx + 36, by - 9, sw - 40, 5]);
+    }
+    const [bx, byy] = s.pt(sw - 6, 3);
+    info.tower = tower(p, bx, byy, layered);
+    info.leds = genLeds(o, zones);
+    if (layered) info.refl = { x: tx, y: by + 1, w: sw + side };
+    return info;
+  }
+
+  /* ---------- 地板與人物 ---------- */
+  function drawFloor(p) {
+    for (let j = 0; j < 10; j++) for (let i = 0; i < 25; i++) {
+      const X = i * TS, Y = j * TS;
+      if (j === 0) { p.rect(C.wallTop, X, Y, 16, 16); p.rect(C.wall, X, Y + 9, 16, 7); p.rect(C.wallEdge, X, Y + 9, 16, 1); p.rect(C.line, X, Y + 15, 16, 1); continue; }
+      const y = j === 8;
+      p.rect(y ? C.yel : C.fab, X, Y, 16, 16);
+      p.rect(y ? C.yel2 : C.fab2, X, Y, 16, 1); p.rect(y ? C.yel2 : C.fab2, X, Y, 1, 16);
+      for (const a of [4, 8, 12]) for (const d of [4, 8, 12]) p.rect(y ? C.yelDot : C.fabDot, X + a, Y + d, 1, 1);
+    }
+    txt(p, 'FAB 9  ETCH BAY', 8, 4, C.white);
+  }
+  function drawPerson(p, X, Y) {
+    p.rect(C.shadow, X + 3, Y + 13, 10, 3);
+    const parts = [[5, 10, 2, 5], [9, 10, 2, 5], [4, 3, 8, 8], [2, 4, 2, 6], [12, 4, 2, 6], [3, -6, 10, 9]];
+    for (const [x, y, w, h] of parts) p.rect(C.line, X + x - 1, Y + y - 1, w + 2, h + 2);
+    for (const [x, y, w, h] of parts) p.rect(C.suit, X + x, Y + y, w, h);
+    p.rect(C.glove, X + 5, Y + 14, 2, 1); p.rect(C.glove, X + 9, Y + 14, 2, 1);
+    p.rect(C.glove, X + 2, Y + 9, 2, 1); p.rect(C.glove, X + 12, Y + 9, 2, 1);
+    p.rect(C.suit2, X + 7, Y + 4, 2, 6);
+    p.rect(C.skin, X + 4, Y - 2, 8, 3);
+    p.rect(C.line, X + 6, Y - 2, 1, 2); p.rect(C.line, X + 9, Y - 2, 1, 2);
+    p.rect(C.suit2, X + 5, Y + 1, 6, 1);
+  }
+
+  /* ---------- 組裝與動畫 ---------- */
+  const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
+  let paused = false, frozenT = 0;
+  const views = [];
+  for (const sec of document.querySelectorAll('.opt')) {
+    const v = sec.dataset.v;
+    const mk = () => { const c = document.createElement('canvas'); c.width = LW; c.height = LH; return c; };
+    const floor = mk(), objs = mk();
+    drawFloor(painter(floor.getContext('2d')));
+    const po = painter(objs.getContext('2d'));
+    const infos = new Map();
+    const items = [...TOOLS.map((o) => ({ o, z: (o.y + o.h) * TS })), { person: true, z: 7 * TS + 15 }].sort((a, b) => a.z - b.z);
+    for (const it of items) {
+      if (it.person) { drawPerson(po, 12 * TS, 7 * TS); continue; }
+      infos.set(it.o.id, v === 'now' ? drawNow(po, it.o) : drawDepth(po, it.o, v === 'b', v === 'c'));
+    }
+    const canvas = sec.querySelector('canvas');
+    views.push({ v, floor, objs, infos, canvas, ctx: canvas.getContext('2d') });
+  }
+
+  function size() {
+    for (const vw of views) {
+      const avail = vw.canvas.parentElement.clientWidth - 6;
+      const z = avail >= LW ? Math.max(1, Math.min(3, Math.floor(avail / LW))) : 2;
+      vw.canvas.width = LW * z; vw.canvas.height = LH * z;
+      vw.canvas.style.width = avail >= LW ? `${LW * z}px` : '100%';
+      vw.z = z;
+    }
+  }
+
+  function frame(now) {
+    const t = paused ? frozenT : now / 1000;
+    const reduce = reduceMQ.matches;
+    for (const vw of views) {
+      const { ctx, z } = vw;
+      ctx.setTransform(z, 0, 0, z, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(vw.floor, 0, 0);
+      const e7 = TOOLS[1];
+      if (reduce || Math.floor(t * 2.5) % 2 === 0) { ctx.fillStyle = C.alarmGlow; ctx.fillRect(e7.x * TS - 6, e7.y * TS - 10, e7.w * TS + 12, e7.h * TS + 16); }
+      ctx.drawImage(vw.objs, 0, 0);
+      const p = painter(ctx);
+      const glow = { rect(col, x, y, w, h) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = col; ctx.fillRect(x, y, w, h); ctx.globalCompositeOperation = 'source-over'; } };
+      for (const o of TOOLS) drawDyn(p, glow, o, vw.infos.get(o.id), t, reduce, vw.v === 'c' ? vw.infos.get(o.id).refl : null);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  const pauseBtn = document.getElementById('pause');
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    frozenT = performance.now() / 1000;
+    pauseBtn.setAttribute('aria-pressed', String(paused));
+  });
+  size();
+  addEventListener('resize', size);
+  requestAnimationFrame(frame);
+})();
+</script>
