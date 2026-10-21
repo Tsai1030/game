@@ -2,7 +2,7 @@ import { afterEach, expect, test } from 'bun:test';
 import { LANGS, setLang, t } from '../src/core/i18n';
 import { CASE } from '../src/data/case';
 import type { Beat, Scene } from '../src/data/script';
-import { ASKS, LABELS, SCENES, SPEAKERS } from '../src/data/story';
+import { ASKS, LABELS, SCENE_FILES, SCENES, SPEAKERS } from '../src/data/story';
 import { walkBeats } from '../src/systems/script';
 
 afterEach(() => setLang('zh-TW'));
@@ -59,6 +59,12 @@ test('the walk reaches lines nested inside response follow-ups', () => {
 
 test('every line has non-empty text in both languages', () => {
   for (const b of allBeats()) if ('line' in b) expect({ id: b.line.id, ok: !!b.line.zh.trim() && !!b.line.en.trim() }).toEqual({ id: b.line.id, ok: true });
+});
+
+test('scene ids are unique across story files', () => {
+  // 不直接數 SCENES：其他測試檔會把測試用劇情塞進去。
+  const keys = Object.values(SCENE_FILES).flatMap((f) => Object.keys(f));
+  expect(new Set(keys).size).toBe(keys.length);
 });
 
 test('every line id is unique and every goto/include target exists', () => {

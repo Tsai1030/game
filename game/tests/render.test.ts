@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from 'bun:test';
 import { newState, setState } from '../src/core/state';
-import { OBJ, syncEtch, TS, type LookId } from '../src/data/world';
+import { loadMap, MH, MW, OBJ, syncEtch, TS, type LookId } from '../src/data/world';
+import { MAPS } from '../src/data/maps';
 import { drawMap } from '../src/render/tiles';
 import { GL, parseColor, txt, type Painter } from '../src/render/paint';
 import { drawPerson, LOOK } from '../src/render/person';
@@ -127,10 +128,14 @@ test('reduce motion freezes every animated part of ETCH-07', () => {
   expect(frame(0.4)).toEqual(frame(0));
 });
 
-test('the map stays inside 736×448', () => {
-  const p = recorder();
-  drawMap(p);
-  expect(inside(p.rects, 736, 448)).toEqual([]);
+test('every map draws inside its own bounds', () => {
+  for (const m of Object.values(MAPS)) {
+    loadMap(m.id);
+    const p = recorder();
+    drawMap(p);
+    expect({ map: m.id, outside: inside(p.rects, MW * TS, MH * TS) }).toEqual({ map: m.id, outside: [] });
+  }
+  loadMap('M03');
 });
 
 /** 每種家具一個樣本（放在 (2,3)）。 */

@@ -80,9 +80,9 @@ test('clicking a tool walks next to it and interacts once', () => {
 });
 
 test('stepping east into the air shower reports the previous x', () => {
-  setState({ ...newState(), suit: true, x: 13, y: 17 });
+  setState({ ...newState(), suit: true, x: 13, y: 18 });
   m.reset();
   run(0.16, 'right');
-  expect([S.x, S.y]).toEqual([14, 17]);
+  expect([S.x, S.y]).toEqual([14, 18]);
   expect(calls.arrive).toContain(13);
 });

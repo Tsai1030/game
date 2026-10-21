@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import { bfs } from '../src/systems/path';
 import { ACTS, adj, loadMap, MAP, MH, MW, OBJ, region, syncEtch, TOOL_INFO, walkable } from '../src/data/world';
 import { MAPS } from '../src/data/maps';
+import { SCENES } from '../src/data/story';
 
 const start = { x: 3, y: 4 };
 const etch07 = () => OBJ.find((o) => o.id === 'ETCH-07')!;
@@ -28,16 +29,55 @@ test('every map is well formed', () => {
   loadMap('M03');
 });
 
-test('M03 keeps the prototype layout until the maps task', () => {
+test('every map connects its start to every exit and every interactable', () => {
+  for (const m of Object.values(MAPS)) {
+    loadMap(m.id);
+    const walk = (x: number, y: number) => walkable(x, y, true);
+    for (const e of m.exits) {
+      const ok = bfs(MW, MH, m.start.x, m.start.y, walk, (x, y) => x === e.x && y === e.y) !== null;
+      expect({ map: m.id, exit: `${e.x},${e.y}`, ok }).toEqual({ map: m.id, exit: `${e.x},${e.y}`, ok: true });
+    }
+    for (const o of ACTS) {
+      const ok = bfs(MW, MH, m.start.x, m.start.y, walk, (x, y) => adj(o, x, y)) !== null;
+      expect({ map: m.id, id: o.id, ok }).toEqual({ map: m.id, id: o.id, ok: true });
+    }
+  }
+  loadMap('M03');
+});
+
+test('exits land on walkable tiles of their target maps', () => {
+  for (const m of Object.values(MAPS))
+    for (const e of m.exits) {
+      loadMap(e.to);
+      expect({ from: m.id, to: e.to, ok: walkable(e.at.x, e.at.y, false) }).toEqual({ from: m.id, to: e.to, ok: true });
+    }
+  loadMap('M03');
+});
+
+test('the site has a corridor, a meeting room, a break room and the unchanged fab', () => {
   loadMap('M03');
   expect(MAP.id).toBe('M03');
-  expect([MW, MH]).toEqual([46, 28]);
+  expect([MW, MH]).toEqual([46, 30]);
+  expect(region(1, 13)).toBe('loc.corridor');
+  expect(region(5, 13)).toBe('loc.meeting');
+  expect(region(7, 26)).toBe('loc.break');
+  expect(OBJ.filter((o) => o.st).map((o) => [o.id, o.x, o.y])).toEqual([
+    ['ETCH-05', 17, 3], ['ETCH-07', 25, 3], ['CVD-11', 33, 3], ['MET-02', 17, 11],
+    ['WET-02', 25, 11], ['STK-01', 39, 10], ['LITHO-03', 20, 21], ['TRACK-03', 30, 21],
+  ]);
+});
+
+test('every scene a map names exists', () => {
+  for (const m of Object.values(MAPS)) {
+    const names = [...m.objects.flatMap((o) => (o.say ? [o.say] : [])), ...m.npcs.map((n) => n.talk), ...m.exits.flatMap((e) => (e.locked ? [e.locked] : []))];
+    for (const n of names) expect({ map: m.id, scene: n, ok: !!SCENES[n] }).toEqual({ map: m.id, scene: n, ok: true });
+  }
 });
 
 test('start tile is walkable and the air shower needs a suit', () => {
   expect(walkable(start.x, start.y, false)).toBe(true);
-  expect(walkable(14, 17, false)).toBe(false);
-  expect(walkable(14, 17, true)).toBe(true);
+  expect(walkable(14, 18, false)).toBe(false);
+  expect(walkable(14, 18, true)).toBe(true);
 });
 
 test('every interactable can be reached when suited', () => {
@@ -54,7 +94,7 @@ test('the fab cannot be reached without a suit', () => {
 test('regions map to location keys', () => {
   expect(region(3, 4)).toBe('loc.office');
   expect(region(5, 20)).toBe('loc.gown');
-  expect(region(14, 17)).toBe('loc.airShower');
+  expect(region(14, 18)).toBe('loc.airShower');
   expect(region(30, 8)).toBe('loc.fabEtch');
   expect(region(30, 25)).toBe('loc.fabLitho');
 });

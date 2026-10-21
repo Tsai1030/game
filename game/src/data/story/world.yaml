@@ -1,0 +1,14 @@
+# 地圖上的門和物件用到的劇情（鎖門的原因、查看物件）。
+scenes:
+  p_gate_locked:
+    - line: { id: p_gate_locked-1, speaker: sys, zh: "閘門沒反應。要先到警衛那裡換臨時通行證。", en: "The gate doesn't budge. You need a temporary badge from the guard first." }
+  p_orient_locked:
+    - line: { id: p_orient_locked-1, speaker: sys, zh: "新訓還沒結束。Amy 看了你一眼。", en: "Orientation isn't over yet. Amy gives you a look." }
+  home_locked:
+    - line: { id: home_locked-1, speaker: me, zh: "還不能走。", en: "I can't leave yet." }
+  room_locked:
+    - line: { id: room_locked-1, speaker: me, zh: "很晚了，先睡吧。", en: "It's late. I should get some sleep." }
+  say_mes:
+    - line: { id: say_mes-1, speaker: sys, zh: "MES 終端機。一整排 lot，有幾批標著 HOLD。", en: "The MES terminal. A long list of lots, a few of them marked HOLD." }
+  say_room_desk:
+    - line: { id: say_room_desk-1, speaker: me, zh: "筆電還開著，新人手冊攤在旁邊，一頁都還沒看。", en: "The laptop is still on. The new-hire handbook lies open next to it, unread." }

@@ -25,6 +25,6 @@ test('the view is sized from the largest map, not the current one', () => {
 
 test('the view never exceeds the map', () => {
   const v = computeViewport(5000, 5000);
-  expect(v.w).toBeLessThanOrEqual(736);
-  expect(v.h).toBeLessThanOrEqual(448);
+  expect(v.w).toBeLessThanOrEqual(MAX_W * TS);
+  expect(v.h).toBeLessThanOrEqual(MAX_H * TS);
 });
