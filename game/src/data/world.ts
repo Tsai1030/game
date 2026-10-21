@@ -1,9 +1,9 @@
 import type { Bi } from '../core/i18n';
-import type { Dir, EtchState } from '../core/state';
+import { S, type Dir, type EtchState, type GameState, type MapId } from '../core/state';
+import { evalCond } from '../systems/script';
+import { MAPS, type Exit, type MapDef, type NpcDef } from './maps';
 
 export const TS = 16;
-export const MW = 46;
-export const MH = 28;
 
 /** # 牆 · . 辦公室地毯 · , Fab 地板 · y 黃光區 · = 更衣室 · D 門 · A 風淋室 · g 玻璃牆 */
 export type Tile = '#' | '.' | ',' | 'y' | '=' | 'D' | 'A' | 'g';
@@ -29,62 +29,63 @@ export interface Thing {
   npc?: boolean;
   dir?: Dir;
   look?: LookId;
+  /** NPC：說話時播的劇情。 */
+  talk?: string;
 }
 
-function buildTiles(): Tile[][] {
-  const t: Tile[][] = Array.from({ length: MH }, () => Array<Tile>(MW).fill('#'));
-  const fill = (x: number, y: number, w: number, h: number, ch: Tile) => {
-    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) t[j]![i] = ch;
-  };
-  fill(1, 1, 13, 13, '.');
-  fill(1, 15, 13, 12, '=');
-  fill(15, 1, 30, 18, ',');
-  fill(15, 19, 30, 8, 'y');
-  t[14]![3] = 'D';
-  t[14]![4] = 'D';
-  for (let y = 3; y <= 10; y++) t[y]![14] = 'g';
-  t[17]![14] = 'A';
-  return t;
-}
-
-export const T: Tile[][] = buildTiles();
+/** 目前載入的地圖。以下這些匯出都是即時綁定：loadMap 之後，其他模組讀到的就是新地圖。 */
+export let MAP: MapDef;
+export let MW = 0;
+export let MH = 0;
+export let T: Tile[][] = [];
+export let OBJ: Thing[] = [];
+export let NPC: Thing[] = [];
+/** 可以互動的物件與 NPC。 */
+export let ACTS: Thing[] = [];
+export let BLK: (Thing | null)[][] = [];
 
 const FLOOR = new Set<Tile>(['.', ',', 'y', '=', 'D']);
 
-export const OBJ: Thing[] = [
-  { id: 'pc', kind: 'desk', x: 2, y: 3, w: 3, h: 1, pc: true, act: 'pc', name: { zh: 'PE 工作站', en: 'PE workstation' } },
-  { id: 'desk2', kind: 'desk', x: 6, y: 3, w: 3, h: 1, pc: true, act: 'say', say: 'say_desk2', name: { zh: 'Kevin 學長的座位', en: "Kevin's desk" } },
-  { id: 'desk3', kind: 'desk', x: 2, y: 7, w: 3, h: 1, pc: true, act: 'say', say: 'say_desk3', name: { zh: '隔壁的座位', en: 'the next desk' } },
-  { id: 'desk4', kind: 'desk', x: 6, y: 7, w: 3, h: 1, pc: true, act: 'say', say: 'say_desk4', name: { zh: '空位', en: 'the empty desk' } },
-  { id: 'bossdesk', kind: 'desk', x: 10, y: 2, w: 3, h: 1, pc: true, act: 'say', say: 'say_bossdesk', name: { zh: '王經理的座位', en: "Manager Wang's desk" } },
-  { id: 'coffee', kind: 'coffee', x: 1, y: 11, w: 1, h: 1, act: 'coffee', name: { zh: '咖啡機', en: 'coffee machine' } },
-  { id: 'plant1', kind: 'plant', x: 13, y: 12, w: 1, h: 1 },
-  { id: 'plant2', kind: 'plant', x: 1, y: 1, w: 1, h: 1 },
-  { id: 'locker', kind: 'locker', x: 6, y: 15, w: 7, h: 1, act: 'locker', name: { zh: '無塵衣置物櫃', en: 'suit lockers' } },
-  { id: 'bench', kind: 'bench', x: 4, y: 20, w: 4, h: 1 },
-  { id: 'ETCH-05', kind: 'etch', x: 17, y: 3, w: 5, h: 3, st: 'run', act: 'tool' },
-  { id: 'ETCH-07', kind: 'etch', x: 25, y: 3, w: 5, h: 3, st: 'alarm', act: 'etch07' },
-  { id: 'CVD-11', kind: 'cvd', x: 33, y: 3, w: 5, h: 3, st: 'run', act: 'tool' },
-  { id: 'MET-02', kind: 'met', x: 17, y: 11, w: 4, h: 3, st: 'run', act: 'met' },
-  { id: 'WET-02', kind: 'wet', x: 25, y: 11, w: 6, h: 2, st: 'idle', act: 'tool' },
-  { id: 'STK-01', kind: 'stk', x: 39, y: 10, w: 4, h: 5, st: 'run', act: 'tool' },
-  { id: 'LITHO-03', kind: 'litho', x: 20, y: 21, w: 7, h: 3, st: 'run', act: 'tool' },
-  { id: 'TRACK-03', kind: 'track', x: 30, y: 21, w: 6, h: 3, st: 'run', act: 'tool' },
-];
+/** NPC 定義對應的地圖物件；同一筆定義一直用同一個物件，面向才會保留。 */
+const npcThings = new Map<NpcDef, Thing>();
+const thingOf = (d: NpcDef): Thing => {
+  let o = npcThings.get(d);
+  if (!o) npcThings.set(d, (o = { id: d.id, kind: 'npc', x: d.x, y: d.y, w: 1, h: 1, dir: d.dir, npc: true, act: 'npc', look: d.look, talk: d.talk }));
+  return o;
+};
 
-export const NPC: Thing[] = [
-  { id: 'boss', kind: 'npc', x: 11, y: 4, w: 1, h: 1, dir: 'down', npc: true, act: 'npc', look: 'boss' },
-  { id: 'kevin', kind: 'npc', x: 27, y: 7, w: 1, h: 1, dir: 'up', npc: true, act: 'npc', look: 'kevin' },
-  { id: 'fse', kind: 'npc', x: 36, y: 7, w: 1, h: 1, dir: 'left', npc: true, act: 'npc', look: 'fse' },
-];
-
-/** 可以互動的物件與 NPC。 */
-export const ACTS: Thing[] = [...OBJ.filter((o) => o.act), ...NPC];
-
-export const BLK: (Thing | null)[][] = Array.from({ length: MH }, () => Array<Thing | null>(MW).fill(null));
-for (const o of [...OBJ, ...NPC]) {
-  for (let j = o.y; j < o.y + o.h; j++) for (let i = o.x; i < o.x + o.w; i++) BLK[j]![i] = o;
+function rebuildBlocks(): void {
+  BLK = Array.from({ length: MH }, () => Array<Thing | null>(MW).fill(null));
+  for (const o of [...OBJ, ...NPC]) {
+    for (let j = o.y; j < o.y + o.h; j++) for (let i = o.x; i < o.x + o.w; i++) BLK[j]![i] = o;
+  }
 }
+
+/** 依目前劇情狀態決定這張地圖上有哪些 NPC（每個 id 取第一筆條件成立的定義）。 */
+export function refreshNpcs(s: GameState): void {
+  const seen = new Set<string>();
+  const list: Thing[] = [];
+  for (const d of MAP.npcs) {
+    if (seen.has(d.id) || (d.when && !evalCond(s, d.when))) continue;
+    seen.add(d.id);
+    list.push(thingOf(d));
+  }
+  NPC = list;
+  ACTS = [...OBJ.filter((o) => o.act), ...NPC];
+  rebuildBlocks();
+}
+
+/** 換成另一張地圖。 */
+export function loadMap(id: MapId): void {
+  MAP = MAPS[id];
+  T = MAP.tiles.map((row) => [...row] as Tile[]);
+  MH = T.length;
+  MW = T[0]!.length;
+  OBJ = MAP.objects;
+  refreshNpcs(S);
+}
+
+loadMap('M03');
 
 export const inb = (x: number, y: number): boolean => x >= 0 && y >= 0 && x < MW && y < MH;
 
@@ -108,16 +109,23 @@ export function adj(o: Thing, x: number, y: number): boolean {
   );
 }
 
+const inRect = ([rx, ry, rw, rh]: [number, number, number, number], x: number, y: number) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+
 /** 地點名稱的語系 key。 */
 export function region(x: number, y: number): string {
   if (T[y]?.[x] === 'A') return 'loc.airShower';
-  if (x < 14) return y < 14 ? 'loc.office' : 'loc.gown';
-  return y >= 19 ? 'loc.fabLitho' : 'loc.fabEtch';
+  return MAP.regions.find((r) => inRect(r.rect, x, y))?.loc ?? MAP.loc;
 }
+
+/** (x, y) 是否在無塵室範圍內（沒穿無塵衣不能進）。 */
+export const inCleanroom = (x: number, y: number): boolean => !!MAP.clean && inRect(MAP.clean, x, y);
+
+/** 站在 (x, y) 會走出去的門。 */
+export const exitAt = (x: number, y: number): Exit | null => MAP.exits.find((e) => e.x === x && e.y === y) ?? null;
 
 /** 把 ETCH-07 的狀態同步到地圖物件（燈號塔、腔體框顏色看這個）。 */
 export function syncEtch(e: EtchState): void {
-  const o = OBJ.find((x) => x.id === 'ETCH-07')!;
+  const o = MAPS.M03.objects.find((x) => x.id === 'ETCH-07')!;
   o.st = e === 'alarm' ? 'alarm' : e === 'inhibit' ? 'inhibit' : 'run';
 }
 
@@ -192,9 +200,7 @@ export const TOOL_INFO: Record<ToolId, { type: Bi; st: 'RUN' | 'IDLE'; rows: [Bi
   },
 };
 
-const NPC_DIR0 = new Map(NPC.map((n) => [n.id, n.dir]));
-
 /** 新遊戲時把 NPC 的面向轉回初始方向（對話時會轉向玩家）。 */
 export function resetNpcs(): void {
-  for (const n of NPC) n.dir = NPC_DIR0.get(n.id);
+  for (const [d, o] of npcThings) o.dir = d.dir;
 }

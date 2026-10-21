@@ -1,6 +1,10 @@
 export type Dir = 'up' | 'down' | 'left' | 'right';
 export type EtchState = 'alarm' | 'inhibit' | 'fixed';
 
+/** 地圖 id（M01 警衛室、M02 新訓教室、M03 廠區、M04 租屋處）。 */
+export const MAP_IDS = ['M03'] as const;
+export type MapId = (typeof MAP_IDS)[number];
+
 /** 有關係值的角色。 */
 export const NPC_IDS = ['boss', 'kevin', 'fse', 'fang', 'amy', 'bear'] as const;
 export type NpcId = (typeof NPC_IDS)[number];

@@ -1,9 +1,38 @@
 import { expect, test } from 'bun:test';
 import { bfs } from '../src/systems/path';
-import { ACTS, adj, MH, MW, OBJ, region, syncEtch, TOOL_INFO, walkable } from '../src/data/world';
+import { ACTS, adj, loadMap, MAP, MH, MW, OBJ, region, syncEtch, TOOL_INFO, walkable } from '../src/data/world';
+import { MAPS } from '../src/data/maps';
 
 const start = { x: 3, y: 4 };
 const etch07 = () => OBJ.find((o) => o.id === 'ETCH-07')!;
+
+const TILE_CHARS = new Set(['#', '.', ',', 'y', '=', 'D', 'A', 'g']);
+
+test('every map is well formed', () => {
+  for (const m of Object.values(MAPS)) {
+    loadMap(m.id);
+    const w = m.tiles[0]!.length;
+    expect({ id: m.id, rect: m.tiles.every((r) => r.length === w) }).toEqual({ id: m.id, rect: true });
+    expect([...m.tiles.join('')].filter((c) => !TILE_CHARS.has(c))).toEqual([]);
+    expect(walkable(m.start.x, m.start.y, false)).toBe(true);
+    const used = new Set<string>();
+    for (const o of m.objects)
+      for (let j = o.y; j < o.y + o.h; j++)
+        for (let i = o.x; i < o.x + o.w; i++) {
+          expect(i >= 0 && j >= 0 && i < w && j < m.tiles.length).toBe(true);
+          expect({ obj: o.id, at: `${i},${j}`, overlap: used.has(`${i},${j}`) }).toEqual({ obj: o.id, at: `${i},${j}`, overlap: false });
+          used.add(`${i},${j}`);
+        }
+    for (const e of m.exits) expect(m.tiles[e.y]![e.x]).toBe('D');
+  }
+  loadMap('M03');
+});
+
+test('M03 keeps the prototype layout until the maps task', () => {
+  loadMap('M03');
+  expect(MAP.id).toBe('M03');
+  expect([MW, MH]).toEqual([46, 28]);
+});
 
 test('start tile is walkable and the air shower needs a suit', () => {
   expect(walkable(start.x, start.y, false)).toBe(true);

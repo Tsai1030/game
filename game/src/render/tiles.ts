@@ -1,4 +1,4 @@
-import { MH, MW, T, TS } from '../data/world';
+import { MAP, MH, MW, T, TS } from '../data/world';
 import { C } from './palette';
 import { txt, type Painter } from './paint';
 
@@ -47,9 +47,13 @@ function tile(p: Painter, i: number, j: number): void {
   }
 }
 
-/** 整張地圖的靜態層：地板、牆、玻璃、風淋室、白板與地面標示。 */
+/** 目前地圖的靜態層：地板、牆、玻璃、風淋室，加上各地圖自己的白板與地面標示。 */
 export function drawMap(p: Painter): void {
   for (let j = 0; j < MH; j++) for (let i = 0; i < MW; i++) tile(p, i, j);
+  if (MAP.id === 'M03') decorM03(p);
+}
+
+function decorM03(p: Painter): void {
   p.rect(C.line, 81, 1, 62, 14);
   p.rect(C.board, 82, 2, 60, 12);
   p.rect(C.red, 85, 5, 22, 1);

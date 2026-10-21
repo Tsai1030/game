@@ -1,5 +1,5 @@
 import { S, type Dir } from '../core/state';
-import { ACTS, adj, inb, MH, MW, objAt, T, TS, walkable, type Thing } from '../data/world';
+import { ACTS, adj, inb, inCleanroom, MH, MW, objAt, T, TS, walkable, type Thing } from '../data/world';
 import { VISUAL_TOP } from '../render/tools';
 import { bfs, type Pt } from '../systems/path';
 
@@ -151,7 +151,7 @@ export class Mover {
         this.marker = null;
         return 'path';
       }
-      return this.blocked(hit.x >= 15);
+      return this.blocked(inCleanroom(hit.x, hit.y));
     }
     if (walk(tx, ty)) {
       const p = bfs(MW, MH, sx, sy, walk, (x, y) => x === tx && y === ty);
@@ -162,9 +162,9 @@ export class Mover {
         this.marker = p.length ? { x: tx, y: ty } : null;
         return p.length ? 'path' : 'none';
       }
-      return this.blocked(tx >= 15);
+      return this.blocked(inCleanroom(tx, ty));
     }
-    if (inb(tx, ty) && !S.suit && (T[ty]![tx] === 'A' || tx >= 15)) return this.blocked(true);
+    if (inb(tx, ty) && !S.suit && (T[ty]![tx] === 'A' || inCleanroom(tx, ty))) return this.blocked(true);
     return 'none';
   }
 

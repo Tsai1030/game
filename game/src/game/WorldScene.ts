@@ -3,7 +3,7 @@ import { on } from '../core/bus';
 import { t } from '../core/i18n';
 import { settings } from '../core/settings';
 import { S } from '../core/state';
-import { MH, MW, NPC, OBJ, region, T, TS, type LookId } from '../data/world';
+import { MAP, MH, MW, NPC, OBJ, region, T, TS, type LookId } from '../data/world';
 import { drawArrow, drawMarker, drawOht } from '../render/oht';
 import { canvasPainter, gfxPainter, type Painter } from '../render/paint';
 import { drawPerson, LOOK } from '../render/person';
@@ -53,18 +53,26 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create(): void {
-    const map = this.textures.createCanvas('map', MW * TS, MH * TS)!;
-    drawMap(canvasPainter(map.context));
-    map.refresh();
-    this.add.image(0, 0, 'map').setOrigin(0).setDepth(-10000);
+    // 換地圖時整個場景重建；Map 欄位會跨重建保留，先清空。貼圖每張地圖各一份，建過就沿用。
+    this.layers.clear();
+    this.npcImg.clear();
+    const mapKey = `map_${MAP.id}`;
+    if (!this.textures.exists(mapKey)) {
+      const map = this.textures.createCanvas(mapKey, MW * TS, MH * TS)!;
+      drawMap(canvasPainter(map.context));
+      map.refresh();
+    }
+    this.add.image(0, 0, mapKey).setOrigin(0).setDepth(-10000);
     this.floorG = this.add.graphics().setDepth(-9000);
     this.floorP = gfxPainter(this.floorG);
 
     for (const o of OBJ) {
-      const key = `obj_${o.id}`;
-      const tex = this.textures.createCanvas(key, o.w * TS + STATIC_PAD.x * 2, o.h * TS + STATIC_PAD.top + STATIC_PAD.bottom)!;
-      objStatic(canvasPainter(tex.context), o, STATIC_PAD.x, STATIC_PAD.top);
-      tex.refresh();
+      const key = `obj_${MAP.id}_${o.id}`;
+      if (!this.textures.exists(key)) {
+        const tex = this.textures.createCanvas(key, o.w * TS + STATIC_PAD.x * 2, o.h * TS + STATIC_PAD.top + STATIC_PAD.bottom)!;
+        objStatic(canvasPainter(tex.context), o, STATIC_PAD.x, STATIC_PAD.top);
+        tex.refresh();
+      }
       const bottom = (o.y + o.h) * TS;
       this.add.image(o.x * TS - STATIC_PAD.x, o.y * TS - STATIC_PAD.top, key).setOrigin(0).setDepth(bottom);
       const gfx = this.add.graphics().setDepth(bottom + 0.01);
@@ -76,6 +84,7 @@ export class WorldScene extends Phaser.Scene {
     for (const id of Object.keys(LOOK) as LookId[])
       for (const d of DIRS)
         for (let f = 0; f < 3; f++) {
+          if (this.textures.exists(`p_${id}_${d}_${f}`)) continue;
           const tex = this.textures.createCanvas(`p_${id}_${d}_${f}`, 16, 24)!;
           drawPerson(canvasPainter(tex.context), 0, 7, d, f === 2 ? 1 : 0, f > 0, LOOK[id]);
           tex.refresh();
@@ -89,7 +98,8 @@ export class WorldScene extends Phaser.Scene {
     this.overP = gfxPainter(this.overG);
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onPointer(p));
-    on('reset', () => this.resetWorld());
+    const off = on('reset', () => this.resetWorld());
+    this.events.once('shutdown', off);
     this.resetWorld();
   }
 
@@ -181,7 +191,7 @@ export class WorldScene extends Phaser.Scene {
       objDyn(L.fx, L.glow, o, X, Y, tt, reduce);
     }
     this.overG.clear();
-    drawOht(this.overP, tt, reduce);
+    if (MAP.oht) drawOht(this.overP, tt, reduce);
     if (this.mover.marker && (reduce || Math.floor(tt * 4) % 2 === 0)) drawMarker(this.overP, this.mover.marker);
     if (rt.near) drawArrow(this.overP, rt.near, tt, reduce);
   }
