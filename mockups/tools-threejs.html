@@ -1,0 +1,385 @@
+<title>Fab 夜班 3D 試作</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Silkscreen:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap">
+<style>
+  /* 版面：上方說明，中間一個大的 3D 舞台（下方一排切換鈕），底下三欄寫對遊戲的影響。遊戲本身是夜班深色，只做深色。 */
+  :root {
+    --bg: #07070b; --panel: #0e0d14; --panel2: #15131d; --edge: #3f3a55; --edge-hi: #e8e3f3;
+    --ink: #f1ecfa; --muted: #9b94b2; --accent: #5fd0c4; --warn: #f2b544;
+    --f-px: "DotGothic16", "Noto Sans TC", system-ui, sans-serif;
+    --f-lbl: "Silkscreen", "DotGothic16", ui-monospace, monospace;
+    --f-body: "Noto Sans TC", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink); font: 15px/1.65 var(--f-body);
+    padding-block: 24px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  h1 { font: 400 clamp(26px, 4vw, 36px)/1.2 var(--f-px); margin: 0; text-wrap: balance; }
+  h1 small { display: block; font: 400 13px var(--f-lbl); letter-spacing: .08em; color: var(--muted); margin-top: 6px; }
+  .lead { margin: 0; max-width: 70ch; color: var(--muted); }
+  .lead b { color: var(--ink); font-weight: 400; }
+  .stage { position: relative; background: #050507; border: 3px solid var(--edge); box-shadow: inset 0 0 0 3px var(--panel); aspect-ratio: 16 / 9; max-width: 100%; overflow: hidden; touch-action: none; }
+  .stage canvas { display: block; width: 100% !important; height: 100% !important; }
+  .stage.px canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+  .hint { position: absolute; left: 10px; bottom: 8px; font: 400 12px var(--f-lbl); letter-spacing: .06em; color: var(--muted); pointer-events: none; }
+  .err { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--muted); }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+  .grp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .grp > span { font: 700 11px var(--f-lbl); letter-spacing: .08em; color: var(--muted); margin-right: 4px; }
+  .btn { font: 400 14px var(--f-px); background: var(--panel); color: var(--ink); border: 3px solid var(--edge); padding: 4px 12px; min-height: 38px; cursor: pointer; }
+  .btn:hover { border-color: var(--edge-hi); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn[aria-pressed="true"] { background: var(--accent); color: #06060a; border-color: var(--accent); }
+  .notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .notes li { background: var(--panel2); border: 2px solid #24212f; padding: 10px 12px; min-width: 0; }
+  .notes b { display: block; font: 700 11px var(--f-lbl); letter-spacing: .08em; color: var(--accent); margin-bottom: 2px; }
+  .notes p { margin: 0; font-size: 14px; }
+  .notes p + p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  @media (max-width: 760px) { .notes { grid-template-columns: minmax(0, 1fr); } .stage { aspect-ratio: 4 / 3; } }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <h1>Fab 夜班・three.js 3D 試作<small>THREE.JS PROTOTYPE · SAME ETCH BAY, REAL 3D</small></h1>
+    <p class="lead">跟之前同一個 ETCH 區角落（ETCH-05、告警中的 ETCH-07、WET-02、STK-01），這次用 <b>three.js 做成真的 3D</b>：有光源、陰影，LED 會發光。兔寶寶裝工程師在走道上來回走。下面可以切換畫風和視角。</p>
+    <p class="lead">The same corner of the etch bay, now in <b>real 3D with three.js</b>: lights, shadows and glowing LEDs, with an engineer in a bunny suit pacing the walkway. Switch the style and the camera below.</p>
+  </header>
+
+  <div class="stage px" id="stage" aria-label="3D 機台場景 / 3D fab scene">
+    <span class="hint" id="hint">遊戲視角 · GAME CAMERA</span>
+  </div>
+
+  <div class="bar">
+    <div class="grp" role="group" aria-label="畫風 / Style">
+      <span>畫風 STYLE</span>
+      <button class="btn" data-style="px" aria-pressed="true">像素 3D · Pixel 3D</button>
+      <button class="btn" data-style="hd" aria-pressed="false">平滑 3D · Smooth 3D</button>
+    </div>
+    <div class="grp" role="group" aria-label="視角 / Camera">
+      <span>視角 CAMERA</span>
+      <button class="btn" data-cam="game" aria-pressed="true">遊戲視角 · Game</button>
+      <button class="btn" data-cam="free" aria-pressed="false">自由旋轉 · Free</button>
+    </div>
+    <div class="grp">
+      <button class="btn" id="pause" aria-pressed="false">暫停燈號 · Pause</button>
+    </div>
+  </div>
+
+  <ul class="notes">
+    <li><b>LOOK 看起來</b><p>真正有深度：機台擋住後面的人、陰影落在地上、ETCH-07 的紅光照亮地板。「像素 3D」保留顆粒感，「平滑 3D」比較像現代 3D 遊戲。</p><p>Real depth: tools hide what's behind them, shadows fall on the floor, and ETCH-07's red alarm lights the ground. Pixel 3D keeps a chunky pixel feel; Smooth 3D looks like a modern 3D game.</p></li>
+    <li><b>CHANGE 改動</b><p>只換「畫面」那一層：地圖、機台、人物改成 3D 繪製。遊戲邏輯、劇情、存檔、對話框和機台視窗都不用動。點擊走路要改成 3D 點選。</p><p>Only the drawing layer changes: maps, tools and characters become 3D. Game logic, story, saves, dialogue and tool windows stay as they are. Click-to-walk moves to 3D picking.</p></li>
+    <li><b>TRADE-OFF 取捨</b><p>畫面會多一個約 600 KB 的函式庫，手機效能要另外調。程式畫的像素機台要重做成 3D 模型。工作量大約一個里程碑。</p><p>Adds a ~600 KB library and needs separate tuning for phones. The code-drawn pixel tools get rebuilt as 3D models. Roughly one milestone of work.</p></li>
+  </ul>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const stage = document.getElementById('stage');
+const hint = document.getElementById('hint');
+const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+} catch {
+  stage.insertAdjacentHTML('beforeend', '<div class="err">這台裝置的瀏覽器不支援 WebGL，看不到 3D 畫面。<br>This browser doesn’t support WebGL, so the 3D scene can’t be shown.</div>');
+  throw new Error('no webgl');
+}
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050507);
+scene.fog = new THREE.Fog(0x050507, 30, 60);
+
+/* ---------- 共用 ---------- */
+const W = 26, D = 11; // 場景大小（格）；1 格 = 1 單位
+const CENTER = new THREE.Vector3(W / 2, 0, D / 2);
+function rng(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const pixTex = (w, h, draw) => {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'));
+  const t = new THREE.CanvasTexture(c);
+  t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+};
+const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.45, ...o });
+const glow = (color) => new THREE.MeshBasicMaterial({ color, toneMapped: false });
+const EDGE = new THREE.LineBasicMaterial({ color: 0x4a5170 });
+function box(w, h, d, m, x, y, z, edges = true) {
+  const g = new THREE.BoxGeometry(w, h, d);
+  const mesh = new THREE.Mesh(g, m);
+  mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true;
+  if (edges) mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(g), EDGE));
+  scene.add(mesh);
+  return mesh;
+}
+
+/* ---------- 地板、牆 ---------- */
+const floorTex = pixTex(W * 16, D * 16, (g) => {
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const yel = j === 8;
+    g.fillStyle = yel ? '#2e2712' : '#1a1922'; g.fillRect(i * 16, j * 16, 16, 16);
+    g.fillStyle = yel ? '#3d3318' : '#25232f'; g.fillRect(i * 16, j * 16, 16, 1); g.fillRect(i * 16, j * 16, 1, 16);
+    g.fillStyle = yel ? '#4d401f' : '#302e3e';
+    for (const a of [4, 8, 12]) for (const b of [4, 8, 12]) g.fillRect(i * 16 + a, j * 16 + b, 1, 1);
+  }
+});
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.75, metalness: 0.15 }));
+floor.rotation.x = -Math.PI / 2; floor.position.set(W / 2, 0, D / 2); floor.receiveShadow = true;
+scene.add(floor);
+const wallTex = pixTex(W * 16, 32, (g) => {
+  g.fillStyle = '#242136'; g.fillRect(0, 0, W * 16, 32);
+  g.fillStyle = '#4a4566'; g.fillRect(0, 0, W * 16, 1);
+  g.fillStyle = '#e8e3f3'; g.font = '10px monospace'; g.fillText('FAB 9  ETCH BAY', 10, 20);
+});
+const wall = new THREE.Mesh(new THREE.BoxGeometry(W, 2, 0.4), [mat(0x242136), mat(0x242136), mat(0x34304a), mat(0x242136), new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.9 }), mat(0x242136)]);
+wall.position.set(W / 2, 1, -0.2); wall.receiveShadow = true; scene.add(wall);
+
+/* ---------- 燈光 ---------- */
+scene.add(new THREE.HemisphereLight(0x8890c0, 0x0a0a12, 0.55));
+const sun = new THREE.DirectionalLight(0xdfe6ff, 1.4);
+sun.position.set(CENTER.x - 9, 16, CENTER.z + 10); sun.target.position.copy(CENTER);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -18, right: 18, top: 14, bottom: -14, near: 1, far: 50 });
+scene.add(sun, sun.target);
+
+/* ---------- LED：所有機台共用一個 InstancedMesh ---------- */
+const LEDC = { g: 0x5dff7a, c: 0x5ff0ff, a: 0xffc04a, b: 0x6b9bff, r: 0xff4d45, w: 0xe8f0ff };
+const leds = []; // { pos, col, kind, rate, ph, duty }
+function addLeds(id, zones, alarm) {
+  const r = rng([...id].reduce((h, ch) => (Math.imul(h ^ ch.charCodeAt(0), 16777619)) >>> 0, 2166136261));
+  const pal = alarm ? 'ggcccbwarrr' : 'gggcccbbwa';
+  for (const z of zones) {
+    for (let k = 0; k < z.n; k++) {
+      const q = r();
+      leds.push({ pos: z.at(r(), r()), col: LEDC[pal[Math.floor(r() * pal.length)]], kind: q < 0.22 ? 'steady' : q < 0.62 ? 'blink' : 'flick', rate: 0.4 + r() * 2.6, ph: r(), duty: 0.25 + r() * 0.55, alarm });
+    }
+  }
+}
+// 面上的 LED 區：face 是 'front'（z 最大那面）、'top'、'side'（x 最大那面）。
+const zone = (n, face, x0, x1, a0, a1, b) => ({
+  n,
+  at: (u, v) => face === 'front' ? new THREE.Vector3(x0 + (x1 - x0) * u, a0 + (a1 - a0) * v, b + 0.012)
+    : face === 'top' ? new THREE.Vector3(x0 + (x1 - x0) * u, b + 0.012, a0 + (a1 - a0) * v)
+    : new THREE.Vector3(b + 0.012, a0 + (a1 - a0) * v, x0 + (x1 - x0) * u),
+});
+
+/* ---------- 機台 ---------- */
+const BODY = mat(0x0f1118, { metalness: 0.6, roughness: 0.4 });
+const TOP = mat(0x181b27, { metalness: 0.5, roughness: 0.45 });
+const POD = mat(0x2fa39c, { metalness: 0.2, roughness: 0.5 });
+const towers = []; // { lamps: {r,a,g}, st }
+const pmWindows = []; // { mesh, red }
+const strips = []; // { x0, x1, y, z, head }
+
+function tower(x, y, z, st) {
+  box(0.05, 0.55, 0.05, mat(0x2a2d3a), x, y + 0.27, z, false);
+  const lamps = {};
+  [['r', 0.75], ['a', 0.63], ['g', 0.51]].forEach(([k, dy]) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.11, 12), new THREE.MeshStandardMaterial({ color: 0x34304a, emissive: LEDC[k], emissiveIntensity: 0 }));
+    m.position.set(x, y + dy, z); m.castShadow = true; scene.add(m); lamps[k] = m;
+  });
+  towers.push({ lamps, st });
+}
+
+function etch(id, tx, tz, st) {
+  const w = 5, d = 3, h = 1.5;
+  box(w, h, d, [BODY, BODY, TOP, BODY, BODY, BODY], tx + w / 2, h / 2, tz + d / 2);
+  const cx = tx + w / 2, cz = tz + 1.35;
+  const tm = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.22, 20), mat(0x1c1f2c)); tm.position.set(cx, h + 0.11, cz); tm.castShadow = true; scene.add(tm);
+  [['A', -1.65, 0.55], ['B', -0.95, -0.7], ['C', 0.95, -0.7], ['D', 1.65, 0.55]].forEach(([n, dx, dz]) => {
+    const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.5, 0.36, 24), mat(0x1c1f2c)); pm.position.set(cx + dx, h + 0.18, cz + dz); pm.castShadow = true; pm.receiveShadow = true; scene.add(pm);
+    const win = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 24), new THREE.MeshStandardMaterial({ color: 0x0a0b10, emissive: 0x5fd0e0, emissiveIntensity: 0.9 }));
+    win.position.set(cx + dx, h + 0.37, cz + dz); scene.add(win);
+    pmWindows.push({ mesh: win, red: id === 'ETCH-07' && n === 'B', dim: id === 'ETCH-07' && n === 'C' });
+  });
+  // 前緣的 load port 和三個晶圓盒
+  box(2.3, 0.12, 0.45, mat(0x22252f), tx + 1.35, 1.0, tz + d + 0.22);
+  for (let k = 0; k < 3; k++) box(0.55, 0.48, 0.42, POD, tx + 0.55 + k * 0.72, 1.3, tz + d + 0.22);
+  addLeds(id, [
+    zone(26, 'front', tx + 2.6, tx + w - 0.15, 0.25, 1.25, tz + d),
+    zone(14, 'top', tx + 0.15, tx + 0.55, tz + 0.2, tz + d - 0.3, h),
+    zone(14, 'top', tx + w - 0.55, tx + w - 0.15, tz + 0.2, tz + d - 0.3, h),
+    zone(22, 'side', tz + 0.2, tz + d - 0.2, 0.2, h - 0.15, tx + w),
+  ], st === 'alarm');
+  tower(tx + w - 0.35, h, tz + 0.35, st);
+  strips.push({ x0: tx + 0.1, x1: tx + w - 0.1, y: 0.08, z: tz + d + 0.015, st });
+}
+
+function wet(id, tx, tz, st) {
+  const w = 6, d = 2, h = 1.0;
+  box(w, h, d, [BODY, BODY, TOP, BODY, BODY, BODY], tx + w / 2, h / 2, tz + d / 2);
+  const liquid = new THREE.MeshStandardMaterial({ color: 0x3a8fb8, emissive: 0x0d3a52, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.85 });
+  for (let k = 0; k < 5; k++) {
+    box(0.95, 0.06, 1.1, mat(0x2a2e40), tx + 0.75 + k * 1.12, h + 0.03, tz + 0.85);
+    const l = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.04, 0.95), liquid); l.position.set(tx + 0.75 + k * 1.12, h + 0.065, tz + 0.85); scene.add(l);
+  }
+  box(0.55, 0.48, 0.42, POD, tx + 0.5, 1.2, tz + d + 0.22);
+  addLeds(id, [zone(24, 'front', tx + 1.6, tx + w - 0.2, 0.25, 0.8, tz + d), zone(14, 'side', tz + 0.2, tz + d - 0.2, 0.2, h - 0.1, tx + w)], false);
+  tower(tx + w - 0.3, h, tz + 0.3, st);
+  strips.push({ x0: tx + 0.1, x1: tx + w - 0.1, y: 0.08, z: tz + d + 0.015, st });
+}
+
+function stocker(id, tx, tz, st) {
+  const w = 4, d = 5, h = 3.0;
+  box(w, h, d, [BODY, BODY, TOP, BODY, BODY, BODY], tx + w / 2, h / 2, tz + d / 2);
+  // 正面大窗：裡面三排晶圓盒，前面一片玻璃
+  box(w - 0.5, h - 0.9, 0.06, mat(0x05080c), tx + w / 2, 1.65, tz + d - 0.02, false);
+  for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) box(0.55, 0.42, 0.3, POD, tx + 0.65 + k * 0.9, 0.75 + r * 0.7, tz + d + 0.06, false);
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.5, h - 0.9), new THREE.MeshStandardMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.12, roughness: 0.05, metalness: 0.9 }));
+  glass.position.set(tx + w / 2, 1.65, tz + d + 0.25); scene.add(glass);
+  addLeds(id, [zone(40, 'side', tz + 0.2, tz + d - 0.2, 0.3, h - 0.2, tx + w), zone(16, 'top', tx + 0.2, tx + w - 0.2, tz + 0.2, tz + 0.6, h)], false);
+  tower(tx + w - 0.35, h, tz + 0.35, st);
+  strips.push({ x0: tx + 0.1, x1: tx + w - 0.1, y: 0.08, z: tz + d + 0.015, st });
+}
+
+etch('ETCH-05', 1, 3, 'run');
+etch('ETCH-07', 7, 3, 'alarm');
+wet('WET-02', 13, 4, 'idle');
+stocker('STK-01', 20, 2, 'run');
+
+const ledMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.07, 0.07, 0.07), new THREE.MeshBasicMaterial({ toneMapped: false }), leds.length);
+const tmp = new THREE.Object3D();
+leds.forEach((l, i) => { tmp.position.copy(l.pos); tmp.updateMatrix(); ledMesh.setMatrixAt(i, tmp.matrix); ledMesh.setColorAt(i, new THREE.Color(l.col)); });
+scene.add(ledMesh);
+
+const stripHead = strips.map((s) => {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.05, 0.02), glow(s.st === 'alarm' ? LEDC.r : LEDC.c));
+  m.position.set(s.x0, s.y, s.z); scene.add(m); return m;
+});
+
+// ETCH-07 告警：腳下一盞紅光
+const alarmLight = new THREE.PointLight(0xff4d45, 0, 7, 1.6);
+alarmLight.position.set(9.5, 1.1, 6.8); scene.add(alarmLight);
+
+/* ---------- 兔寶寶裝工程師 ---------- */
+const worker = new THREE.Group();
+const SUIT = mat(0xf4f5ff, { metalness: 0, roughness: 0.8 });
+const GLOVE = mat(0x3d6fd6, { metalness: 0, roughness: 0.6 });
+const bodyM = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.5, 6, 12), SUIT); bodyM.position.y = 0.55; bodyM.castShadow = true;
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), SUIT); head.position.y = 1.12; head.castShadow = true;
+const visor = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.08), mat(0x2a2d50, { metalness: 0.8, roughness: 0.2 })); visor.position.set(0, 1.13, 0.19);
+const handL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), GLOVE); handL.position.set(-0.3, 0.55, 0);
+const handR = handL.clone(); handR.position.x = 0.3;
+worker.add(bodyM, head, visor, handL, handR);
+scene.add(worker);
+
+/* ---------- 相機 ---------- */
+const persp = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 200);
+persp.position.set(CENTER.x + 10, 12, CENTER.z + 17);
+const ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
+ortho.position.set(CENTER.x + 6, 20, CENTER.z + 16);
+ortho.lookAt(CENTER);
+const controls = new OrbitControls(persp, renderer.domElement);
+controls.target.copy(CENTER); controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.46; controls.minDistance = 6; controls.maxDistance = 40;
+controls.enabled = false;
+let camera = ortho;
+
+/* ---------- 後製：LED 光暈 ---------- */
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.85, 0.45, 0.55);
+composer.addPass(renderPass); composer.addPass(bloom); composer.addPass(new OutputPass());
+
+let style = 'px';
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  // 像素 3D：用 1/3 解析度畫，再放大成硬邊像素。
+  const pr = style === 'px' ? Math.max(0.2, 1 / 3) : Math.min(devicePixelRatio, 2);
+  renderer.setPixelRatio(pr); composer.setPixelRatio(pr);
+  renderer.setSize(w, h, false); composer.setSize(w, h);
+  persp.aspect = w / h; persp.updateProjectionMatrix();
+  const view = 8.2, aspect = w / h;
+  Object.assign(ortho, { left: -view * aspect, right: view * aspect, top: view, bottom: -view });
+  ortho.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+function setStyle(s) {
+  style = s;
+  stage.classList.toggle('px', s === 'px');
+  bloom.strength = s === 'px' ? 0.55 : 0.95;
+  resize();
+}
+function setCam(c) {
+  camera = c === 'free' ? persp : ortho;
+  controls.enabled = c === 'free';
+  renderPass.camera = camera;
+  hint.textContent = c === 'free' ? '拖曳旋轉、滾輪縮放 · DRAG TO ROTATE, SCROLL TO ZOOM' : '遊戲視角 · GAME CAMERA';
+}
+for (const b of document.querySelectorAll('[data-style]')) b.addEventListener('click', () => {
+  document.querySelectorAll('[data-style]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  setStyle(b.dataset.style);
+});
+for (const b of document.querySelectorAll('[data-cam]')) b.addEventListener('click', () => {
+  document.querySelectorAll('[data-cam]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  setCam(b.dataset.cam);
+});
+let paused = false, frozen = 0;
+const pauseBtn = document.getElementById('pause');
+pauseBtn.addEventListener('click', () => { paused = !paused; frozen = performance.now() / 1000; pauseBtn.setAttribute('aria-pressed', String(paused)); });
+
+/* ---------- 動畫 ---------- */
+const fract = (v) => v - Math.floor(v);
+const black = new THREE.Color(0x000000), c = new THREE.Color();
+function frame(now) {
+  const t = paused ? frozen : now / 1000;
+  const still = paused || reduceMQ.matches;
+  const blink = still || Math.floor(t * 2.5) % 2 === 0;
+  leds.forEach((l, i) => {
+    const on = still ? l.kind !== 'flick'
+      : l.kind === 'steady' || (l.kind === 'blink' ? fract(t * l.rate + l.ph) < l.duty : fract(Math.sin((Math.floor(t * 12) + l.ph * 977) * 12.9898) * 43758.5453) > 0.45);
+    const col = l.col === LEDC.r && !l.alarm ? LEDC.g : l.col;
+    ledMesh.setColorAt(i, on ? c.set(col).multiplyScalar(1.6) : black);
+  });
+  ledMesh.instanceColor.needsUpdate = true;
+  for (const p of pmWindows) {
+    const col = p.red ? (blink ? 0xff4d45 : 0x6a2329) : p.dim ? 0x5c6178 : 0x5fd0e0;
+    p.mesh.material.emissive.setHex(col);
+    p.mesh.material.emissiveIntensity = p.red && blink ? 2.2 : 0.9;
+  }
+  for (const tw of towers) {
+    tw.lamps.r.material.emissiveIntensity = tw.st === 'alarm' && blink ? 3 : 0;
+    tw.lamps.a.material.emissiveIntensity = tw.st === 'idle' ? 2.2 : 0;
+    tw.lamps.g.material.emissiveIntensity = tw.st === 'run' ? 2.2 : 0;
+  }
+  alarmLight.intensity = blink ? 3.2 : 0.4;
+  strips.forEach((s, i) => { stripHead[i].position.x = still ? (s.x0 + s.x1) / 2 : s.x0 + fract(t * 0.35 + i * 0.2) * (s.x1 - s.x0); });
+  // 工程師在走道上來回走
+  const span = 20, p = still ? 0.5 : fract(t / 14), fwd = p < 0.5;
+  const x = 3 + span * (fwd ? p * 2 : 2 - p * 2);
+  worker.position.set(x, still ? 0 : Math.abs(Math.sin(t * 9)) * 0.04, 8.5);
+  worker.rotation.y = fwd ? Math.PI / 2 : -Math.PI / 2;
+  handL.position.z = still ? 0 : Math.sin(t * 9) * 0.12; handR.position.z = -handL.position.z;
+  if (controls.enabled) controls.update();
+  composer.render();
+  requestAnimationFrame(frame);
+}
+setStyle('px');
+setCam('game');
+requestAnimationFrame(frame);
+</script>
