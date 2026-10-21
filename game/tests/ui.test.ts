@@ -4,6 +4,7 @@ import { settings, SETTINGS_KEY } from '../src/core/settings';
 import { ch2State, newState, S, setState } from '../src/core/state';
 import { loadMap, NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
 import { SCENES } from '../src/data/story';
+import { cleanName } from '../src/core/name';
 import { doInteract } from '../src/game/actions';
 import { CODEX } from '../src/data/codex';
 import { switchLang } from '../src/core/lang';
@@ -305,4 +306,58 @@ test('choosing English in settings switches and stores the language', () => {
   $<HTMLButtonElement>('#win [data-lang="en"]').click();
   expect(getLang()).toBe('en');
   expect(localStorage.getItem(SETTINGS_KEY)).toContain('"lang":"en"');
+});
+
+// 測試用劇情：台詞裡用到名字。
+Object.assign(SCENES, { t_name: [{ line: { id: 'tn-1', speaker: 'sys', zh: '你好，{name}。', en: 'Hi, {name}.' } }] });
+
+test('cleanName trims, drops control characters and keeps at most 12 characters', () => {
+  expect(cleanName('  小明  ')).toBe('小明');
+  expect(cleanName('a\u0007b')).toBe('ab');
+  expect(cleanName('a   b')).toBe('a b');
+  expect(cleanName('一二三四五六七八九十壹貳參肆伍')).toBe('一二三四五六七八九十壹貳');
+  expect(cleanName('   ')).toBe('');
+});
+
+test('your name is the speaker label for your lines, shown as plain text', () => {
+  S.name = '<b>x</b>';
+  playScene('intro');
+  advanceScene();
+  expect($('#dlg-who').textContent).toBe('<b>x</b>');
+  expect($('#dlg-who b')).toBeNull();
+});
+
+test('{name} in a line becomes your name, or the default name in the current language', () => {
+  S.name = '小明';
+  playScene('t_name');
+  expect($('#dlg-text').textContent).toBe('你好，小明。');
+  stopScene();
+  S.name = '';
+  playScene('t_name');
+  expect($('#dlg-text').textContent).toBe('你好，林靜。');
+  setLang('en');
+  expect($('#dlg-text').textContent).toBe('Hi, Jing Lin.');
+});
+
+test('New Game asks for a name, and switching language keeps what you typed', () => {
+  let got = null as string | null;
+  showTitle({ canContinue: false, onContinue: () => {}, onNew: (n) => (got = n) });
+  $<HTMLButtonElement>('#title [data-act="new"]').click();
+  const input = $<HTMLInputElement>('#name-in');
+  expect(input.maxLength).toBe(12);
+  input.value = '小明';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  switchLang('en');
+  expect($<HTMLInputElement>('#name-in').value).toBe('小明');
+  expect($('#title [data-act="start"]').textContent).toBe('Start');
+  $<HTMLButtonElement>('#title [data-act="start"]').click();
+  expect(got).toBe('小明');
+});
+
+test('Back on the name step returns to the title buttons', () => {
+  showTitle({ canContinue: false, onContinue: () => {}, onNew: () => {} });
+  $<HTMLButtonElement>('#title [data-act="new"]').click();
+  $<HTMLButtonElement>('#title [data-act="back"]').click();
+  expect($('#name-in')).toBeNull();
+  expect($('#title [data-act="new"]')).not.toBeNull();
 });

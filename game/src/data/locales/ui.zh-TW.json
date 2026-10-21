@@ -189,5 +189,9 @@
 
   "title.continue": "繼續",
   "title.newGame": "新遊戲",
+  "title.nameLabel": "你的名字",
+  "title.start": "開始",
+  "title.back": "返回",
+  "name.default": "林靜",
   "title.tagline": "M0 開發版 · 第 2 章 Case 03"
 }

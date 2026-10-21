@@ -189,5 +189,9 @@
 
   "title.continue": "Continue",
   "title.newGame": "New game",
+  "title.nameLabel": "Your name",
+  "title.start": "Start",
+  "title.back": "Back",
+  "name.default": "Jing Lin",
   "title.tagline": "M0 dev build · Chapter 2, Case 03"
 }

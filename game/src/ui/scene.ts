@@ -23,8 +23,6 @@ const queue: { id: string; opts: SceneOpts }[] = [];
 
 export const isSceneActive = (): boolean => runner !== null;
 
-/** 台詞裡的 {clues}、{coffee} 一律用當下的狀態填；重播（讀檔）時也一樣。 */
-const lineParams = (): Params => ({ clues: S.clues.length, coffee: S.coffee, ...params });
 
 function handle(ev: RunnerEvent): void {
   if (ev.kind === 'codex') toast(`${t('codex.correct', { name: L(CODEX[ev.id].name) })} ${L(CODEX[ev.id].what)}`, 'clue');
@@ -54,7 +52,7 @@ function render(f: Frame): void {
 }
 
 function show(f: Frame): void {
-  if (f.kind === 'line') renderLine(f.line, lineParams(), f.canRecognize);
+  if (f.kind === 'line') renderLine(f.line, params, f.canRecognize);
   else if (f.kind === 'choice') renderChoices(f.options.map((o) => ({ id: o.id, label: { zh: o.zh, en: o.en }, enabled: o.enabled })));
   else if (f.kind === 'card') {
     closeDialog();

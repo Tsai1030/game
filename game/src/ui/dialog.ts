@@ -1,5 +1,6 @@
 import { on } from '../core/bus';
 import { esc, fmt, L, t, type Bi, type Params } from '../core/i18n';
+import { playerName } from '../core/name';
 import { CPS, settings } from '../core/settings';
 import { S, type TacticId } from '../core/state';
 import { CODEX, TACTIC_IDS } from '../data/codex';
@@ -34,7 +35,8 @@ let pickerOpen = false;
 
 export const isDialogOpen = (): boolean => open;
 
-const lineText = (v: LineView): string => fmt(L(v.line), v.params);
+/** 台詞裡的 {clues}、{coffee}、{name} 每次重畫都用當下的狀態和語言填（重播、切換語言都正確）。 */
+const lineText = (v: LineView): string => fmt(L(v.line), { clues: S.clues.length, coffee: S.coffee, name: playerName(S), ...v.params });
 const portraitOf = (l: Line): PortraitId => (l.speaker === 'me' ? (S.suit ? 'meSuit' : 'me') : l.speaker);
 
 function tick(now: number): void {
@@ -61,7 +63,8 @@ function renderPicker(): void {
 
 /** 說話者、頭像和台詞；沒有台詞時全部清空。 */
 function paintSpeaker(v: LineView | null, text: string): void {
-  $('#dlg-who').textContent = v ? t('speaker.' + v.line.speaker) : '';
+  // 「你」的說話者名稱顯示玩家的名字；用 textContent，名字裡有 HTML 也只會當成文字。
+  $('#dlg-who').textContent = !v ? '' : v.line.speaker === 'me' ? playerName(S) : t('speaker.' + v.line.speaker);
   const cv = $<HTMLCanvasElement>('#dlg-por');
   const ctx = cv.getContext('2d');
   if (ctx) {

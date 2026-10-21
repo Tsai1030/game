@@ -105,10 +105,10 @@ window.addEventListener('resize', () => {
 });
 
 /* 4. 標題畫面、新遊戲與繼續 */
-function start(loaded: GameState | null): void {
+function start(loaded: GameState | null, name = ''): void {
   stopScene();
   // 序章完成前（Task 10），新遊戲先從第 2 章開始。
-  const s = loaded ?? ch2State();
+  const s = loaded ?? { ...ch2State(), name };
   if (!loaded) clearSave(browserStore());
   setState(s);
   placeLoaded(S);
@@ -138,7 +138,7 @@ function openTitle(): void {
     canContinue: r.kind === 'ok',
     notice: r.kind === 'corrupt' ? t('toast.saveCorrupt') : undefined,
     onContinue: () => start(r.kind === 'ok' ? r.state : null),
-    onNew: () => start(null),
+    onNew: (name: string) => start(null, name),
     onLang: (l: Lang) => switchLang(l),
   });
 }
