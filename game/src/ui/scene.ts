@@ -18,10 +18,13 @@ let runner: ScriptRunner | null = null;
 let activeId: string | null = null;
 let params: Params | undefined;
 let onEnd: (() => void) | undefined;
-const queue: string[] = [];
+type SceneOpts = { params?: Params; onEnd?: () => void };
+const queue: { id: string; opts: SceneOpts }[] = [];
 
 export const isSceneActive = (): boolean => runner !== null;
 
+/** 台詞裡的 {clues}、{coffee} 一律用當下的狀態填；重播（讀檔）時也一樣。 */
+const lineParams = (): Params => ({ clues: S.clues.length, coffee: S.coffee, ...params });
 
 function handle(ev: RunnerEvent): void {
   if (ev.kind === 'codex') toast(`${t('codex.correct', { name: L(CODEX[ev.id].name) })} ${L(CODEX[ev.id].what)}`, 'clue');
@@ -51,7 +54,7 @@ function render(f: Frame): void {
 }
 
 function show(f: Frame): void {
-  if (f.kind === 'line') renderLine(f.line, params, f.canRecognize);
+  if (f.kind === 'line') renderLine(f.line, lineParams(), f.canRecognize);
   else if (f.kind === 'choice') renderChoices(f.options.map((o) => ({ id: o.id, label: { zh: o.zh, en: o.en }, enabled: o.enabled })));
   else if (f.kind === 'card') {
     closeDialog();
@@ -63,8 +66,11 @@ function show(f: Frame): void {
   } else finish();
 }
 
-/** 第二次歸零：劇情中止，看完燃盡卡後刪除存檔、回標題畫面。存檔維持暫停，不會寫回。 */
+/** 第二次歸零：劇情中止，存檔立刻刪除（直接關分頁也一樣），看完燃盡卡回標題畫面。 */
 function burnout(): void {
+  setAutosave(false);
+  pauseAutosave(false);
+  clearSave(browserStore());
   closeDialog();
   runner = null;
   activeId = null;
@@ -72,12 +78,7 @@ function burnout(): void {
   onEnd = undefined;
   S.scene = null;
   queue.length = 0;
-  showCard('card.burnoutTitle', 'card.burnoutBody', () => {
-    setAutosave(false);
-    pauseAutosave(false);
-    clearSave(browserStore());
-    emit('toTitle');
-  });
+  showCard('card.burnoutTitle', 'card.burnoutBody', () => emit('toTitle'));
 }
 
 function finish(): void {
@@ -97,9 +98,9 @@ function finish(): void {
  * 播一段劇情。開始時先存檔（記下這段劇情，讀檔時從開頭重播），
  * 進行中暫停自動存檔，結束後再存。已經有劇情在播時排到後面。
  */
-export function playScene(id: string, opts: { params?: Params; onEnd?: () => void } = {}): void {
+export function playScene(id: string, opts: SceneOpts = {}): void {
   if (runner) {
-    queueScene(id);
+    queueScene(id, opts);
     return;
   }
   S.scene = id;
@@ -138,15 +139,15 @@ function noteScene(): void {
 }
 
 /** 等不忙的時候再播；同一段不會重複排入。 */
-export function queueScene(id: string): void {
-  if (activeId !== id && !queue.includes(id)) queue.push(id);
+export function queueScene(id: string, opts: SceneOpts = {}): void {
+  if (activeId !== id && !queue.some((q) => q.id === id)) queue.push({ id, opts });
 }
 
 /** 由遊戲迴圈每格呼叫；對話、視窗、劇情卡、風淋等忙碌狀態時先不播。 */
 export function pumpQueue(): void {
   if (runner || busy()) return;
-  const id = queue.shift();
-  if (id) playScene(id);
+  const q = queue.shift();
+  if (q) playScene(q.id, q.opts);
 }
 
 /** 強制結束目前劇情（測試、回標題用）。 */

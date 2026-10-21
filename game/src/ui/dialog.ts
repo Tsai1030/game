@@ -21,7 +21,9 @@ export interface ChoiceView {
   enabled: boolean;
 }
 
-type View = { kind: 'line'; line: Line; params?: Params; canRecognize: boolean } | { kind: 'choice'; options: ChoiceView[] };
+type LineView = { kind: 'line'; line: Line; params?: Params; canRecognize: boolean };
+/** 選項畫面也記住上面那句台詞（prompt），切換語言時一起重畫；劇情一開始就是選項時沒有。 */
+type View = LineView | { kind: 'choice'; options: ChoiceView[]; prompt: LineView | null };
 
 let open = false;
 let view: View | null = null;
@@ -32,7 +34,7 @@ let pickerOpen = false;
 
 export const isDialogOpen = (): boolean => open;
 
-const lineText = (v: Extract<View, { kind: 'line' }>): string => fmt(L(v.line), v.params);
+const lineText = (v: LineView): string => fmt(L(v.line), v.params);
 const portraitOf = (l: Line): PortraitId => (l.speaker === 'me' ? (S.suit ? 'meSuit' : 'me') : l.speaker);
 
 function tick(now: number): void {
@@ -57,22 +59,32 @@ function renderPicker(): void {
     `</div>`;
 }
 
+/** 說話者、頭像和台詞；沒有台詞時全部清空。 */
+function paintSpeaker(v: LineView | null, text: string): void {
+  $('#dlg-who').textContent = v ? t('speaker.' + v.line.speaker) : '';
+  const cv = $<HTMLCanvasElement>('#dlg-por');
+  const ctx = cv.getContext('2d');
+  if (ctx) {
+    if (v) drawPortrait(ctx, portraitOf(v.line));
+    else ctx.clearRect(0, 0, cv.width, cv.height);
+  }
+  $('#dlg-text').textContent = text;
+}
+
 /** 依目前狀態整個重畫（切換語言時也用這個，不重跑打字效果）。 */
 function paint(typewriter: boolean): void {
   if (!view) return;
   const choices = $('#dlg-choices');
   if (view.kind === 'line') {
     const full = lineText(view);
-    $('#dlg-who').textContent = t('speaker.' + view.line.speaker);
-    const ctx = $<HTMLCanvasElement>('#dlg-por').getContext('2d');
-    if (ctx) drawPortrait(ctx, portraitOf(view.line));
     if (!typewriter || CPS[settings.textSpeed] === Infinity) shown = full.length;
-    $('#dlg-text').textContent = full.slice(0, Math.floor(shown));
+    paintSpeaker(view, full.slice(0, Math.floor(shown)));
     choices.hidden = true;
     choices.innerHTML = '';
     $('#dlg-rec').hidden = !view.canRecognize;
     $('#dlg-note').hidden = false;
   } else {
+    paintSpeaker(view.prompt, view.prompt ? lineText(view.prompt) : '');
     choices.hidden = false;
     choices.innerHTML = view.options
       .map((o) => `<button class="pbtn" data-choice="${esc(o.id)}"${o.enabled ? '' : ` disabled title="${esc(t('choice.locked'))}"`}>${esc(L(o.label))}</button>`)
@@ -109,7 +121,8 @@ export function renderLine(line: Line, params: Params | undefined, canRecognize:
 }
 
 export function renderChoices(options: ChoiceView[]): void {
-  view = { kind: 'choice', options };
+  const prompt = view?.kind === 'line' ? view : (view?.prompt ?? null);
+  view = { kind: 'choice', options, prompt };
   pickerOpen = false;
   paint(false);
 }
@@ -139,6 +152,8 @@ export function relocalizeDialog(): void {
 export function initDialog(h: DialogHandlers): void {
   $('#dialog').addEventListener('click', (e) => {
     const el = e.target as HTMLElement;
+    // 用滑鼠按過「記下」「？」或話術按鈕後不要留著焦點，不然之後按空白鍵／Enter 會一直重按它，而不是下一句。
+    el.closest<HTMLElement>('#dlg-note, #dlg-rec, [data-tactic]')?.blur();
     const choice = el.closest<HTMLButtonElement>('[data-choice]');
     if (choice) {
       if (!choice.disabled) h.choose(choice.dataset.choice!);

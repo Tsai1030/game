@@ -7,7 +7,7 @@ import { settings } from '../src/core/settings';
 import { newState, S, setState } from '../src/core/state';
 import { CODEX } from '../src/data/codex';
 import { SCENES } from '../src/data/story';
-import { advanceScene, initScenePlayer, isSceneActive, playScene, stopScene } from '../src/ui/scene';
+import { advanceScene, initScenePlayer, isSceneActive, playScene, pumpQueue, stopScene } from '../src/ui/scene';
 
 const html = await Bun.file(new URL('../index.html', import.meta.url)).text();
 const body = /<body>([\s\S]*)<\/body>/.exec(html)![1]!.replace(/<script[\s\S]*?<\/script>/g, '');
@@ -18,6 +18,10 @@ Object.assign(SCENES, {
   t_tactic: [
     { line: { id: 't-1', speaker: 'boss', zh: '我不是叫你去看了嗎？', en: "Didn't I tell you to check it?", tactic: 'gaslighting', sanity: -10 } },
     { line: { id: 't-2', speaker: 'me', zh: '……', en: '…' } },
+  ],
+  t_prompt: [
+    { line: { id: 'p-1', speaker: 'boss', zh: '你要怎麼做？', en: 'What will you do?' } },
+    { choice: [{ id: 'a', zh: '甲', en: 'A', do: [] }] },
   ],
   t_choice: [
     {
@@ -100,6 +104,55 @@ test('switching language re-labels choices and keeps the picker open', () => {
   expect($('#dlg-pick').hidden).toBe(false);
   expect($('#dlg-pick [data-tactic="gaslighting"]').textContent).toBe(CODEX.gaslighting.name.zh);
   expect($('#dlg-text').textContent).toBe('我不是叫你去看了嗎？');
+});
+
+test('the line above a choice switches language with it', () => {
+  playScene('t_prompt');
+  advanceScene();
+  switchLang('en');
+  expect($('#dlg-text').textContent).toBe('What will you do?');
+  expect($('#dlg-who').textContent).toBe(t('speaker.boss'));
+  expect($('#dlg-choices button').textContent).toBe('A');
+});
+
+test('a scene that opens with a choice does not show the previous scene’s last line', () => {
+  playScene('t_prompt');
+  advanceScene();
+  $<HTMLButtonElement>('#dlg-choices button').click();
+  playScene('t_choice');
+  expect($('#dlg-text').textContent).toBe('');
+  expect($('#dlg-who').textContent).toBe('');
+});
+
+test('rc_solved shows real clue and coffee counts even when replayed without params', () => {
+  S.clues = ['spc', 'fdc', 'ring'];
+  S.coffee = 2;
+  playScene('rc_solved');
+  for (let i = 0; i < 3; i++) advanceScene();
+  expect($('#dlg-text').textContent).toBe('CASE 03 完成！用到線索 3/5，剩下咖啡 2 杯。');
+});
+
+test('a scene queued behind another keeps its onEnd', () => {
+  let ended = 0;
+  playScene('t_prompt');
+  playScene('t_tactic', { onEnd: () => ended++ });
+  advanceScene();
+  $<HTMLButtonElement>('#dlg-choices button').click();
+  pumpQueue();
+  expect($('#dlg-text').textContent).toBe('我不是叫你去看了嗎？');
+  advanceScene();
+  advanceScene();
+  expect(ended).toBe(1);
+});
+
+test('clicking Note it or ? does not keep keyboard focus on the button', () => {
+  playScene('t_tactic');
+  for (const id of ['#dlg-note', '#dlg-rec']) {
+    const b = $<HTMLButtonElement>(id);
+    b.focus();
+    b.click();
+    expect({ id, focused: document.activeElement === b }).toEqual({ id, focused: false });
+  }
 });
 
 test('a scene saves at its start, not in the middle, and again at its end', () => {

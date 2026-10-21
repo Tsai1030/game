@@ -80,7 +80,7 @@ scenes:
     - line: { id: rc_solved-1, speaker: sys, zh: "EE 換上新的 focus ring，PM-B 跑 monitor wafer：CD 45.1 nm，回到 target。", en: "EE installed a new focus ring. PM-B ran a monitor wafer: CD 45.1 nm, back on target." }
     - line: { id: rc_solved-2, speaker: sys, zh: "Hold 的 4 批 lot 重新量測後放行。", en: "The 4 held lots were re-measured and released." }
     - line: { id: rc_solved-3, speaker: boss, zh: "好，8 點我來報。你去吃早餐吧。", en: "Fine. I'll present it at 8. Go get some breakfast." }
-    - line: { id: rc_solved-4, speaker: sys, zh: "CASE 03 完成！用到線索 {n}/5，剩下咖啡 {c} 杯。", en: "CASE 03 complete! Clues used: {n}/5. Coffee left: {c}." }
+    - line: { id: rc_solved-4, speaker: sys, zh: "CASE 03 完成！用到線索 {clues}/5，剩下咖啡 {coffee} 杯。", en: "CASE 03 complete! Clues used: {clues}/5. Coffee left: {coffee}." }
 
   # C2-03：拿到 SPC 線索後，你在 LINE 回報王經理（證據 E-C2-01、E-C2-02）。
   c2_report_spc:

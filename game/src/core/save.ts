@@ -64,7 +64,8 @@ export function parseSave(raw: string | null): GameState | null {
     flags: [],
     scene: null,
   };
-  if (o.v === 1) return base;
+  // M0 存檔一定已經過了開場，證據簿要直接解鎖（開場劇情才會設這個旗標）。
+  if (o.v === 1) return { ...base, flags: ['ev_unlocked'] };
   if (!isInt(o.sanity, 0, 100) || !isInt(o.zeroCount, 0, 2) || !isRel(o.rel)) return null;
   if (!Array.isArray(o.codex) || !o.codex.every((c) => (TACTIC_IDS as readonly unknown[]).includes(c))) return null;
   if (!Array.isArray(o.evidence) || !o.evidence.every(isEvidence)) return null;

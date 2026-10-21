@@ -88,8 +88,8 @@ test('the solved summary keeps its placeholders in both languages', () => {
   const lines = SCENES.rc_solved!.flatMap((b) => ('line' in b ? [b.line] : []));
   const last = lines.at(-1)!;
   for (const s of [last.zh, last.en]) {
-    expect(s).toContain('{n}');
-    expect(s).toContain('{c}');
+    expect(s).toContain('{clues}');
+    expect(s).toContain('{coffee}');
   }
 });
 

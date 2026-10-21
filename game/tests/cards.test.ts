@@ -7,7 +7,7 @@ import { SAVE_KEY } from '../src/core/save';
 import { settings } from '../src/core/settings';
 import { newState, S, setState } from '../src/core/state';
 import { SCENES } from '../src/data/story';
-import { busy } from '../src/game/runtime';
+import { busy, canOpenSettings } from '../src/game/runtime';
 import { isCardOpen, showCard } from '../src/ui/cards';
 import { isDialogOpen } from '../src/ui/dialog';
 import { advanceScene, initScenePlayer, isSceneActive, playScene, stopScene } from '../src/ui/scene';
@@ -68,6 +68,9 @@ test('hitting zero again shows the Burnout card, which clears the save and retur
   expect(isSceneActive()).toBe(false);
   expect(isCardOpen()).toBe(true);
   expect($('#card').textContent).toContain(t('card.burnoutTitle'));
+  // 卡片一出現存檔就刪掉：玩家直接關分頁，也不能回到這段劇情。
+  expect(localStorage.getItem(SAVE_KEY)).toBeNull();
+  expect(canOpenSettings()).toBe(false);
   press('Space');
   expect(isCardOpen()).toBe(false);
   expect(localStorage.getItem(SAVE_KEY)).toBeNull();

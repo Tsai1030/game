@@ -34,7 +34,7 @@ test('an M0 (v1) save migrates to v2 with defaults', () => {
   const r = readSave(memStore({ [SAVE_KEY]: JSON.stringify(v1) }));
   expect(r.kind).toBe('ok');
   if (r.kind !== 'ok') return;
-  expect(r.state).toMatchObject({ v: 2, x: 20, suit: true, clues: ['spc'], sanity: 80, zeroCount: 0, codex: [], evidence: [], flags: [], scene: null });
+  expect(r.state).toMatchObject({ v: 2, x: 20, suit: true, clues: ['spc'], sanity: 80, zeroCount: 0, codex: [], evidence: [], flags: ['ev_unlocked'], scene: null });
   expect(r.state.rel).toEqual(REL_START);
 });
 

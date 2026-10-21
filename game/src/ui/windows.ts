@@ -109,7 +109,7 @@ function submitRC(): void {
     return;
   }
   solveCase();
-  playScene('rc_solved', { params: { n: S.clues.length, c: S.coffee } });
+  playScene('rc_solved');
 }
 
 function rcOn(root: HTMLElement): void {
