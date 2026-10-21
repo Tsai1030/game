@@ -37,7 +37,7 @@ applyDom();
 
 /* 2. DOM 介面 */
 const stageW = () => $('#stage').clientWidth;
-initWin(() => view.canvas.focus({ preventScroll: true }));
+initWin(() => view?.canvas.focus({ preventScroll: true }));
 initScenePlayer();
 initHud(stageW() < 700);
 initInput({
@@ -74,9 +74,15 @@ $('#set-btn').addEventListener('click', () => {
   if (canOpenSettings()) openSettings();
 });
 
-/* 3. 3D 世界畫面（three.js） */
-const view = new WorldView($('#stage'));
-view.start();
+/* 3. 3D 世界畫面（three.js）。瀏覽器不支援 WebGL 時，舞台顯示說明，介面其餘部分照常。 */
+let view: WorldView | null = null;
+try {
+  view = new WorldView($('#stage'));
+  view.start();
+} catch (e) {
+  console.error(e);
+  $('#stage').insertAdjacentHTML('afterbegin', '<p class="no-gl" data-i18n="world.noWebgl"></p>');
+}
 applyDom();
 
 /* 4. 標題畫面、新遊戲與繼續 */

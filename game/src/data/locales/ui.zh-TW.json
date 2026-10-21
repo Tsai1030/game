@@ -35,6 +35,7 @@
   "hud.evidence": "證據簿",
   "hud.codex": "圖鑑",
   "game.canvasAria": "Fab 夜班遊戲畫面：俯視的辦公室、更衣室與晶圓廠",
+  "world.noWebgl": "這個瀏覽器無法顯示 3D 畫面（不支援 WebGL）。請改用最新版的 Chrome、Edge、Firefox 或 Safari。",
   "quest.case": "Case 03",
   "quest.title": "ETCH 段 CD 偏移",
   "quest.toggle": "收合或展開任務清單",

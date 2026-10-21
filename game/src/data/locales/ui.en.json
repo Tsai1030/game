@@ -35,6 +35,7 @@
   "hud.evidence": "Evidence",
   "hud.codex": "Codex",
   "game.canvasAria": "Fab Night Shift game view: a top-down office, gowning room and fab",
+  "world.noWebgl": "This browser can't show the 3D view (WebGL isn't available). Please use a recent Chrome, Edge, Firefox or Safari.",
   "quest.case": "Case 03",
   "quest.title": "ETCH CD shift",
   "quest.toggle": "Collapse or expand the task list",

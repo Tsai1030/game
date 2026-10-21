@@ -53,6 +53,7 @@ button.stat:active { transform: translate(3px, 3px); box-shadow: none; }
 .quest li.done { color: var(--muted); text-decoration: line-through; }
 .quest li.done i { background: var(--ok); border-color: var(--ok); }
 .quest.min ol { display: none; }
+.no-gl { margin: auto; padding: 48px 24px; max-width: 46ch; text-align: center; color: var(--muted); }
 .fade { position: absolute; inset: 0; background: #050507; opacity: 0; pointer-events: none; z-index: 2; }
 .prompt { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: var(--panel); color: var(--ink); border: 3px solid var(--edge); padding: 8px 16px; font-size: 16px; cursor: pointer; white-space: nowrap; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; animation: bob 1s steps(2) infinite; z-index: 2; }
 .prompt kbd { margin-right: 10px; }

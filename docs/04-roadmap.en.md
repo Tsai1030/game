@@ -44,7 +44,7 @@ Effort uses relative sizes: S, M, L, XL. Calendar time depends on how many peopl
 
 ## 3. M1 · v0.1 playable slice (L)
 
-> **M1-3D (2026-10-21):** in progress. Plan: `docs/superpowers/plans/2026-10-21-m1-3d-renderer.md`.
+> **M1-3D (2026-10-21): code complete, waiting for the owner's playtest.** The world is now three.js Smooth 3D: 3D floors and walls, tools with instanced glowing LEDs and alarm light, furniture, low-poly characters, an orthographic follow camera with 3D picking, and fades between maps. Phaser is removed and the bundle drops from 1,613 KB to 617 KB. 177 automated tests pass. Plan: `docs/superpowers/plans/2026-10-21-m1-3d-renderer.md`.
 
 > **Status (2026-10-21): M1-1 (story engine) code complete, waiting for the owner's playtest; M1-2 (content) next.** M1 is split in two. M1-1 adds the story systems and runs Chapter 2's existing lines through them: YAML scenes with choices, responses, asking, conditions and effects; sanity with forced leave and Burnout; Tactic Recognition and the 7-card Codex; the Evidence Log, where Chapter 2's LINE reports log E-C2-01 to E-C2-04; and save format v2, which migrates v1 saves. The owner also chose oblique tools with a visible side face from three mockups (`mockups/tools-3d.html`). 123 automated tests pass, typecheck passes, and the build succeeds. Plan and progress: `docs/superpowers/plans/2026-10-20-m1a-story-engine.md`. M1-2 covers maps 2 and 3, the new characters, Prologue S1–S8, C2-07 to C2-10, the end-of-demo card and the acceptance pass.
 >
