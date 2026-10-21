@@ -120,3 +120,12 @@ test('all chapter 2 scenes exist, including the LINE reports', () => {
   expect(evIds('c2_report_ring')).toEqual(['E-C2-03', 'E-C2-04']);
   expect(beats(SCENES.kevin!).some((b) => 'effect' in b && b.effect.clue === 'pm')).toBe(true);
 });
+
+test('source files contain no raw control characters', async () => {
+  const bad: string[] = [];
+  for await (const f of new Bun.Glob('{src,tests}/**/*.{ts,yaml,json}').scan('.')) {
+    const s = await Bun.file(f).text();
+    if (/[\x00-\x08\x0e-\x1f\x7f]/.test(s)) bad.push(f);
+  }
+  expect(bad).toEqual([]);
+});

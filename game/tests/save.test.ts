@@ -79,7 +79,7 @@ test('invalid v3 fields are reported as corrupt', () => {
     { ...fullV3(), map: 'M99' },
     { ...fullV3(), chapter: 'ch9' },
     { ...fullV3(), name: 'x'.repeat(13) },
-    { ...fullV3(), name: 'a' },
+    { ...fullV3(), name: 'a\u0007' },
   ];
   for (const b of bad) expect(readSave(memStore({ [SAVE_KEY]: JSON.stringify(b) }))).toEqual({ kind: 'corrupt' });
 });

@@ -19,7 +19,7 @@
 src/
   main.ts          啟動：設定 → 語言 → DOM → Phaser → 標題畫面
   core/            語系、設定、遊戲狀態、存檔、事件匯流排、亂數
-  data/            地圖與物件（world.ts）、Case 03（case03.json）、劇本（story/*.yaml）、介面文字（locales/）
+  data/            目前地圖（world.ts）、四張地圖（maps/）、Case 03（case03.json）、劇本（story/*.yaml）、介面文字（locales/）
   systems/         尋路、線索、結論判定、咖啡、任務清單、理智、證據、關係、回應、劇本執行器（純邏輯）
   render/          程式繪製的像素圖：地圖、斜角黑機台＋LED、人物、頭像、天車
   game/            Phaser 場景、移動控制（Mover）、輸入、互動、視窗大小
@@ -73,6 +73,30 @@ scenes:
 劇情由 `playScene(id)` 播放（`src/ui/scene.ts`）。播放時暫停自動存檔，存檔停在劇情開頭，讀檔後從頭重播，效果不會重複。要等玩家空下來再播的劇情（例如 LINE 回報）用 `queueScene(id)`。
 
 Scenes play through `playScene(id)` (`src/ui/scene.ts`). Autosave pauses while a scene plays, so the save stays at the scene's start and a reload replays it from the top without applying its effects twice. Use `queueScene(id)` for scenes that should wait until the player is free, such as LINE reports.
+
+## 地圖與劇情觸發 · Maps and triggers
+
+每張地圖是 `src/data/maps/` 裡的一個 `MapDef`：格子（每列一個字串）、物件、NPC 定義、出口、地點範圍、起點。地板字元：`#` 牆、`.` 地毯、`,` Fab、`y` 黃光區、`=` 更衣室、`D` 門、`A` 風淋室、`g` 玻璃、`l` 石材、`w` 木地板。
+
+Each map is a `MapDef` in `src/data/maps/`: tile rows (one string per row), objects, NPC definitions, exits, location regions and a start tile. Tile characters: `#` wall, `.` carpet, `,` fab, `y` yellow room, `=` gowning room, `D` door, `A` air shower, `g` glass, `l` stone, `w` wood.
+
+```ts
+// NPC：同一個 id 可以寫好幾筆，取第一筆 when 成立的；talk 是說話時播的劇情。
+// NPCs: an id may have several entries; the first whose `when` holds is used. `talk` is the scene played when you talk to them.
+{ id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'down', talk: 'p_ask_kevin', when: { chapter: 'prologue', flag: 'task_hold', notFlag: 'knows_hold_lot' } },
+// 出口：站上門格就換地圖；if 不成立時播 locked 劇情、人留在原地。
+// Exits: stepping on the door tile changes map. If `if` fails, the `locked` scene plays and you stay put.
+{ x: 10, y: 0, to: 'M02', at: { x: 2, y: 10, dir: 'up' }, if: { flag: 'p_badge' }, locked: 'p_gate_locked' },
+```
+
+劇本檔可以寫 `triggers:`，在走進某張地圖（或某個範圍 `at: [x, y, w, h]`）時自動播劇情。觸發的劇情要設一個旗標，讓自己的條件不再成立（測試會檢查）。效果可以用 `time: "15:00"`、`chapter: ch2`、`etch: alarm`，以及 `warp: { map, x, y, dir }` 把玩家帶到別的地方；台詞裡的 `{name}` 會換成玩家的名字。
+
+A story file can list `triggers:` that start a scene when you enter a map (or an area `at: [x, y, w, h]`). A triggered scene must set a flag that turns its own condition off (a test checks this). Effects can use `time: "15:00"`, `chapter: ch2`, `etch: alarm` and `warp: { map, x, y, dir }` to move the player. `{name}` in a line becomes the player's name.
+
+```yaml
+triggers:
+  - { scene: p_s2, map: M02, if: { chapter: prologue, notFlag: seen_p_s2 } }
+```
 
 ## 規則
 

@@ -44,6 +44,17 @@ Effort uses relative sizes: S, M, L, XL. Calendar time depends on how many peopl
 ## 3. M1 · v0.1 playable slice (L)
 
 > **Status (2026-10-21): M1-1 (story engine) code complete, waiting for the owner's playtest; M1-2 (content) next.** M1 is split in two. M1-1 adds the story systems and runs Chapter 2's existing lines through them: YAML scenes with choices, responses, asking, conditions and effects; sanity with forced leave and Burnout; Tactic Recognition and the 7-card Codex; the Evidence Log, where Chapter 2's LINE reports log E-C2-01 to E-C2-04; and save format v2, which migrates v1 saves. The owner also chose oblique tools with a visible side face from three mockups (`mockups/tools-3d.html`). 123 automated tests pass, typecheck passes, and the build succeeds. Plan and progress: `docs/superpowers/plans/2026-10-20-m1a-story-engine.md`. M1-2 covers maps 2 and 3, the new characters, Prologue S1–S8, C2-07 to C2-10, the end-of-demo card and the acceptance pass.
+>
+> **Status (2026-10-21): M1-1 merged into `main`. M1-2 is split in two. M1-2a (prologue) is code complete and waiting for the owner's playtest; M1-2b (Chapter 2 ending) is next.** M1-2a adds:
+> - The security gate, orientation room and rented room maps; a corridor, meeting room and technicians' break room on the main site.
+> - Door transitions with a fade and the location name.
+> - Oblique furniture.
+> - Fang-jie, Amy and the security guard, who appear based on story progress.
+> - Naming your character on New Game.
+> - Day and night shift rules.
+> - Prologue S1–S8, flowing into the Chapter 2 chapter card.
+>
+> 165 automated tests pass, including a full prologue playthrough in each language. Plan and progress: `docs/superpowers/plans/2026-10-21-m1-2a-prologue.md`.
 
 **Work:**
 1. **Story systems:** sanity, Tactic Recognition (7 cards), Evidence Log, relationships, asking system, response options, story flags.
