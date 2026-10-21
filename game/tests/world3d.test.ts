@@ -182,3 +182,64 @@ test('people turn to face where they walk, and stand still when not moving', () 
   p.setWalk(0.25, false);
   expect(p.group.getObjectByName('legL')!.rotation.x).toBe(0);
 });
+
+/* ---------- Task 6：整張地圖 ---------- */
+import { ACTS, MAP, NPC, refreshNpcs } from '../src/data/world';
+import type { NpcDef } from '../src/data/maps';
+import { WorldModel } from '../src/world3d/model';
+
+const view = (o: Partial<Parameters<WorldModel['update']>[2]> = {}) => ({ px: 48, py: 64, dir: 'down' as const, moving: false, walkT: 0, near: null, marker: null, reduce: true, ...o });
+
+test('building M03 makes every interactable pickable, one person per NPC, and the OHT', () => {
+  setState(ch2State());
+  loadMap('M03');
+  const w = new WorldModel();
+  w.build();
+  const things = new Set(w.pickables().map((p) => p.userData.thing));
+  for (const o of ACTS) expect({ id: o.id, pickable: things.has(o) }).toEqual({ id: o.id, pickable: true });
+  expect(NPC.every((n) => !!w.scene.getObjectByName(`npc:${n.id}`))).toBe(true);
+  expect(w.scene.getObjectByName('oht')).toBeDefined();
+  loadMap('M04');
+  w.build();
+  expect(w.scene.getObjectByName('oht')).toBeUndefined();
+  expect(w.scene.getObjectByName('leds')).toBeUndefined();
+  w.dispose();
+});
+
+test('NPCs come and go with story flags without leaving ghosts', () => {
+  setState(ch2State());
+  loadMap('M03');
+  const def: NpcDef = { id: 't_npc', look: 'boss', x: 5, y: 5, dir: 'down', talk: 'boss', when: { flag: 't_flag' } };
+  MAP.npcs.unshift(def);
+  try {
+    const w = new WorldModel();
+    w.build();
+    expect(w.scene.getObjectByName('npc:t_npc')).toBeUndefined();
+    S.flags = ['t_flag'];
+    refreshNpcs(S);
+    w.syncNpcs();
+    expect(w.scene.getObjectByName('npc:t_npc')).toBeDefined();
+    S.flags = [];
+    refreshNpcs(S);
+    w.syncNpcs();
+    const left: string[] = [];
+    w.scene.traverse((o) => o.name.startsWith('npc:t_npc') && left.push(o.name));
+    expect(left).toEqual([]);
+    w.dispose();
+  } finally {
+    MAP.npcs.shift();
+    refreshNpcs(S);
+  }
+});
+
+test('the player stands where the mover is, and dispose empties the scene', () => {
+  setState(ch2State());
+  loadMap('M03');
+  const w = new WorldModel();
+  w.build();
+  w.update(0, 0.016, view({ px: 48, py: 32 }));
+  const p = w.scene.getObjectByName('player')!;
+  expect([p.position.x, p.position.z]).toEqual([3.5, 2.5]);
+  w.dispose();
+  expect(w.scene.children.length).toBe(0);
+});
