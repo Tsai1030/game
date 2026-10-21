@@ -288,6 +288,17 @@ test('the same clue cannot be collected twice', () => {
   expect(S.clues).toEqual(['spc']);
 });
 
+test('in the prologue the PE workstation and the suit lockers stay closed', () => {
+  S.chapter = 'prologue';
+  doInteract(OBJ.find((o) => o.id === 'locker')!);
+  expect(S.scene).toBe('p_locker');
+  expect(S.suit).toBe(false);
+  stopScene();
+  doInteract(OBJ.find((o) => o.id === 'pc')!);
+  expect(S.scene).toBe('p_pc');
+  expect($('#win').textContent).toBe('');
+});
+
 test('the locker prompt follows the suit state', () => {
   const locker = OBJ.find((o) => o.id === 'locker')!;
   expect(verb(locker)).toBe(t('verb.suitOn'));

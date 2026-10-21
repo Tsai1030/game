@@ -7,7 +7,8 @@ import { ch2State, S, setState } from '../src/core/state';
 import { loadMap, MAP, MW, OBJ } from '../src/data/world';
 import { doInteract } from '../src/game/actions';
 import { busy, rt } from '../src/game/runtime';
-import { enterMap, onArrive, placeLoaded, setFader, travel, tryExit } from '../src/game/travel';
+import { enterMap, fireTrigger, onArrive, placeLoaded, setFader, travel, tryExit } from '../src/game/travel';
+import { TRIGGERS } from '../src/data/story';
 import { showBanner } from '../src/ui/hud';
 import { initScenePlayer, isSceneActive, stopScene } from '../src/ui/scene';
 
@@ -88,6 +89,21 @@ test('a saved tile that is now a wall falls back to that map’s start', () => {
   setState({ ...ch2State(), map: 'M02', x: 0, y: 0 });
   placeLoaded(S);
   expect([MAP.id, S.x, S.y]).toEqual(['M02', 2, 10]);
+});
+
+test('a trigger plays its scene where it is placed, and not while you are busy', () => {
+  TRIGGERS.unshift({ scene: 'home_locked', map: 'M03', at: [3, 4, 1, 1], if: { notFlag: 't_seen' } });
+  try {
+    S.x = 3;
+    S.y = 5;
+    expect(fireTrigger()).toBe(false);
+    S.y = 4;
+    expect(fireTrigger()).toBe(true);
+    expect(S.scene).toBe('home_locked');
+    expect(fireTrigger()).toBe(false);
+  } finally {
+    TRIGGERS.shift();
+  }
 });
 
 test('the location banner switches language while it is showing', () => {

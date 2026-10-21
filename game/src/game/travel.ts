@@ -4,8 +4,10 @@ import { S, type Dir, type GameState, type MapId } from '../core/state';
 import type { Exit } from '../data/maps';
 import { exitAt, loadMap, MAP, walkable } from '../data/world';
 import { evalCond } from '../systems/script';
+import { TRIGGERS } from '../data/story';
+import { triggerAt } from '../systems/triggers';
 import { playScene } from '../ui/scene';
-import { rt } from './runtime';
+import { busy, rt } from './runtime';
 
 export type ExitResult = { kind: 'go'; exit: Exit } | { kind: 'locked'; scene: string } | null;
 
@@ -58,6 +60,7 @@ export function travel(map: MapId, x: number, y: number, dir: Dir): void {
       const n = next;
       next = null;
       if (n) travel(...n);
+      else fireTrigger();
     },
   );
 }
@@ -72,6 +75,13 @@ export function onArrive(): 'go' | 'locked' | null {
   }
   travel(r.exit.to, r.exit.at.x, r.exit.at.y, r.exit.at.dir);
   return 'go';
+}
+
+/** 站的地方有觸發劇情就播（忙碌時不播）；有播回傳 true。 */
+export function fireTrigger(): boolean {
+  if (busy()) return false;
+  const scene = triggerAt(TRIGGERS, S.map, S.x, S.y, S);
+  return scene ? playScene(scene) : false;
 }
 
 /** 讀檔後載入存檔裡的地圖；原本那格不能站（例如地圖改過）就改站那張地圖的起點。 */

@@ -14,7 +14,7 @@ import { advanceScene, pumpQueue } from '../ui/scene';
 import { hideShower, setLocation, setPrompt, showBanner, showShower } from '../ui/hud';
 import { toast } from '../ui/toast';
 import { doInteract } from './actions';
-import { onArrive, setFader } from './travel';
+import { fireTrigger, onArrive, setFader } from './travel';
 import { held } from './input';
 import { Mover } from './movement';
 import { busy, rt } from './runtime';
@@ -154,6 +154,7 @@ export class WorldScene extends Phaser.Scene {
     const exit = onArrive();
     if (exit === 'locked') this.mover.reset();
     if (exit) return;
+    if (fireTrigger()) this.mover.reset();
     if (T[S.y]![S.x] === 'A' && prevX < S.x) {
       rt.shower = SHOWER_SEC;
       showShower();

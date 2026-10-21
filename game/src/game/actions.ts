@@ -50,6 +50,11 @@ export function doInteract(o: Thing): void {
   if (rt.traveling) return;
   faceTo(o);
   if (o.npc) return talk(o);
+  // 序章：還沒有電腦帳號、還不能進 Fab。
+  if (S.chapter === 'prologue' && (o.act === 'pc' || o.act === 'locker')) {
+    playScene(o.act === 'pc' ? 'p_pc' : 'p_locker');
+    return;
+  }
   switch (o.act) {
     case 'pc':
       return openPC();
