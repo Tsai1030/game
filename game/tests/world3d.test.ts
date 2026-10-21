@@ -105,3 +105,56 @@ test('ETCH-07 alarm blinks its PM-B window red, and Reduce motion freezes everyt
   expect([colors(), win.material.emissive.getHex()]).toEqual(before);
   expect(S.etch).toBe('alarm');
 });
+
+/* ---------- Task 4：家具 ---------- */
+import type { Thing } from '../src/data/world';
+import { buildFurniture, FURN_H } from '../src/world3d/furniture';
+
+const FURN: Thing[] = [
+  { id: 'pc', kind: 'desk', x: 2, y: 3, w: 3, h: 1, pc: true, act: 'pc' },
+  { id: 'f_table', kind: 'table', x: 2, y: 3, w: 5, h: 2 },
+  { id: 'f_bench', kind: 'bench', x: 2, y: 3, w: 4, h: 1 },
+  { id: 'f_bed', kind: 'bed', x: 2, y: 3, w: 3, h: 2 },
+  { id: 'f_sofa', kind: 'sofa', x: 2, y: 3, w: 4, h: 1 },
+  { id: 'f_booth', kind: 'booth', x: 2, y: 3, w: 4, h: 2 },
+  { id: 'f_vending', kind: 'vending', x: 2, y: 3, w: 2, h: 1 },
+  { id: 'locker', kind: 'locker', x: 2, y: 3, w: 7, h: 1, act: 'locker' },
+  { id: 'coffee', kind: 'coffee', x: 2, y: 3, w: 1, h: 1, act: 'coffee' },
+  { id: 'f_plant', kind: 'plant', x: 2, y: 3, w: 1, h: 1 },
+  { id: 'f_board', kind: 'board', x: 2, y: 3, w: 4, h: 1 },
+  { id: 'f_screen', kind: 'screen', x: 2, y: 3, w: 6, h: 1 },
+  { id: 'f_gate', kind: 'gate', x: 2, y: 3, w: 1, h: 1 },
+];
+
+test('every furniture kind has a model that fits its footprint at the table height', () => {
+  for (const o of FURN) {
+    const m = buildFurniture(o);
+    expect({ id: o.id, built: !!m }).toEqual({ id: o.id, built: true });
+    const b = boxOf(m!.group);
+    const fits = b.min.x >= o.x - 0.1 && b.max.x <= o.x + o.w + 0.1 && b.min.z >= o.y - 0.1 && b.max.z <= o.y + o.h + 0.1 && b.min.y >= -0.001;
+    expect({ id: o.id, fits }).toEqual({ id: o.id, fits: true });
+    const top = o.kind === 'desk' ? FURN_H.deskMonitor : FURN_H[o.kind as keyof typeof FURN_H];
+    expect({ id: o.id, top: Math.abs(b.max.y - top) <= 0.05 }).toEqual({ id: o.id, top: true });
+  }
+});
+
+test('the PE workstation screen flashes red until the SPC clue is found', () => {
+  setState(ch2State());
+  const m = buildFurniture(FURN[0]!)!;
+  const screen = m.group.getObjectByName('screen') as THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+  m.update(0, false);
+  expect(screen.material.emissive.getHex()).toBe(0xff4d45);
+  S.clues = ['spc'];
+  m.update(0, false);
+  expect(screen.material.emissive.getHex()).not.toBe(0xff4d45);
+});
+
+test('the open locker shows the hanging suit until you put it on', () => {
+  setState(ch2State());
+  const m = buildFurniture(FURN.find((o) => o.id === 'locker')!)!;
+  m.update(0, false);
+  expect(m.group.getObjectByName('suit')!.visible).toBe(true);
+  S.suit = true;
+  m.update(0, false);
+  expect(m.group.getObjectByName('suit')!.visible).toBe(false);
+});
