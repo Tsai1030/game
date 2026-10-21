@@ -147,3 +147,13 @@ test('hitting zero once is forced leave; the second time ends the scene in burno
   expect(r.events()).toEqual([{ kind: 'zero', outcome: 'burnout' }]);
   expect(r.current().kind).toBe('end');
 });
+
+test('a goto loop with no player-facing beat ends the scene instead of hanging', () => {
+  const err = console.error;
+  console.error = () => {};
+  try {
+    expect(run({ t_loop: [{ goto: 't_loop' }] }).start('t_loop')).toEqual({ kind: 'end' });
+  } finally {
+    console.error = err;
+  }
+});

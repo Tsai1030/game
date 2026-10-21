@@ -35,7 +35,10 @@ function doLocker(): void {
 
 function doCoffee(): void {
   const r = drink(S.coffee);
-  if (!r.ok) return playScene('coffee_full');
+  if (!r.ok) {
+    playScene('coffee_full');
+    return;
+  }
   setCoffee(r.coffee);
   playScene('coffee_ok');
 }

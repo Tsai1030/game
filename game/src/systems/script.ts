@@ -84,6 +84,22 @@ interface Option {
   do: InnerBeat[];
 }
 
+/** 走訪劇情的每個段落，包含 if 分支、選項和四種回應之後的段落。 */
+export function walkBeats(scene: Scene, visit: (b: Beat) => void): void {
+  for (const b of scene) {
+    visit(b);
+    if ('choice' in b) for (const o of b.choice) walkBeats(o.do, visit);
+    if ('if' in b) {
+      walkBeats(b.then, visit);
+      if (b.else) walkBeats(b.else, visit);
+    }
+    if ('respond' in b) for (const after of Object.values(b.respond.after ?? {})) if (after) walkBeats(after, visit);
+  }
+}
+
+/** run() 一次最多連續處理幾個不用玩家操作的段落；超過就當成劇本寫成了迴圈。 */
+const MAX_STEPS = 500;
+
 /**
  * 劇本執行器：依遊戲狀態逐段執行，停在台詞、選項或卡片上等玩家操作。
  * 不碰 DOM；介面層讀 current() 來畫，玩家操作時呼叫 advance／choose／recognize／note。
@@ -95,6 +111,7 @@ export class ScriptRunner {
   private recognized = false;
   private attempted = false;
   private queue: RunnerEvent[] = [];
+  private sceneId = '';
 
   constructor(private readonly env: RunnerEnv) {}
 
@@ -109,6 +126,7 @@ export class ScriptRunner {
   }
 
   start(id: string): Frame {
+    this.sceneId = id;
     this.stack = [{ beats: this.scene(id), i: 0 }];
     return this.run();
   }
@@ -200,7 +218,11 @@ export class ScriptRunner {
 
   /** 從堆疊往下執行，直到需要玩家操作的段落。 */
   private run(): Frame {
-    for (;;) {
+    for (let steps = 0; ; steps++) {
+      if (steps > MAX_STEPS) {
+        console.error(`script loop in scene "${this.sceneId}"`);
+        return this.end();
+      }
       const top = this.stack[this.stack.length - 1];
       if (!top) return this.end();
       if (top.i >= top.beats.length) {
@@ -263,6 +285,7 @@ export class ScriptRunner {
       }
       if ('card' in b) return (this.frame = { kind: 'card', card: b.card });
       if ('goto' in b) {
+        this.sceneId = b.goto;
         this.stack = [{ beats: this.scene(b.goto), i: 0 }];
         continue;
       }

@@ -2,7 +2,8 @@ import { afterEach, expect, test } from 'bun:test';
 import { LANGS, setLang, t } from '../src/core/i18n';
 import { CASE } from '../src/data/case';
 import type { Beat, Scene } from '../src/data/script';
-import { LABELS, SCENES, SPEAKERS } from '../src/data/story';
+import { ASKS, LABELS, SCENES, SPEAKERS } from '../src/data/story';
+import { walkBeats } from '../src/systems/script';
 
 afterEach(() => setLang('zh-TW'));
 
@@ -17,19 +18,20 @@ function bilingualNodes(v: unknown, out: Record<string, unknown>[] = []): Record
   return out;
 }
 
-/** 依序取出劇本裡所有段落（含巢狀的選項、分支）。 */
-function beats(scene: Scene, out: Beat[] = []): Beat[] {
-  for (const b of scene) {
-    out.push(b);
-    if ('choice' in b) b.choice.forEach((o) => beats(o.do, out));
-    if ('if' in b) {
-      beats(b.then, out);
-      if (b.else) beats(b.else, out);
-    }
-  }
+/** 所有劇情的所有段落（含巢狀分支、回應後續），再加上問人的每一句回答。 */
+/** 一段劇情裡的所有段落。 */
+const beats = (sc: Scene): Beat[] => {
+  const out: Beat[] = [];
+  walkBeats(sc, (b) => out.push(b));
   return out;
-}
-const allBeats = () => Object.values(SCENES).flatMap((sc) => beats(sc));
+};
+const allBeats = (): Beat[] => {
+  const out: Beat[] = [];
+  for (const sc of Object.values(SCENES)) walkBeats(sc, (b) => out.push(b));
+  for (const topic of Object.values(ASKS))
+    for (const a of Object.values(topic)) if (a) for (const l of [...a.full, ...a.partial, ...a.refuse]) out.push({ line: l });
+  return out;
+};
 
 test('every bilingual field in the case, the scenes and the labels has both languages', () => {
   const nodes = [...bilingualNodes(CASE), ...bilingualNodes(SCENES), ...bilingualNodes(LABELS)];
@@ -46,6 +48,17 @@ test('every speaker is known and named in both languages', () => {
     setLang(lang);
     for (const s of SPEAKERS) expect(t('speaker.' + s)).not.toBe('speaker.' + s);
   }
+});
+
+test('the walk reaches lines nested inside response follow-ups', () => {
+  const nested: Scene = [{ respond: { target: 'boss', after: { boundary: [{ line: { id: 'n-1', speaker: 'me', zh: '好', en: 'OK' } }] } } }];
+  const seen: string[] = [];
+  walkBeats(nested, (b) => 'line' in b && seen.push(b.line.id));
+  expect(seen).toEqual(['n-1']);
+});
+
+test('every line has non-empty text in both languages', () => {
+  for (const b of allBeats()) if ('line' in b) expect({ id: b.line.id, ok: !!b.line.zh.trim() && !!b.line.en.trim() }).toEqual({ id: b.line.id, ok: true });
 });
 
 test('every line id is unique and every goto/include target exists', () => {

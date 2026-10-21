@@ -97,11 +97,16 @@ function finish(): void {
 /**
  * 播一段劇情。開始時先存檔（記下這段劇情，讀檔時從開頭重播），
  * 進行中暫停自動存檔，結束後再存。已經有劇情在播時排到後面。
+ * 劇情 id 不存在時什麼都不改，回傳 false。
  */
-export function playScene(id: string, opts: SceneOpts = {}): void {
+export function playScene(id: string, opts: SceneOpts = {}): boolean {
+  if (!SCENES[id]) {
+    console.error(`unknown scene: ${id}`);
+    return false;
+  }
   if (runner) {
     queueScene(id, opts);
-    return;
+    return true;
   }
   S.scene = id;
   saveNow();
@@ -112,6 +117,7 @@ export function playScene(id: string, opts: SceneOpts = {}): void {
   runner = new ScriptRunner({ state: () => S, clock: () => fmtClock(S.sec).slice(0, 5), scenes: SCENES, asks: ASKS, labels: LABELS });
   openDialog();
   render(runner.start(id));
+  return true;
 }
 
 /** 點對話框／按互動鍵：還在打字就先顯示整句，否則往下一句。 */

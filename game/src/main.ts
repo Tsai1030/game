@@ -123,7 +123,10 @@ function start(loaded: GameState | null): void {
   setClock(S.sec);
   emit('reset');
   saveNow();
-  if (!loaded) return playScene('intro');
+  if (!loaded) {
+    playScene('intro');
+    return;
+  }
   // 存檔停在某段劇情開頭時，從那段開頭重播（劇情進行中不會存檔，效果不會重複）。
   if (S.scene && SCENES[S.scene]) playScene(S.scene);
   else S.scene = null;

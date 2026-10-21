@@ -155,6 +155,16 @@ test('clicking Note it or ? does not keep keyboard focus on the button', () => {
   }
 });
 
+test('an unknown scene id changes nothing', () => {
+  setAutosave(true);
+  expect(playScene('no_such_scene')).toBe(false);
+  expect(S.scene).toBeNull();
+  expect(isSceneActive()).toBe(false);
+  expect($('#dialog').hidden).toBe(true);
+  saveNow();
+  expect(localStorage.getItem(SAVE_KEY)).not.toBeNull();
+});
+
 test('a scene saves at its start, not in the middle, and again at its end', () => {
   setAutosave(true);
   const stored = () => JSON.parse(localStorage.getItem(SAVE_KEY)!);
