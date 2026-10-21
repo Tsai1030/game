@@ -355,6 +355,27 @@ Scope split (Claude's call, recorded at Task 1): M1 is split into M1-1 (this pla
 - [ ] **Step 4: Run** `bun test`, `bun run typecheck`, `bun run build`. Expected: all green, exit code 0.
 - [ ] **Step 5: Commit:** `feat(game): run chapter 2 through the story engine; LINE reports feed the evidence log`.
 
+### Task 9b: Oblique tools (added 2026-10-21)
+
+The user picked option B from `mockups/tools-3d.html`: the tools are drawn so the top face leans up and to the right (1 px per 4 rows) and the right side face shows, with LEDs on it. Lighting runs top > side > front. Only tools change. Desks, lockers and the coffee machine stay as they are for now.
+
+**Files:** Modify `game/src/render/tools.ts` and `game/src/render/palette.ts`. Test `game/tests/render.test.ts`.
+
+**Interfaces:**
+- `toolGeo(o, X?, Y?)` returns `{ W, H, hz, T, side, sw, tx, ty, fy, by }`: front height, top depth, side width, front and top width, and key rows.
+- `VISUAL_TOP` for a tool is `lift + 14`. `STATIC_PAD` is unchanged.
+- `buildLeds` zones cover the top, the front panels and the side face.
+- The chamber frames, tower lamps and MET screen glow come from a cached per-tool layout, so the static and dynamic layers agree.
+
+- [ ] **Step 1: Write the failing tests:**
+  - Every tool has a side face 6 px or wider, drawn right of the front and inside the footprint.
+  - `VISUAL_TOP` equals how far above the footprint each tool is drawn.
+  - Every LED, and every rect of the chamber-frame layer, lands on a pixel the static drawing painted (shadows excluded).
+- [ ] **Step 2: Run** `bun test tests/render.test.ts`. Expected: FAIL.
+- [ ] **Step 3: Implement**, porting `surface()`/`body()` from the mockup and relaying out each kind to fit the narrower top.
+- [ ] **Step 4: Run** `bun test`, `bun run typecheck`, `bun run build`. Expected: all green.
+- [ ] **Step 5: Commit:** `feat(game): oblique tools with a visible side face`.
+
 ### Task 10: Docs, preview, manual check
 
 **Files:** Modify `docs/04-roadmap.en.md` and `docs/04-roadmap.zh-TW.md` (M1-1 status), and `game/README.md` (script format section with one example beat of each kind).

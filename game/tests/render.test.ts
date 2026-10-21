@@ -4,7 +4,8 @@ import { OBJ, syncEtch, TS, type LookId } from '../src/data/world';
 import { drawMap } from '../src/render/tiles';
 import { GL, parseColor, txt, type Painter } from '../src/render/paint';
 import { drawPerson, LOOK } from '../src/render/person';
-import { buildLeds, objDyn, objStatic, STATIC_PAD } from '../src/render/tools';
+import { C } from '../src/render/palette';
+import { buildLeds, objDyn, objStatic, STATIC_PAD, toolGeo, VISUAL_TOP } from '../src/render/tools';
 
 type Rect = [string, number, number, number, number];
 const recorder = (): Painter & { rects: Rect[] } => {
@@ -13,6 +14,23 @@ const recorder = (): Painter & { rects: Rect[] } => {
 };
 const inside = (rects: Rect[], w: number, h: number) =>
   rects.filter(([, x, y, rw, rh]) => x < 0 || y < 0 || x + rw > w || y + rh > h);
+
+const TOOL_KINDS = ['etch', 'cvd', 'met', 'wet', 'stk', 'litho', 'track'];
+const tools = () => OBJ.filter((o) => TOOL_KINDS.includes(o.kind));
+/** 靜態圖實際塗到的像素（陰影是半透明，不算機身）。 */
+const painted = (rects: Rect[]) => {
+  const px = new Set<string>();
+  for (const [c, x, y, w, h] of rects) {
+    if (c.startsWith('rgba')) continue;
+    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) px.add(`${i},${j}`);
+  }
+  return px;
+};
+const staticAt = (o: (typeof OBJ)[number]) => {
+  const p = recorder();
+  objStatic(p, o, o.x * TS, o.y * TS);
+  return p.rects;
+};
 
 afterEach(() => {
   setState(newState());
@@ -53,20 +71,46 @@ test('people fit a 16×24 sprite in every look, direction and frame', () => {
       }
 });
 
-test('LEDs are deterministic, sit on the tool and only ETCH-07 has red ones', () => {
+test('LEDs are deterministic, sit on the tool body and only ETCH-07 has red ones', () => {
   for (const o of OBJ.filter((x) => x.st)) {
     const a = buildLeds(o);
     expect(buildLeds(o)).toEqual(a);
     const X = o.x * TS;
-    const Y = o.y * TS;
     const W = o.w * TS;
-    const H = o.h * TS;
-    for (const l of a.L) {
-      expect(l.x >= X && l.x < X + W).toBe(true);
-      expect(l.y >= Y - 5 && l.y < Y + H).toBe(true);
-    }
+    const body = painted(staticAt(o));
+    const off = a.L.filter((l) => !body.has(`${l.x},${l.y}`)).map((l) => [l.x, l.y]);
+    expect({ id: o.id, off }).toEqual({ id: o.id, off: [] });
     for (const x of a.strip) expect(x >= X && x < X + W).toBe(true);
     expect(a.L.some((l) => l.col === 'r')).toBe(o.id === 'ETCH-07');
+  }
+});
+
+test('every tool shows a right side face inside its footprint', () => {
+  for (const o of tools()) {
+    const X = o.x * TS;
+    const g = toolGeo(o, X, o.y * TS);
+    expect({ id: o.id, wide: g.side >= 6 }).toEqual({ id: o.id, wide: true });
+    const side = staticAt(o).filter(([c]) => c === C.tSide || c === C.tSide1);
+    expect(side.length).toBeGreaterThan(0);
+    for (const [, x, , w] of side) expect(x >= g.tx + g.sw && x + w <= X + o.w * TS).toBe(true);
+  }
+});
+
+test('VISUAL_TOP is how far above its footprint each tool is drawn', () => {
+  for (const o of tools()) {
+    const Y = o.y * TS;
+    const top = Math.min(...staticAt(o).filter(([c]) => !c.startsWith('rgba')).map(([, , y]) => y));
+    expect({ id: o.id, top: Y - top }).toEqual({ id: o.id, top: VISUAL_TOP[o.kind]! });
+  }
+});
+
+test('chamber frames and other moving parts are drawn on the tool body', () => {
+  for (const o of tools()) {
+    const body = painted(staticAt(o));
+    const p = recorder();
+    objDyn(p, recorder(), o, o.x * TS, o.y * TS, 0, true);
+    const off = [...painted(p.rects)].filter((k) => !body.has(k));
+    expect({ id: o.id, off }).toEqual({ id: o.id, off: [] });
   }
 });
 
