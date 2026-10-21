@@ -43,6 +43,8 @@ Effort uses relative sizes: S, M, L, XL. Calendar time depends on how many peopl
 
 ## 3. M1 · v0.1 playable slice (L)
 
+> **Status (2026-10-21): M1-1 (story engine) done; M1-2 (content) next.** M1 is split in two. M1-1 adds the story systems and runs Chapter 2's existing lines through them: YAML scenes with choices, responses, asking, conditions and effects; sanity with forced leave and Burnout; Tactic Recognition and the 7-card Codex; the Evidence Log, where Chapter 2's LINE reports log E-C2-01 to E-C2-04; and save format v2, which migrates v1 saves. The owner also chose oblique tools with a visible side face from three mockups (`mockups/tools-3d.html`). 118 automated tests pass, typecheck passes, and the build succeeds. Plan and progress: `docs/superpowers/plans/2026-10-20-m1a-story-engine.md`. M1-2 covers maps 2 and 3, the new characters, Prologue S1–S8, C2-07 to C2-10, the end-of-demo card and the acceptance pass.
+
 **Work:**
 1. **Story systems:** sanity, Tactic Recognition (7 cards), Evidence Log, relationships, asking system, response options, story flags.
 2. **Maps:** add the security gate, orientation room, and rented room; add the meeting room and technicians' break room to the main site.
