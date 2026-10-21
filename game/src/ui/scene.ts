@@ -1,11 +1,15 @@
-import { pauseAutosave, saveNow } from '../core/autosave';
+import { pauseAutosave, saveNow, setAutosave } from '../core/autosave';
+import { emit } from '../core/bus';
 import { L, t, type Params } from '../core/i18n';
+import { clearSave } from '../core/save';
 import { fmtClock, S } from '../core/state';
+import { browserStore } from '../core/storage';
 import { CASE, type ClueId } from '../data/case';
 import { CODEX } from '../data/codex';
 import type { Scene } from '../data/script';
 import { ASKS, LABELS, SCENES, type Line } from '../data/story';
 import { ScriptRunner, type Frame, type RunnerEvent } from '../systems/script';
+import { hideCard, showCard } from './cards';
 import { closeDialog, finishTyping, hideRecognize, initDialog, openDialog, renderChoices, renderLine } from './dialog';
 import { refreshHud } from './hud';
 import { toast } from './toast';
@@ -34,12 +38,51 @@ function handle(ev: RunnerEvent): void {
 }
 
 function render(f: Frame): void {
-  for (const ev of runner?.events() ?? []) handle(ev);
+  const evs = runner?.events() ?? [];
+  for (const ev of evs) handle(ev);
   refreshHud();
+  const zero = evs.find((e) => e.kind === 'zero');
+  if (zero?.kind === 'zero' && zero.outcome === 'burnout') return burnout();
+  if (zero) {
+    // 第一次歸零：收起對話框，看完強制請假卡再接著播。
+    closeDialog();
+    showCard('card.forcedTitle', 'card.forcedBody', () => {
+      openDialog();
+      show(f);
+    });
+    return;
+  }
+  show(f);
+}
+
+function show(f: Frame): void {
   if (f.kind === 'line') renderLine(f.line, params, f.canRecognize);
   else if (f.kind === 'choice') renderChoices(f.options.map((o) => ({ id: o.id, label: { zh: o.zh, en: o.en }, enabled: o.enabled })));
-  else if (f.kind === 'card') renderLine({ speaker: 'sys', zh: f.card.zh, en: f.card.en }, undefined, false);
-  else finish();
+  else if (f.kind === 'card') {
+    closeDialog();
+    showCard({ zh: f.card.zh, en: f.card.en }, null, () => {
+      if (!runner) return;
+      openDialog();
+      render(runner.advance());
+    });
+  } else finish();
+}
+
+/** 第二次歸零：劇情中止，看完燃盡卡後刪除存檔、回標題畫面。存檔維持暫停，不會寫回。 */
+function burnout(): void {
+  closeDialog();
+  runner = null;
+  activeId = null;
+  params = undefined;
+  onEnd = undefined;
+  S.scene = null;
+  queue.length = 0;
+  showCard('card.burnoutTitle', 'card.burnoutBody', () => {
+    setAutosave(false);
+    pauseAutosave(false);
+    clearSave(browserStore());
+    emit('toTitle');
+  });
 }
 
 function finish(): void {
@@ -78,8 +121,7 @@ export function playScene(id: string, opts: { params?: Params; onEnd?: () => voi
 /** 點對話框／按互動鍵：還在打字就先顯示整句，否則往下一句。 */
 export function advanceScene(): void {
   if (!runner || finishTyping()) return;
-  const f = runner.current();
-  if (f.kind === 'line' || f.kind === 'card') render(runner.advance());
+  if (runner.current().kind === 'line') render(runner.advance());
 }
 
 function chooseScene(id: string): void {
@@ -114,6 +156,7 @@ export function pumpQueue(): void {
 
 /** 強制結束目前劇情（測試、回標題用）。 */
 export function stopScene(): void {
+  hideCard();
   if (runner) {
     closeDialog();
     runner = null;
