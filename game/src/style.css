@@ -43,7 +43,7 @@ button.stat:active { transform: translate(3px, 3px); box-shadow: none; }
 
 /* 遊戲畫面 */
 .stage { position: relative; background: var(--bg); border: 3px solid var(--edge2); display: flex; justify-content: center; overflow: hidden; }
-.stage canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; touch-action: manipulation; outline: none; }
+.stage canvas { display: block; width: 100%; height: 100%; cursor: pointer; touch-action: manipulation; outline: none; }
 .quest { position: absolute; top: 10px; left: 10px; width: min(330px, calc(100% - 20px)); background: var(--panel); border: 3px solid var(--edge); font-size: 14px; z-index: 2; }
 .quest button { display: flex; gap: 8px; align-items: center; width: 100%; background: var(--edge); color: var(--accent-ink); border: 0; padding: 6px 10px; cursor: pointer; text-align: left; }
 .quest .tog { margin-left: auto; }

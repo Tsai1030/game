@@ -25,6 +25,8 @@ export class LedField {
   constructor(private readonly specs: LedSpec[]) {
     this.mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.07, 0.07, 0.07), new THREE.MeshBasicMaterial({ toneMapped: false }), Math.max(1, specs.length));
     this.mesh.name = 'leds';
+    // LED 散在整張地圖上；整組一起被視錐剔除會讓 LED 突然全部消失，所以不剔除。
+    this.mesh.frustumCulled = false;
     this.mesh.count = specs.length;
     const m = new THREE.Matrix4();
     specs.forEach((l, i) => {

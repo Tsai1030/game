@@ -135,3 +135,11 @@ test('three.js is pinned to the prototype version', async () => {
   expect(pkg.dependencies.three).toBe('0.160.0');
   expect(pkg.devDependencies['@types/three']).toBe('0.160.0');
 });
+
+test('Phaser is gone: no source imports it and package.json does not list it', async () => {
+  const pkg = await Bun.file(new URL('../package.json', import.meta.url)).json();
+  expect(pkg.dependencies.phaser).toBeUndefined();
+  const users: string[] = [];
+  for await (const f of new Bun.Glob('src/**/*.ts').scan('.')) if (/from 'phaser/.test(await Bun.file(f).text())) users.push(f);
+  expect(users).toEqual([]);
+});

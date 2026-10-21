@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import './style.css';
 import { saveNow, setAutosave } from './core/autosave';
 import { emit, on } from './core/bus';
@@ -15,8 +14,7 @@ import { placeLoaded } from './game/travel';
 import { requeueReports, setCoffee } from './game/effects';
 import { held, initInput } from './game/input';
 import { busy, canOpenSettings, rt } from './game/runtime';
-import { computeViewport } from './game/viewport';
-import { WorldScene } from './game/WorldScene';
+import { WorldView } from './world3d/view';
 import { COFFEE_DECAY_MS, decay } from './systems/coffee';
 import { isDialogOpen } from './ui/dialog';
 import { advanceScene, initScenePlayer, playScene, stopScene } from './ui/scene';
@@ -39,7 +37,7 @@ applyDom();
 
 /* 2. DOM 介面 */
 const stageW = () => $('#stage').clientWidth;
-initWin(() => game.canvas?.focus({ preventScroll: true }));
+initWin(() => view.canvas.focus({ preventScroll: true }));
 initScenePlayer();
 initHud(stageW() < 700);
 initInput({
@@ -76,33 +74,10 @@ $('#set-btn').addEventListener('click', () => {
   if (canOpenSettings()) openSettings();
 });
 
-/* 3. Phaser 遊戲畫面 */
-const vp = computeViewport(stageW(), innerHeight);
-const game = new Phaser.Game({
-  type: Phaser.AUTO,
-  parent: 'stage',
-  width: vp.w,
-  height: vp.h,
-  zoom: vp.zoom,
-  pixelArt: true,
-  roundPixels: true,
-  backgroundColor: '#050507',
-  scale: { mode: Phaser.Scale.NONE },
-  input: { keyboard: false },
-  audio: { noAudio: true },
-  banner: false,
-  scene: [WorldScene],
-});
-game.events.once('ready', () => {
-  game.canvas.tabIndex = 0;
-  game.canvas.dataset.i18nAria = 'game.canvasAria';
-  applyDom();
-});
-window.addEventListener('resize', () => {
-  const v = computeViewport(stageW(), innerHeight);
-  game.scale.resize(v.w, v.h);
-  game.scale.setZoom(v.zoom);
-});
+/* 3. 3D 世界畫面（three.js） */
+const view = new WorldView($('#stage'));
+view.start();
+applyDom();
 
 /* 4. 標題畫面、新遊戲與繼續 */
 function start(loaded: GameState | null, name = ''): void {

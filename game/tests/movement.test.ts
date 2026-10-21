@@ -74,7 +74,7 @@ test('clicking a wall does nothing', () => {
 test('clicking a tool walks next to it and interacts once', () => {
   S.suit = true;
   const etch = OBJ.find((o) => o.id === 'ETCH-07')!;
-  expect(m.click(27 * TS + 8, 4 * TS + 8)).toBe('path');
+  expect(m.click(27 * TS + 8, 4 * TS + 8, etch)).toBe('path');
   for (let i = 0; i < 4000 && (m.path.length || m.step || m.pending); i++) m.tick(0.05, undefined, free);
   expect(calls.interact).toEqual([etch]);
   expect(adj(etch, S.x, S.y)).toBe(true);

@@ -1,6 +1,5 @@
 import { S, type Dir } from '../core/state';
-import { ACTS, adj, inb, inCleanroom, MH, MW, objAt, T, TS, walkable, type Thing } from '../data/world';
-import { VISUAL_TOP } from '../render/tools';
+import { adj, inb, inCleanroom, MH, MW, objAt, T, TS, walkable, type Thing } from '../data/world';
 import { bfs, type Pt } from '../systems/path';
 
 export const STEP_SEC = 0.15;
@@ -121,28 +120,14 @@ export class Mover {
     }
   }
 
-  /** 世界座標上的點擊落在哪個可互動物件（看得到的範圍，包含高出佔地格的部分）。 */
-  private pick(wx: number, wy: number): Thing | null {
-    let best: Thing | null = null;
-    for (const o of ACTS) {
-      const top = o.y * TS - (o.npc ? 7 : (VISUAL_TOP[o.kind] ?? 0));
-      const bottom = (o.y + o.h) * TS;
-      if (wx >= o.x * TS && wx < (o.x + o.w) * TS && wy >= top && wy < bottom && (!best || bottom > (best.y + best.h) * TS)) best = o;
-    }
-    return best;
-  }
-
-  /**
-   * 點擊世界座標 (wx, wy)（像素）。3D 畫面點選時直接帶入點到的物件 hit（點到地板是 null）；
-   * 沒帶時用舊的 2D 判定（Phaser 版，M1-3D Task 9 移除）。
-   */
-  click(wx: number, wy: number, picked?: Thing | null): ClickResult {
+  /** 點擊世界座標 (wx, wy)（像素）。picked 是 3D 點選到的物件；點到地板時是 null。 */
+  click(wx: number, wy: number, picked: Thing | null = null): ClickResult {
     const tx = Math.floor(wx / TS);
     const ty = Math.floor(wy / TS);
     const sx = this.step ? this.step.tx : S.x;
     const sy = this.step ? this.step.ty : S.y;
     const walk = (x: number, y: number) => walkable(x, y, S.suit);
-    const hit = picked !== undefined ? picked : this.pick(wx, wy);
+    const hit = picked;
     if (hit) {
       if (!this.step && adj(hit, S.x, S.y)) {
         this.hooks.onInteract(hit);
