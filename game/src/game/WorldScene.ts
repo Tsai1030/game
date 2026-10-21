@@ -11,9 +11,10 @@ import { drawMap } from '../render/tiles';
 import { floorGlow, objDyn, objStatic, STATIC_PAD } from '../render/tools';
 import { isDialogOpen } from '../ui/dialog';
 import { advanceScene, pumpQueue } from '../ui/scene';
-import { hideShower, setLocation, setPrompt, showShower } from '../ui/hud';
+import { hideShower, setLocation, setPrompt, showBanner, showShower } from '../ui/hud';
 import { toast } from '../ui/toast';
 import { doInteract } from './actions';
+import { onArrive, setFader } from './travel';
 import { held } from './input';
 import { Mover } from './movement';
 import { busy, rt } from './runtime';
@@ -52,7 +53,11 @@ export class WorldScene extends Phaser.Scene {
     super('world');
   }
 
-  create(): void {
+  /** 目前畫面上是哪張地圖（讀檔換到別張時要重建）。 */
+  private shownMap = '';
+
+  create(data?: { arrived?: () => void }): void {
+    this.shownMap = MAP.id;
     // 換地圖時整個場景重建；Map 欄位會跨重建保留，先清空。貼圖每張地圖各一份，建過就沿用。
     this.layers.clear();
     this.npcImg.clear();
@@ -95,9 +100,28 @@ export class WorldScene extends Phaser.Scene {
     this.overP = gfxPainter(this.overG);
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onPointer(p));
-    const off = on('reset', () => this.resetWorld());
+    const off = on('reset', () => (MAP.id === this.shownMap ? this.resetWorld() : this.scene.restart()));
     this.events.once('shutdown', off);
     this.resetWorld();
+    // 換地圖：淡出 → 換過去 → 重建場景 → 淡入，最後顯示地點名稱。
+    setFader((go, done) => {
+      const swap = () => {
+        go();
+        this.scene.restart({ arrived: done });
+      };
+      if (settings.reduceMotion) return swap();
+      this.cameras.main.once('camerafadeoutcomplete', swap);
+      this.cameras.main.fadeOut(200, 5, 5, 7);
+    });
+    if (data?.arrived) {
+      const arrived = data.arrived;
+      showBanner(region(S.x, S.y));
+      if (settings.reduceMotion) arrived();
+      else {
+        this.cameras.main.once('camerafadeincomplete', () => arrived());
+        this.cameras.main.fadeIn(200, 5, 5, 7);
+      }
+    }
   }
 
   /** 讓畫面上的 NPC 人物跟目前的 NPC 清單一致。 */
@@ -126,6 +150,10 @@ export class WorldScene extends Phaser.Scene {
 
   private arrive(prevX: number): void {
     setLocation(region(S.x, S.y));
+    // 踩到門：換地圖；門鎖著就播原因、停下腳步。
+    const exit = onArrive();
+    if (exit === 'locked') this.mover.reset();
+    if (exit) return;
     if (T[S.y]![S.x] === 'A' && prevX < S.x) {
       rt.shower = SHOWER_SEC;
       showShower();

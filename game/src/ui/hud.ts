@@ -1,3 +1,4 @@
+import { on } from '../core/bus';
 import { esc, L, t } from '../core/i18n';
 import { fmtClock, isNightShift, S, SHIFT_END, TACTIC_IDS } from '../core/state';
 import type { Thing } from '../data/world';
@@ -43,6 +44,27 @@ export function refreshHud(): void {
   $('#loc').textContent = t(locKey);
   setPrompt(promptThing);
 }
+
+let bannerKey: string | null = null;
+let bannerTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** 換地圖後在畫面中間顯示地點名稱 1.6 秒。 */
+export function showBanner(key: string): void {
+  bannerKey = key;
+  const el = $('#banner');
+  el.textContent = t(key);
+  el.hidden = false;
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => {
+    bannerKey = null;
+    $('#banner').hidden = true;
+  }, 1600);
+}
+
+// 橫幅顯示中切換語言時跟著換。
+on('lang', () => {
+  if (bannerKey) $('#banner').textContent = t(bannerKey);
+});
 
 export function setLocation(key: string): void {
   locKey = key;

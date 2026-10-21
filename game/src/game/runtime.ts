@@ -4,11 +4,11 @@ import { isDialogOpen } from '../ui/dialog';
 import { isTitleOpen } from '../ui/title';
 import { isWinOpen } from '../ui/win';
 
-/** 不存檔的執行期狀態：風淋剩餘秒數、目前面前可互動的對象。 */
-export const rt: { shower: number; near: Thing | null } = { shower: 0, near: null };
+/** 不存檔的執行期狀態：風淋剩餘秒數、目前面前可互動的對象、是否正在換地圖。 */
+export const rt: { shower: number; near: Thing | null; traveling: boolean } = { shower: 0, near: null, traveling: false };
 
-/** 對話、劇情卡、視窗、標題畫面或風淋中時，角色不能開始新的移動。 */
-export const busy = (): boolean => isDialogOpen() || isCardOpen() || isWinOpen() || isTitleOpen() || rt.shower > 0;
+/** 對話、劇情卡、視窗、標題畫面、風淋或換地圖時，角色不能開始新的移動。 */
+export const busy = (): boolean => isDialogOpen() || isCardOpen() || isWinOpen() || isTitleOpen() || rt.shower > 0 || rt.traveling;
 
 /** 設定（含語言切換）隨時都能打開，只有已經開著視窗、劇情卡或在標題畫面時例外。 */
 export const canOpenSettings = (): boolean => !isWinOpen() && !isTitleOpen() && !isCardOpen();

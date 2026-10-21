@@ -32,7 +32,7 @@ function handle(ev: RunnerEvent): void {
   else if (ev.kind === 'clue') {
     const clue = CASE.clues[ev.id as ClueId];
     toast(t('toast.clueGot', { text: clue ? L(clue.t) : ev.id }), 'clue');
-  }
+  } else if (ev.kind === 'warp') emit('warp', ev);
 }
 
 function render(f: Frame): void {

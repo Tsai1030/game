@@ -6,6 +6,7 @@ import { playScene } from '../ui/scene';
 import { toast } from '../ui/toast';
 import { openEtch, openMet, openPC, openTool } from '../ui/windows';
 import { setCoffee, setSuit } from './effects';
+import { rt } from './runtime';
 
 /** 轉身面向物件。 */
 function faceTo(o: Thing): void {
@@ -45,6 +46,8 @@ function doCoffee(): void {
 
 /** 和物件或 NPC 互動（行為與原型的 doInteract 相同）。 */
 export function doInteract(o: Thing): void {
+  // 換地圖途中不能跟舊地圖的東西互動。
+  if (rt.traveling) return;
   faceTo(o);
   if (o.npc) return talk(o);
   switch (o.act) {

@@ -6,11 +6,12 @@ import { applyDom, setLang, t, type Lang } from './core/i18n';
 import { switchLang } from './core/lang';
 import { clearSave, readSave } from './core/save';
 import { loadSettings, settings } from './core/settings';
-import { ch2State, isNightShift, S, setState, START_POS, type GameState } from './core/state';
+import { ch2State, isNightShift, S, setState, type GameState } from './core/state';
 import { browserStore } from './core/storage';
 import { SCENES } from './data/story';
-import { resetNpcs, syncEtch, walkable } from './data/world';
+import { resetNpcs, syncEtch } from './data/world';
 import { doInteract } from './game/actions';
+import { placeLoaded } from './game/travel';
 import { requeueReports, setCoffee } from './game/effects';
 import { held, initInput } from './game/input';
 import { busy, canOpenSettings, rt } from './game/runtime';
@@ -109,11 +110,8 @@ function start(loaded: GameState | null): void {
   // 序章完成前（Task 10），新遊戲先從第 2 章開始。
   const s = loaded ?? ch2State();
   if (!loaded) clearSave(browserStore());
-  if (!walkable(s.x, s.y, s.suit)) {
-    s.x = START_POS.x;
-    s.y = START_POS.y;
-  }
   setState(s);
+  placeLoaded(S);
   syncEtch(S.etch);
   resetNpcs();
   resetCaseUi();
