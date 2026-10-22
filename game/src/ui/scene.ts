@@ -33,7 +33,8 @@ function handle(ev: RunnerEvent): void {
     const clue = CASE.clues[ev.id as ClueId];
     toast(t('toast.clueGot', { text: clue ? L(clue.t) : ev.id }), 'clue');
     // 劇情給的線索也要排 LINE 回報（跟在視窗裡點到的一樣）。
-    const report = reportScene(ev.id);
+    // 結案之後不再回報。
+    const report = S.solved ? null : reportScene(ev.id);
     if (report && !S.flags.includes('seen_' + report)) queueScene(report);
   } else if (ev.kind === 'warp') emit('warp', ev);
 }
@@ -64,6 +65,12 @@ function show(f: Frame): void {
   else if (f.kind === 'card') {
     closeDialog();
     if (f.card.kind === 'end') {
+      // 劇情已經走到底，只差關掉卡片：先存一次（end 卡自成一段劇情，從頭重播沒有效果）。
+      // 直接關分頁的話，下次「繼續」也會回到這張卡。
+      if (runner) S.scene = runner.sceneName();
+      pauseAutosave(false);
+      saveNow();
+      pauseAutosave(true);
       // 試玩結束卡：關掉後把劇情跑完（會存檔），再回標題畫面。
       showEndCard({ zh: f.card.zh, en: f.card.en }, () => {
         if (!runner) return;

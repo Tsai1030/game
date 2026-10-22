@@ -18,6 +18,11 @@ export function requeueReports(): void {
 }
 
 export function gainClue(id: string): void {
+  // 結案之後（PM-B 已經修好）不再收新線索，也就不會再有 LINE 回報。
+  if (S.solved) {
+    toast(t('toast.caseClosed'));
+    return;
+  }
   const r = addClue(S.clues, id);
   if (!r.added) {
     toast(t('toast.clueDup'));

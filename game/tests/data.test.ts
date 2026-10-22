@@ -144,13 +144,13 @@ test('Phaser is gone: no source imports it and package.json does not list it', a
   expect(users).toEqual([]);
 });
 
-test('an end card is always the last beat of its scene', () => {
+test('an end card is always the only beat of its scene (the game saves on it)', () => {
   let found = 0;
   for (const [id, sc] of Object.entries(SCENES))
     walkBeats(sc, (b) => {
       if (!('card' in b) || b.card.kind !== 'end') return;
       found++;
-      expect({ id, last: sc.at(-1) === b }).toEqual({ id, last: true });
+      expect({ id, only: sc.length === 1 && sc[0] === b }).toEqual({ id, only: true });
     });
   expect(found).toBeGreaterThan(0);
 });

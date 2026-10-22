@@ -6,7 +6,7 @@ import { browserStore } from '../core/storage';
 import { SCENES } from '../data/story';
 import { resetNpcs, syncEtch } from '../data/world';
 import { refreshHud, setClock } from '../ui/hud';
-import { playScene, stopScene } from '../ui/scene';
+import { playScene, queueScene, stopScene } from '../ui/scene';
 import { hideTitle } from '../ui/title';
 import { resetCaseUi } from '../ui/windows';
 import { requeueReports } from './effects';
@@ -50,4 +50,6 @@ export function startGame(loaded: GameState | null, name = ''): void {
     fireTrigger();
   }
   requeueReports();
+  // 已經破案卻還沒看過 C2-07 過場（舊版存檔，或送出結論後馬上關掉遊戲）：補播，才接得上晨會。
+  if (S.chapter === 'ch2' && S.solved && !S.flags.includes('c2_standup_call')) queueScene('rc_solved');
 }

@@ -71,6 +71,7 @@
   "toast.showerDone": "Air shower done. Welcome to Fab 9. Don't touch your face.",
   "toast.clueGot": "Clue noted: {text}",
   "toast.clueDup": "That clue is already in your clue book.",
+  "toast.caseClosed": "Case 03 is already closed.",
   "toast.suitOff": "You take off the cleanroom suit and hang it back in the locker.",
   "toast.coffeeEmpty": "Out of coffee. So sleepy… Go make a cup in the office.",
   "toast.inControl": "That point is within the control limits.",

@@ -153,6 +153,11 @@ export class ScriptRunner {
     return this.frame;
   }
 
+  /** 目前在播的劇情 id（goto 之後就是新的那段）。 */
+  sceneName(): string {
+    return this.sceneId;
+  }
+
   /** 從台詞或卡片往下走；台詞的理智變化在這時套用（辨識正確就減半）。 */
   advance(): Frame {
     const f = this.frame;

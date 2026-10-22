@@ -71,6 +71,7 @@
   "toast.showerDone": "風淋完成。歡迎來到 Fab 9，記得別摸臉。",
   "toast.clueGot": "記下線索：{text}",
   "toast.clueDup": "這條已經記在線索簿了。",
+  "toast.caseClosed": "Case 03 已經結案了。",
   "toast.suitOff": "你脫下無塵衣，掛回置物櫃。",
   "toast.coffeeEmpty": "咖啡見底了，好睏……回辦公室泡一杯吧。",
   "toast.inControl": "這點在管制線內。",

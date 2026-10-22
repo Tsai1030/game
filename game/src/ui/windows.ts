@@ -11,7 +11,7 @@ import { CODEX } from '../data/codex';
 import { TOOL_INFO, type Thing } from '../data/world';
 import { gainClue, setCoffee, setEtch, solveCase } from '../game/effects';
 import { judge, type Pick3 } from '../systems/conclusion';
-import { playScene } from './scene';
+import { playScene, pumpQueue, queueScene } from './scene';
 import { toast } from './toast';
 import { closeWin, openWin, rerenderWin, showTab } from './win';
 
@@ -110,7 +110,9 @@ function submitRC(): void {
     return;
   }
   solveCase();
-  playScene('rc_solved');
+  // 排在還沒播的 LINE 回報後面，時間順序才對（沒有回報在排就馬上播）。
+  queueScene('rc_solved');
+  pumpQueue();
 }
 
 function rcOn(root: HTMLElement): void {

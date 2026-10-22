@@ -11,6 +11,7 @@ import { gainClue } from '../src/game/effects';
 import { startGame } from '../src/game/session';
 import { isSceneActive, stopScene } from '../src/ui/scene';
 import { $, CJK, lineById, play, playUntil, prologue, recognizeIn, resetWorld, setCheckText, submitRC, talk, untilLine, use, walkTo } from './drive';
+import { isCardOpen } from '../src/ui/cards';
 
 /** 規格 §9 驗收：從「新遊戲」一路玩到「試玩結束」卡。 */
 
@@ -146,4 +147,49 @@ test('Continue fires a trigger that was pending when the game closed', () => {
   startGame({ ...newState(), map: 'M02', x: 9, y: 6, flags: ['p_badge'] });
   expect(isSceneActive()).toBe(true);
   expect(S.flags).toContain('seen_p_s2');
+});
+
+/* ===== 最終審查修正 ===== */
+
+/** 剛破案、從 Fab 回到辦公室、等 8 點晨會。 */
+const backInOffice = (): GameState => ({ ...ch2State(), sanity: 70, solved: true, etch: 'fixed', flags: ['ev_unlocked', 'c2_bear_here', 'c2_standup_call'] });
+
+test('closing the tab on the end card keeps the ending: Continue shows the card again', () => {
+  startGame(backInOffice());
+  walkTo(3, 13);
+  playUntil(() => !!document.querySelector('#card .end-card'), ['drop']);
+  const s = saved();
+  expect([s.scene, s.sanity]).toEqual(['c2_demo_end', S.sanity]);
+  expect(s.flags).toContain('demo_done');
+  stopScene();
+  startGame(s);
+  expect(document.querySelector('#card .end-card')).not.toBeNull();
+});
+
+test('a save that solved Case 03 before this version plays the cutscene on Continue and reaches the stand-up', () => {
+  const { chapterSanity: _cs, ...rest } = { ...ch2State(), solved: true, etch: 'fixed' as const, clues: ['spc', 'fdc', 'ring'], flags: ['ev_unlocked', 'seen_c2_report_spc', 'seen_c2_report_ring'] };
+  const s = parseSave(JSON.stringify({ ...rest, v: 3 }))!;
+  startGame(s);
+  play();
+  expect(S.flags).toEqual(expect.arrayContaining(['c2_bear_here', 'c2_standup_call']));
+  walkTo(3, 13);
+  expect(isSceneActive()).toBe(true);
+});
+
+test('a LINE report still waiting when you submit plays before the cutscene', () => {
+  startGame({ ...ch2State(), clues: ['fdc', 'ring', 'map'], flags: ['ev_unlocked', 'seen_c2_report_ring'] });
+  gainClue('spc');
+  submitRC();
+  expect($('#dlg-text').textContent).toBe(lineById('c2_report_spc-1').zh);
+  play();
+  expect(S.flags).toEqual(expect.arrayContaining(['seen_c2_report_spc', 'c2_standup_call']));
+});
+
+test('after the case is closed, new clues and their LINE reports no longer come in', () => {
+  startGame({ ...backInOffice(), clues: ['spc', 'fdc', 'map'], flags: ['ev_unlocked', 'c2_bear_here', 'c2_standup_call', 'seen_c2_report_spc'] });
+  gainClue('ring');
+  play();
+  expect(S.clues).not.toContain('ring');
+  expect(S.evidence.map((e) => e.id)).not.toContain('E-C2-03');
+  expect(isCardOpen() || isSceneActive()).toBe(false);
 });
