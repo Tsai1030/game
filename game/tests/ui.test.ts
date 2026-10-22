@@ -435,7 +435,8 @@ test('the 3D canvas sizing rule does not stretch the dialog portrait', async () 
 });
 
 /* ---------- M1-3D：換地圖的淡入淡出 ---------- */
-import { fadeIn, fadeOut } from '../src/ui/fade';
+import { spyOn } from 'bun:test';
+import { fadeIn, fadeOut, fadeSwap } from '../src/ui/fade';
 
 test('map fades darken then clear the stage, and skip entirely with Reduce motion', async () => {
   settings.reduceMotion = false;
@@ -448,4 +449,30 @@ test('map fades darken then clear the stage, and skip entirely with Reduce motio
   await fadeOut(200);
   expect($('#fade').hidden).toBe(true);
   settings.reduceMotion = false;
+});
+
+test('a map change that throws still fades back in and finishes', async () => {
+  settings.reduceMotion = false;
+  const err = spyOn(console, 'error').mockImplementation(() => {});
+  let done = 0;
+  await fadeSwap(
+    () => {
+      throw new Error('boom');
+    },
+    () => done++,
+    10,
+  );
+  expect(done).toBe(1);
+  expect($('#fade').hidden).toBe(true);
+  expect(err).toHaveBeenCalled();
+  err.mockRestore();
+});
+
+test('fading out over a stage that is already dark does not flash it clear first', () => {
+  settings.reduceMotion = false;
+  const el = $('#fade');
+  el.hidden = false;
+  el.style.opacity = '1';
+  void fadeOut(200);
+  expect(el.style.opacity).toBe('1');
 });

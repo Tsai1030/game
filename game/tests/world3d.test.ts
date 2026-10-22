@@ -188,7 +188,7 @@ import { ACTS, MAP, NPC, refreshNpcs } from '../src/data/world';
 import type { NpcDef } from '../src/data/maps';
 import { WorldModel } from '../src/world3d/model';
 
-const view = (o: Partial<Parameters<WorldModel['update']>[2]> = {}) => ({ px: 48, py: 64, dir: 'down' as const, moving: false, walkT: 0, near: null, marker: null, reduce: true, ...o });
+const view = (o: Partial<Parameters<WorldModel['update']>[2]> = {}) => ({ px: 48, py: 64, dir: 'down' as const, moving: false, walkT: 0, near: null, marker: null, reduce: true, focus: { x: 3, z: 4 }, ...o });
 
 test('building M03 makes every interactable pickable, one person per NPC, and the OHT', () => {
   setState(ch2State());
@@ -242,6 +242,20 @@ test('the player stands where the mover is, and dispose empties the scene', () =
   expect([p.position.x, p.position.z]).toEqual([3.5, 2.5]);
   w.dispose();
   expect(w.scene.children.length).toBe(0);
+});
+
+test('the sun and its shadows follow the view, not the player', () => {
+  setState(ch2State());
+  loadMap('M03');
+  const w = new WorldModel();
+  w.build();
+  w.update(0, 0.016, view({ px: 80, py: 80, focus: { x: 30, z: 20 } }));
+  const suns: THREE.DirectionalLight[] = [];
+  w.scene.traverse((o) => (o as THREE.DirectionalLight).isDirectionalLight && suns.push(o as THREE.DirectionalLight));
+  expect(suns.length).toBe(1);
+  expect(suns[0]!.target.position.toArray()).toEqual([30, 0, 20]);
+  expect(suns[0]!.position.toArray()).toEqual([21, 16, 30]);
+  w.dispose();
 });
 
 /* ---------- Task 7：相機與點選 ---------- */

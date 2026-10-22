@@ -14,7 +14,8 @@ import { Mover } from '../game/movement';
 import { busy, rt } from '../game/runtime';
 import { fireTrigger, onArrive, setFader } from '../game/travel';
 import { isDialogOpen } from '../ui/dialog';
-import { fadeIn, fadeOut } from '../ui/fade';
+import { fadeSwap } from '../ui/fade';
+import { isTitleOpen } from '../ui/title';
 import { hideShower, setLocation, setPrompt, showBanner, showShower } from '../ui/hud';
 import { advanceScene, pumpQueue } from '../ui/scene';
 import { toast } from '../ui/toast';
@@ -46,6 +47,7 @@ export class WorldView {
   private shownMap = '';
   private last = 0;
   private lastWarn = -Infinity;
+  private sizeKey = '';
   private readonly mover = new Mover({
     onArrive: (prevX) => this.arrive(prevX),
     onInteract: (o) => doInteract(o),
@@ -75,17 +77,17 @@ export class WorldView {
     window.addEventListener('resize', () => this.resize());
     // 新遊戲／讀檔：換到別張地圖就重建，同一張就只更新 NPC 與移動狀態。
     on('reset', () => this.reset());
-    // 換地圖：遮罩淡出 → 換過去並重建 → 顯示地點名稱 → 淡入。
+    // 換地圖：遮罩淡出 → 換過去並重建 → 顯示地點名稱 → 淡入。中途出錯也一定會淡回來。
     setFader((go, done) => {
-      void (async () => {
-        await fadeOut(200);
-        go();
-        this.rebuild();
-        this.resetMotion();
-        showBanner(region(S.x, S.y));
-        await fadeIn(200);
-        done();
-      })();
+      void fadeSwap(() => {
+        try {
+          go();
+        } finally {
+          this.rebuild();
+          this.resetMotion();
+          showBanner(region(S.x, S.y));
+        }
+      }, done);
     });
   }
 
@@ -130,8 +132,14 @@ export class WorldView {
 
   private resize(): void {
     const w = this.stage.clientWidth;
-    const h = stageHeight(w, innerHeight);
-    this.stage.style.height = `${h}px`;
+    // 大小沒變就不動（改舞台高度本身也會觸發 ResizeObserver，不能一直重算）。
+    const key = `${w}x${innerHeight}@${devicePixelRatio}`;
+    if (key === this.sizeKey) return;
+    this.sizeKey = key;
+    const full = stageHeight(w, innerHeight);
+    this.stage.style.height = `${full}px`;
+    // 舞台有邊框：用設定高度之後的內部高度，畫面才不會被壓扁（量不到時退回設定值）。
+    const h = this.stage.clientHeight || full;
     const q = quality(w, devicePixelRatio);
     this.renderer.setPixelRatio(q.pixelRatio);
     this.composer.setPixelRatio(q.pixelRatio);
@@ -147,6 +155,8 @@ export class WorldView {
     requestAnimationFrame(this.frame);
     const dt = Math.min(0.05, (now - this.last) / 1000 || 0);
     this.last = now;
+    // 標題畫面蓋住舞台時不更新也不繪圖（畫布留著最後一格），顯示卡可以閒下來。
+    if (isTitleOpen()) return;
     if (MAP.id !== this.shownMap) return;
     const tt = now / 1000;
     if (rt.shower > 0) {
@@ -172,7 +182,7 @@ export class WorldView {
     }
     this.target = followTarget(this.target, m.px, m.py, MW, MH, 0.15, viewHalf(this.cam));
     placeCamera(this.cam, this.target);
-    this.model.update(tt, dt, { px: m.px, py: m.py, dir: S.dir, moving: !!m.step, walkT: m.walkT, near: rt.near, marker: m.marker, reduce: settings.reduceMotion });
+    this.model.update(tt, dt, { px: m.px, py: m.py, dir: S.dir, moving: !!m.step, walkT: m.walkT, near: rt.near, marker: m.marker, reduce: settings.reduceMotion, focus: { x: this.target.x, z: this.target.z } });
     this.composer.render(dt);
   };
 

@@ -21,6 +21,8 @@ export interface ViewState {
   near: Thing | null;
   marker: Pt | null;
   reduce: boolean;
+  /** 鏡頭對準的地面點（世界單位）；平行光和陰影範圍跟著它。 */
+  focus: { x: number; z: number };
 }
 
 const isTool = (o: Thing) => o.kind in TOOL_H;
@@ -139,10 +141,11 @@ export class WorldModel {
         m.setDir(v.dir);
         m.setWalk(v.walkT, v.moving && !v.reduce);
       }
-      // 平行光跟著玩家，陰影範圍才夠用。
-      this.sun.target.position.set(x, 0, z);
-      this.sun.position.set(x - 9, 16, z + 10);
     }
+    // 平行光跟著畫面中心（不是玩家）：鏡頭停在地圖邊上時，畫面裡的陰影也都算得到。
+    const f = v.focus;
+    this.sun.target.position.set(f.x, 0, f.z);
+    this.sun.position.set(f.x - 9, 16, f.z + 10);
     this.ring.visible = !!v.marker && (v.reduce || Math.floor(t * 4) % 2 === 0);
     if (v.marker) this.ring.position.set(v.marker.x + 0.5, 0.02, v.marker.y + 0.5);
     this.arrow.visible = !!v.near;
