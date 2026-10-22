@@ -32,6 +32,9 @@ export function refreshHud(): void {
   cups.setAttribute('aria-label', t('hud.coffeeAria', { n: S.coffee }));
   $('#clue-n').textContent = `${S.clues.length}/5`;
   $('#shift-stat').hidden = !isNightShift(S);
+  // 序章沒有 Case 03 的任務清單；日期跟著章節（序章 8/24、第 2 章 10/21）。
+  $('#quest').hidden = S.chapter === 'prologue';
+  $('#date').textContent = t('hud.date.' + S.chapter);
   const san = $('#sanity');
   san.className = `sanity ${S.sanity > 50 ? 'ok' : S.sanity > 25 ? 'warn' : 'bad'}`;
   san.setAttribute('aria-label', t('hud.sanityAria', { n: S.sanity }));

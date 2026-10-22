@@ -131,6 +131,34 @@ test('the prologue runs from the gate to Chapter 2 with the spec’s numbers', (
   expect(S.etch).toBe('alarm');
 });
 
+test('asking Wang or Kevin about holding a lot only costs once', () => {
+  newGame();
+  talk('guard');
+  play();
+  walkTo(10, 0);
+  play();
+  talk('amy');
+  play();
+  walkTo(15, 11);
+  play();
+  use('pc');
+  play();
+  talk('kevin');
+  play();
+  talk('boss');
+  play();
+  expect(S.sanity).toBe(72);
+  talk('boss');
+  play();
+  expect(S.sanity).toBe(72);
+  talk('kevin');
+  play();
+  expect(S.rel.kevin).toBe(8);
+  talk('kevin');
+  play();
+  expect(S.rel.kevin).toBe(8);
+});
+
 test('staying late costs sanity and pleases Wang', () => {
   prologue(true);
   expect(S.sanity).toBe(46);

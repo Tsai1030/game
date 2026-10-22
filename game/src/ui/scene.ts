@@ -9,6 +9,7 @@ import { CODEX } from '../data/codex';
 import { ASKS, LABELS, SCENES } from '../data/story';
 import { syncEtch } from '../data/world';
 import { busy } from '../game/runtime';
+import { reportScene } from '../systems/reports';
 import { ScriptRunner, type Frame, type RunnerEvent } from '../systems/script';
 import { hideCard, showCard } from './cards';
 import { closeDialog, finishTyping, hideRecognize, initDialog, openDialog, renderChoices, renderLine } from './dialog';
@@ -31,6 +32,9 @@ function handle(ev: RunnerEvent): void {
   else if (ev.kind === 'clue') {
     const clue = CASE.clues[ev.id as ClueId];
     toast(t('toast.clueGot', { text: clue ? L(clue.t) : ev.id }), 'clue');
+    // 劇情給的線索也要排 LINE 回報（跟在視窗裡點到的一樣）。
+    const report = reportScene(ev.id);
+    if (report && !S.flags.includes('seen_' + report)) queueScene(report);
   } else if (ev.kind === 'warp') emit('warp', ev);
 }
 

@@ -24,7 +24,8 @@
   "lang.en": "English",
 
   "hud.location": "位置",
-  "hud.date": "10/21",
+  "hud.date.prologue": "8/24",
+  "hud.date.ch2": "10/21",
   "hud.shiftEnd": "交班",
   "hud.coffee": "咖啡",
   "hud.coffeeAria": "咖啡 {n}/5",

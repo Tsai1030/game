@@ -92,6 +92,7 @@ scenes:
     - line: { id: coffee_full-1, speaker: me, zh: "已經第五杯了，手在抖。先不要。", en: "That's the fifth cup. Your hands are shaking. Maybe not." }
 
   rc_wrong:
+    - effect: { sanity: -5 }
     - line: { id: rc_wrong-1, speaker: boss, zh: "EE 照你的結論處理了，CD 還是沒回來。再查查看？（咖啡 −1）", en: "EE did what your conclusion said, and the CD still hasn't come back. Look again? (Coffee −1)" }
   rc_solved:
     - line: { id: rc_solved-1, speaker: sys, zh: "EE 換上新的 focus ring，PM-B 跑 monitor wafer：CD 45.1 nm，回到 target。", en: "EE installed a new focus ring. PM-B ran a monitor wafer: CD 45.1 nm, back on target." }

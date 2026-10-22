@@ -148,7 +148,37 @@ test('a wrong cause costs a coffee and gets scolded', () => {
   pick('#rc-cause', 'recipe_changed');
   $<HTMLButtonElement>('#rc-go').click();
   expect(S.coffee).toBe(2);
+  expect(S.sanity).toBe(75);
   expect($('#dlg-text').textContent).toBe(line('rc_wrong').zh);
+});
+
+test('the Evidence Log shows your own name for your lines', () => {
+  S.flags = ['ev_unlocked'];
+  S.evidence = [{ id: 'x', time: '03:05', source: 'chat', speaker: 'me', zh: '甲', en: 'A' }];
+  S.name = '阿明';
+  openEvidence();
+  expect($('.ev-meta').textContent).toContain('阿明');
+  closeWin();
+  S.name = '';
+  openEvidence();
+  expect($('.ev-meta').textContent).toContain(t('name.default'));
+});
+
+test('the prologue hides the Case 03 tasks and shows its own date', () => {
+  setState(newState());
+  refreshHud();
+  expect($('#quest').hidden).toBe(true);
+  expect($('#date').textContent).toBe('8/24');
+  setLang('en');
+  refreshHud();
+  expect($('#date').textContent).toBe('Aug 24');
+  setState(ch2State());
+  refreshHud();
+  expect($('#quest').hidden).toBe(false);
+  expect($('#date').textContent).toBe('Oct 21');
+  setLang('zh-TW');
+  refreshHud();
+  expect($('#date').textContent).toBe('10/21');
 });
 
 test('a new game clears the previous conclusion picks and NPC facing', () => {

@@ -1,6 +1,7 @@
 import { emit } from '../core/bus';
 import { esc, L, LANGS, rich, t, type Lang } from '../core/i18n';
 import { switchLang } from '../core/lang';
+import { playerName } from '../core/name';
 import { rng } from '../core/random';
 import { saveSettings, settings, type TextSpeed } from '../core/settings';
 import { S, TACTIC_IDS, type EvidenceSource, type TacticId } from '../core/state';
@@ -383,7 +384,7 @@ function evidenceHTML(): string {
     items
       .map(
         (e) =>
-          `<li data-id="${esc(e.id)}"><span class="ev-meta"><b class="num">${esc(e.time)}</b> · ${esc(t('ev.src.' + e.source))} · ${esc(t('speaker.' + e.speaker))}</span><span class="ev-text">${esc(L(e))}</span></li>`,
+          `<li data-id="${esc(e.id)}"><span class="ev-meta"><b class="num">${esc(e.time)}</b> · ${esc(t('ev.src.' + e.source))} · ${esc(e.speaker === 'me' ? playerName(S) : t('speaker.' + e.speaker))}</span><span class="ev-text">${esc(L(e))}</span></li>`,
       )
       .join('') +
     `</ol>`

@@ -24,7 +24,8 @@
   "lang.en": "English",
 
   "hud.location": "Location",
-  "hud.date": "Oct 21",
+  "hud.date.prologue": "Aug 24",
+  "hud.date.ch2": "Oct 21",
   "hud.shiftEnd": "Shift ends",
   "hud.coffee": "Coffee",
   "hud.coffeeAria": "Coffee {n}/5",

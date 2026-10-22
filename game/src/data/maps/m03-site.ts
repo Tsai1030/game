@@ -64,10 +64,10 @@ export const M03: MapDef = {
   npcs: [
     // 序章：王經理 S4 才回辦公室；課會時在會議室；問人時給 hold_lot 的回答。
     { id: 'boss', look: 'boss', x: 5, y: 14, dir: 'right', talk: 'p_boss', when: { chapter: 'prologue', flag: 'p_in_meeting' } },
-    { id: 'boss', look: 'boss', x: 11, y: 4, dir: 'down', talk: 'p_ask_boss', when: { chapter: 'prologue', flag: ['p_wang_back', 'task_hold'], notFlag: 'knows_hold_lot' } },
+    { id: 'boss', look: 'boss', x: 11, y: 4, dir: 'down', talk: 'p_ask_boss', when: { chapter: 'prologue', flag: ['p_wang_back', 'task_hold'], notFlag: ['knows_hold_lot', 'p_asked_boss'] } },
     { id: 'boss', look: 'boss', x: 11, y: 4, dir: 'down', talk: 'p_boss', when: { chapter: 'prologue', flag: 'p_wang_back' } },
     { id: 'kevin', look: 'kevinDay', x: 11, y: 14, dir: 'left', talk: 'p_kevin', when: { chapter: 'prologue', flag: 'p_in_meeting' } },
-    { id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'down', talk: 'p_ask_kevin', when: { chapter: 'prologue', flag: 'task_hold', notFlag: 'knows_hold_lot' } },
+    { id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'down', talk: 'p_ask_kevin', when: { chapter: 'prologue', flag: 'task_hold', notFlag: ['knows_hold_lot', 'p_asked_kevin'] } },
     { id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'down', talk: 'p_kevin', when: { chapter: 'prologue' } },
     { id: 'fang', look: 'fang', x: 8, y: 27, dir: 'up', talk: 'p_ask_fang', when: { chapter: 'prologue', flag: 'task_hold', notFlag: 'knows_hold_lot' } },
     // 第 2 章（夜班）。

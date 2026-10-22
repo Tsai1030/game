@@ -23,6 +23,7 @@ Object.assign(SCENES, {
     { line: { id: 'p-1', speaker: 'boss', zh: '你要怎麼做？', en: 'What will you do?' } },
     { choice: [{ id: 'a', zh: '甲', en: 'A', do: [] }] },
   ],
+  t_clue_ring: [{ effect: { clue: 'ring' } }],
   t_choice: [
     {
       choice: [
@@ -46,6 +47,16 @@ afterEach(() => {
   stopScene();
   setAutosave(false);
   setLang('zh-TW');
+});
+
+test('a clue granted by a scene effect queues its LINE report', () => {
+  playScene('t_clue_ring');
+  expect(isSceneActive()).toBe(false);
+  pumpQueue();
+  const first = SCENES.c2_report_ring!.find((b) => 'line' in b)!;
+  expect($('#dlg-text').textContent).toBe('line' in first ? first.line.zh : '');
+  for (let k = 0; k < 20 && isSceneActive(); k++) advanceScene();
+  expect(S.evidence.map((e) => e.id)).toEqual(expect.arrayContaining(['E-C2-03', 'E-C2-04']));
 });
 
 test('a scene plays line by line and choices render as buttons', () => {

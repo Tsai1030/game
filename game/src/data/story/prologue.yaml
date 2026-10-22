@@ -64,10 +64,13 @@ scenes:
   p_ask_boss:
     - ask: { npc: boss, topic: hold_lot }
     - line: { id: p_ask_boss-1, speaker: me, zh: "（……我明明查過才來問的。）", en: "(…I did look it up before asking.)" }
+    # 問過一次之後，再找他就是一般對話，不會一直扣理智。
+    - effect: { flag: p_asked_boss }
 
   p_ask_kevin:
     - ask: { npc: kevin, topic: hold_lot }
     - effect: { rel: { kevin: -2 } }
+    - effect: { flag: p_asked_kevin }
 
   p_ask_fang:
     - ask: { npc: fang, topic: hold_lot }
