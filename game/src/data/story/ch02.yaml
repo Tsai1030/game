@@ -1,4 +1,8 @@
 # 第 2 章（Case 03）的劇情。每段劇情是一串段落（beat），台詞中英並排；speaker 對應語系檔的 speaker.*。
+triggers:
+  # C2-08：過場之後走進會議室（含門口）就開晨會。
+  - { scene: c2_standup, map: M03, at: [3, 11, 11, 6], if: { chapter: ch2, flag: c2_standup_call, notFlag: seen_c2_standup } }
+
 scenes:
   intro:
     - effect: { flag: ev_unlocked }
@@ -91,6 +95,77 @@ scenes:
         - line: { id: say_bossdesk-p1, speaker: me, zh: "桌上貼著一張便條：「8/24 新人報到」，旁邊畫了一個問號。", en: "A note on the desk: “8/24 new hire starts”, with a question mark drawn next to it." }
         - goto: say_end
     - line: { id: say_bossdesk-1, speaker: me, zh: "桌上放著 8 點晨會的簡報，標題是「ETCH CD 異常說明」……內容還是空的。", en: "The slides for the 8 a.m. stand-up sit on the desk, titled “ETCH CD Excursion Explained”… They're still blank." }
+
+  # C2-08：08:00 晨會，王經理搶功、煤氣燈；C2-09：三選一。
+  c2_standup:
+    - effect: { time: "08:00", flag: seen_c2_standup }
+    - effect: { flag: c2_in_standup, suit: false, warp: { map: M03, x: 8, y: 15, dir: up } }
+    - line: { id: c2_standup-1, speaker: sys, zh: "08:00，晨會。陳處長坐在白板前，王經理的簡報已經投上去了。", en: "08:00. The stand-up. Director Chen sits by the whiteboard. Manager Wang's slides are already up." }
+    - line: { id: c2_standup-2, speaker: chen, zh: "我不要過程，我要結果。ETCH 那批怎麼樣了？", en: "I don't want the process. I want results. What happened with the ETCH lots?" }
+    - line: { id: c2_standup-3, speaker: boss, zh: "我判斷是 focus ring 的問題，已經處理了。", en: "I identified it as a focus ring issue, and it's been handled.", tactic: credit_stealing, sanity: -12, evidence: meeting }
+    - line: { id: c2_standup-4, speaker: me, zh: "呃……那個 focus ring，是我凌晨四點半查到的……", en: "Um… I was the one who found the focus ring, around 4:30 this morning…" }
+    - line: { id: c2_standup-5, speaker: boss, zh: "我昨天不是就叫你去看 focus ring 了嗎？你記錯了吧。", en: "Didn't I tell you to check the focus ring yesterday? You must be remembering it wrong.", tactic: gaslighting, sanity: -12, evidence: meeting }
+    - line: { id: c2_standup-6, speaker: sys, zh: "陳處長看了你一眼，又看了王經理一眼。", en: "Director Chen glances at you, then at Manager Wang." }
+    - choice:
+        - id: line
+          zh: "當場拿出手機，給處長看 LINE 紀錄（需要你 04:32 的回報和他的回覆）"
+          en: "Pull up the LINE messages right there (needs your 04:32 report and his reply)"
+          if: { evidence: [E-C2-03, E-C2-04] }
+          do:
+            - line: { id: c2_standup-l1, speaker: me, zh: "處長，這是凌晨的 LINE。04:32 我回報 focus ring 1,180 小時、建議更換；05:10 經理回了一個「嗯」。", en: "Director, these are the LINE messages from last night. At 04:32 I reported the focus ring at 1,180 hours and recommended replacing it. At 05:10 the manager replied, “Mm.”" }
+            - line: { id: c2_standup-l2, speaker: sys, zh: "陳處長盯著時間戳看了很久。會議室安靜到聽得見投影機的風扇。", en: "Director Chen studies the timestamps for a long time. The room goes so quiet you can hear the projector fan." }
+            - line: { id: c2_standup-l3, speaker: chen, zh: "……王經理，會後來我辦公室一下。", en: "…Manager Wang, come by my office after this." }
+            - effect: { sanity: 10, rel: { boss: -25 }, flag: confronted_publicly }
+            - line: { id: c2_standup-l4, speaker: sys, zh: "你的手在發抖，但你沒有退。（理智 +10）", en: "Your hands are shaking, but you don't back down. (Sanity +10)" }
+        - id: email
+          zh: "會後寄 email 整理時間線，CC 自己"
+          en: "Email a timeline after the meeting, CC yourself"
+          do:
+            - if: { evidenceMin: { ids: [E-C2-01, E-C2-02, E-C2-03, E-C2-04], n: 2 } }
+              then:
+                - line: { id: c2_standup-e1, speaker: sys, zh: "會後，你寄出一封 email：〈Case 03 處理時間線〉，列出凌晨每一則 LINE 的時間。收件人王經理，CC 你自己。", en: "After the meeting you send an email titled “Case 03 timeline”, listing the time of every LINE message from last night. To: Manager Wang. CC: yourself." }
+                - effect: { sanity: 8, rel: { boss: -5 }, flag: paper_trail }
+                - line: { id: c2_standup-e2, speaker: sys, zh: "語氣很平靜，沒有一個形容詞。紀錄在那裡，就夠了。（理智 +8）", en: "It's calm, without a single adjective. The record is there, and that's enough. (Sanity +8)" }
+              else:
+                - line: { id: c2_standup-e3, speaker: sys, zh: "會後，你想寄一封時間線 email，但手上幾乎沒有紀錄，只能寫「凌晨我有在查」。", en: "After the meeting you try to write a timeline email, but you have almost nothing on record. All you can write is “I was investigating overnight.”" }
+                - effect: { rel: { boss: -5 }, flag: paper_trail_thin }
+                - line: { id: c2_standup-e4, speaker: sys, zh: "信寄出去了，但沒什麼份量。", en: "The email goes out, but it doesn't carry much weight." }
+        - id: drop
+          zh: "算了"
+          en: "Let it go"
+          do:
+            - line: { id: c2_standup-d1, speaker: me, zh: "……是，可能是我記錯了。", en: "…Right. Maybe I remembered it wrong." }
+            - effect: { sanity: -5, rel: { boss: 5 }, flag: let_it_go }
+            - line: { id: c2_standup-d2, speaker: sys, zh: "王經理點點頭，翻到下一頁。（理智 −5）", en: "Manager Wang nods and moves on to the next slide. (Sanity −5)" }
+    - effect: { unflag: c2_in_standup }
+    - goto: c2_s10
+
+  # C2-10：08:30 辦公室，依選擇和 Kevin 或芳姐對話；完成第 2 章，理智 +10；試玩結束卡。
+  c2_s10:
+    - effect: { time: "08:30", flag: c2_after, warp: { map: M03, x: 3, y: 4, dir: up } }
+    - line: { id: c2_s10-1, speaker: sys, zh: "08:30，辦公室。夜班的人陸續下班了。", en: "08:30. The office. The night shift is heading home." }
+    - if: { flag: confronted_publicly }
+      then:
+        - line: { id: c2_s10-k1, speaker: kevin, zh: "（小聲）你剛剛很有種。", en: "(quietly) That took guts back there." }
+        - line: { id: c2_s10-k2, speaker: kevin, zh: "不過他會記得的。接下來小心一點。", en: "But he'll remember it. Watch your back for a while." }
+      else:
+        - if: { flag: let_it_go }
+          then:
+            - line: { id: c2_s10-k3, speaker: kevin, zh: "……我第一年也被這樣過。", en: "…He did the same thing to me my first year." }
+            - line: { id: c2_s10-k4, speaker: kevin, zh: "你不講，下次還會發生。我是說真的。", en: "If you don't say anything, it'll happen again. I mean it." }
+          else:
+            - if: { flag: paper_trail }
+              then:
+                - line: { id: c2_s10-f1, speaker: fang, zh: "我看到你那封信了。時間、內容、誰說了什麼，都在上面。", en: "I saw your email. Times, what happened, who said what. It's all there." }
+                - line: { id: c2_s10-f2, speaker: fang, zh: "在這裡，書面紀錄會保護你。記住這個感覺。", en: "Around here, written records protect you. Remember how this feels." }
+              else:
+                - line: { id: c2_s10-f3, speaker: fang, zh: "我看到你那封信了。有點薄喔。", en: "I saw your email. It's a bit thin." }
+                - line: { id: c2_s10-f4, speaker: fang, zh: "下次查到東西，當下就傳出去。紀錄要先存在，才幫得了你。", en: "Next time you find something, send it right away. A record can only help you if it exists." }
+    - line: { id: c2_s10-2, speaker: sys, zh: "你收拾東西準備下班。外面，天已經亮了。", en: "You pack up to go home. Outside, it's already light." }
+    - effect: { sanity: 10 }
+    - line: { id: c2_s10-3, speaker: sys, zh: "第 2 章完成。（理智 +10）", en: "Chapter 2 complete. (Sanity +10)" }
+    - effect: { flag: demo_done }
+    - goto: c2_demo_end
 
   # 試玩結束卡：第 2 章結尾、試玩結束後再按「繼續」都播這段。
   c2_demo_end:

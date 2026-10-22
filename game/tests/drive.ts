@@ -85,6 +85,30 @@ export function play(picks: string[] = [], recognize: Record<string, string> = {
   expect(isSceneActive() || isCardOpen() || isDialogOpen()).toBe(false);
 }
 
+/** 任何劇情裡（含巢狀分支）某個 id 的台詞。 */
+export const lineById = (id: string): ScriptLine => {
+  let found: ScriptLine | null = null;
+  for (const sc of Object.values(SCENES))
+    walkBeats(sc, (b) => {
+      if ('line' in b && b.line.id === id) found = b.line;
+    });
+  if (!found) throw new Error(`no line ${id}`);
+  return found;
+};
+
+/** 一直按下一句，直到對話框出現某一句台詞（中文）。 */
+export function untilLine(id: string): void {
+  const want = lineById(id).zh;
+  for (let k = 0; k < 40 && $('#dlg-text').textContent !== want; k++) advanceScene();
+  expect($('#dlg-text').textContent).toBe(want);
+}
+
+/** 一直按下一句，直到出現選項。 */
+export function untilChoice(): void {
+  for (let k = 0; k < 40 && $('#dlg-choices').hidden; k++) advanceScene();
+  expect($('#dlg-choices').hidden).toBe(false);
+}
+
 /** 辨識某段劇情裡某種話術的那一句（中英文都認得）。 */
 export const recognizeIn = (scene: string, tactic: string): Record<string, string> => {
   const l = tacticLine(scene, tactic);

@@ -70,6 +70,13 @@ export const M03: MapDef = {
     { id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'down', talk: 'p_ask_kevin', when: { chapter: 'prologue', flag: 'task_hold', notFlag: ['knows_hold_lot', 'p_asked_kevin'] } },
     { id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'down', talk: 'p_kevin', when: { chapter: 'prologue' } },
     { id: 'fang', look: 'fang', x: 8, y: 27, dir: 'up', talk: 'p_ask_fang', when: { chapter: 'prologue', flag: 'task_hold', notFlag: 'knows_hold_lot' } },
+    // 第 2 章晨會（C2-08、C2-09）與會後（C2-10）：只在劇情進行中出現，所以說話劇情是空的 say_end。
+    { id: 'chen', look: 'chen', x: 8, y: 12, dir: 'down', talk: 'say_end', when: { chapter: 'ch2', flag: 'c2_in_standup' } },
+    { id: 'boss', look: 'boss', x: 5, y: 14, dir: 'right', talk: 'say_end', when: { chapter: 'ch2', flag: 'c2_in_standup' } },
+    { id: 'kevin', look: 'kevinDay', x: 11, y: 14, dir: 'left', talk: 'say_end', when: { chapter: 'ch2', flag: 'c2_in_standup' } },
+    { id: 'boss', look: 'boss', x: 11, y: 4, dir: 'down', talk: 'say_end', when: { chapter: 'ch2', flag: 'c2_after' } },
+    { id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'left', talk: 'say_end', when: { chapter: 'ch2', flag: 'c2_after' } },
+    { id: 'fang', look: 'fang', x: 5, y: 4, dir: 'left', talk: 'say_end', when: { chapter: 'ch2', flag: 'c2_after' } },
     // 第 2 章（夜班）。過場之後，大熊留在 ETCH-07 旁。
     { id: 'bear', look: 'bear', x: 26, y: 6, dir: 'up', talk: 'c2_bear', when: { chapter: 'ch2', flag: 'c2_bear_here' } },
     { id: 'boss', look: 'boss', x: 11, y: 4, dir: 'down', talk: 'boss', when: { chapter: 'ch2' } },
