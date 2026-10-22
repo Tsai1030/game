@@ -1,29 +1,27 @@
 import './style.css';
 import { saveNow, setAutosave } from './core/autosave';
-import { emit, on } from './core/bus';
+import { on } from './core/bus';
 import { applyDom, setLang, t, type Lang } from './core/i18n';
 import { switchLang } from './core/lang';
-import { clearSave, readSave } from './core/save';
+import { readSave } from './core/save';
 import { loadSettings, settings } from './core/settings';
-import { isNightShift, newState, S, setState, type GameState } from './core/state';
+import { isNightShift, S } from './core/state';
 import { browserStore } from './core/storage';
-import { SCENES } from './data/story';
-import { resetNpcs, syncEtch } from './data/world';
 import { doInteract } from './game/actions';
-import { placeLoaded } from './game/travel';
-import { requeueReports, setCoffee } from './game/effects';
-import { held, initInput } from './game/input';
+import { setCoffee } from './game/effects';
+import { initInput } from './game/input';
 import { busy, canOpenSettings, rt } from './game/runtime';
+import { startGame } from './game/session';
 import { WorldView } from './world3d/view';
 import { COFFEE_DECAY_MS, decay } from './systems/coffee';
 import { isDialogOpen } from './ui/dialog';
-import { advanceScene, initScenePlayer, playScene, stopScene } from './ui/scene';
+import { advanceScene, initScenePlayer, stopScene } from './ui/scene';
 import { $ } from './ui/dom';
 import { initHud, refreshHud, setClock } from './ui/hud';
-import { hideTitle, isTitleOpen, showTitle } from './ui/title';
+import { isTitleOpen, showTitle } from './ui/title';
 import { toast } from './ui/toast';
 import { closeWin, initWin, isWinOpen } from './ui/win';
-import { openClues, openCodex, openEvidence, openSettings, resetCaseUi } from './ui/windows';
+import { openClues, openCodex, openEvidence, openSettings } from './ui/windows';
 
 /* 1. 設定與語言 */
 loadSettings(browserStore(), {
@@ -85,40 +83,14 @@ try {
 }
 applyDom();
 
-/* 4. 標題畫面、新遊戲與繼續 */
-function start(loaded: GameState | null, name = ''): void {
-  stopScene();
-  const s = loaded ?? { ...newState(), name };
-  if (!loaded) clearSave(browserStore());
-  setState(s);
-  placeLoaded(S);
-  syncEtch(S.etch);
-  resetNpcs();
-  resetCaseUi();
-  held.length = 0;
-  hideTitle();
-  setAutosave(true);
-  refreshHud();
-  setClock(S.sec);
-  emit('reset');
-  saveNow();
-  if (!loaded) {
-    playScene('p_s1');
-    return;
-  }
-  // 存檔停在某段劇情開頭時，從那段開頭重播（劇情進行中不會存檔，效果不會重複）。
-  if (S.scene && SCENES[S.scene]) playScene(S.scene);
-  else S.scene = null;
-  requeueReports();
-}
-
+/* 4. 標題畫面、新遊戲與繼續（startGame 在 game/session.ts） */
 function openTitle(): void {
   const r = readSave(browserStore());
   showTitle({
     canContinue: r.kind === 'ok',
     notice: r.kind === 'corrupt' ? t('toast.saveCorrupt') : undefined,
-    onContinue: () => start(r.kind === 'ok' ? r.state : null),
-    onNew: (name: string) => start(null, name),
+    onContinue: () => startGame(r.kind === 'ok' ? r.state : null),
+    onNew: (name: string) => startGame(null, name),
     onLang: (l: Lang) => switchLang(l),
   });
 }

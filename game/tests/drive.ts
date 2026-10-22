@@ -1,16 +1,17 @@
 import { expect } from 'bun:test';
-import { newState, S, setState } from '../src/core/state';
+import { S } from '../src/core/state';
 import { settings } from '../src/core/settings';
 import type { ScriptLine } from '../src/data/script';
 import { SCENES } from '../src/data/story';
 import { NPC, OBJ, refreshNpcs } from '../src/data/world';
 import { doInteract } from '../src/game/actions';
 import { rt } from '../src/game/runtime';
-import { fireTrigger, onArrive, placeLoaded, setFader } from '../src/game/travel';
+import { fireTrigger, onArrive, setFader } from '../src/game/travel';
+import { startGame } from '../src/game/session';
 import { walkBeats } from '../src/systems/script';
 import { isCardOpen } from '../src/ui/cards';
 import { isDialogOpen } from '../src/ui/dialog';
-import { advanceScene, initScenePlayer, isSceneActive, playScene, pumpQueue, stopScene } from '../src/ui/scene';
+import { advanceScene, initScenePlayer, isSceneActive, pumpQueue, stopScene } from '../src/ui/scene';
 import { hideTitle } from '../src/ui/title';
 import { closeWin, initWin, showTab } from '../src/ui/win';
 import { openPC } from '../src/ui/windows';
@@ -57,7 +58,14 @@ export const setCheckText = (on: boolean): void => {
  * 沒有劇情在播時，先讓排隊中的劇情（LINE 回報）播出來，跟遊戲畫面每格做的一樣。
  */
 export function play(picks: string[] = [], recognize: Record<string, string> = {}): void {
+  playUntil(() => false, picks, recognize);
+  expect(isSceneActive() || isCardOpen() || isDialogOpen()).toBe(false);
+}
+
+/** 跟 play() 一樣往下播，但 stop() 成立時就停（例如停在試玩結束卡上檢查內容）。 */
+export function playUntil(stop: () => boolean, picks: string[] = [], recognize: Record<string, string> = {}): void {
   for (let k = 0; k < 400; k++) {
+    if (stop()) return;
     if (!isSceneActive() && !isCardOpen()) {
       pumpQueue();
       if (!isSceneActive()) break;
@@ -82,7 +90,6 @@ export function play(picks: string[] = [], recognize: Record<string, string> = {
     }
     advanceScene();
   }
-  expect(isSceneActive() || isCardOpen() || isDialogOpen()).toBe(false);
 }
 
 /** 任何劇情裡（含巢狀分支）某個 id 的台詞。 */
@@ -146,10 +153,9 @@ export function submitRC(cause = 'focus_ring_eol'): void {
   $<HTMLButtonElement>('#rc-go').click();
 }
 
+/** 跟標題畫面按「新遊戲」一樣。 */
 export function newGame(name = ''): void {
-  setState({ ...newState(), name });
-  placeLoaded(S);
-  playScene('p_s1');
+  startGame(null, name);
   play();
 }
 
