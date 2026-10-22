@@ -220,7 +220,7 @@ test('the shift-end countdown shows only on the night shift', () => {
 });
 
 test('a new game starts the prologue at the security gate', () => {
-  expect(newState()).toMatchObject({ v: 3, map: 'M01', x: 10, y: 10, chapter: 'prologue', sec: 26400, etch: 'fixed', name: '' });
+  expect(newState()).toMatchObject({ v: 4, chapterSanity: 80, map: 'M01', x: 10, y: 10, chapter: 'prologue', sec: 26400, etch: 'fixed', name: '' });
   expect(ch2State()).toMatchObject({ map: 'M03', x: 3, y: 4, chapter: 'ch2', sec: 2 * 3600 + 47 * 60, etch: 'alarm' });
 });
 

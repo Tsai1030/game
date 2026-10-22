@@ -27,7 +27,8 @@ function isRel(v: unknown): v is Record<NpcId, number> {
 
 /**
  * 解析存檔字串；任何欄位不合法就回傳 null，不讓遊戲帶著壞資料執行。
- * v1（M0）、v2（M1-1）存檔都還在第 2 章：補上預設值升級成 v3（M03、第 2 章、名字空白）。
+ * v1（M0）、v2（M1-1）存檔都還在第 2 章：補上預設值（M03、第 2 章、名字空白）。
+ * v1–v3 沒有「本章開始時的理智」，就用目前的理智值。升級後一律是 v4。
  */
 export function parseSave(raw: string | null): GameState | null {
   if (!raw) return null;
@@ -39,14 +40,14 @@ export function parseSave(raw: string | null): GameState | null {
   }
   if (!d || typeof d !== 'object') return null;
   const o = d as Record<string, unknown>;
-  if (o.v !== 1 && o.v !== 2 && o.v !== 3) return null;
+  if (o.v !== 1 && o.v !== 2 && o.v !== 3 && o.v !== 4) return null;
   if (!isInt(o.x, 0, 999) || !isInt(o.y, 0, 999)) return null;
   if (!DIRS.includes(o.dir) || !ETCH.includes(o.etch)) return null;
   if (typeof o.suit !== 'boolean' || typeof o.everSuit !== 'boolean' || typeof o.solved !== 'boolean') return null;
   if (!isInt(o.coffee, 0, 5) || !isInt(o.sec, 0, 86400)) return null;
   if (!isStrList(o.clues)) return null;
   const base: GameState = {
-    v: 3,
+    v: 4,
     map: 'M03',
     chapter: 'ch2',
     name: '',
@@ -61,6 +62,7 @@ export function parseSave(raw: string | null): GameState | null {
     etch: o.etch as EtchState,
     sec: o.sec,
     sanity: 80,
+    chapterSanity: 80,
     zeroCount: 0,
     rel: { ...REL_START },
     codex: [],
@@ -74,12 +76,14 @@ export function parseSave(raw: string | null): GameState | null {
   if (!Array.isArray(o.codex) || !o.codex.every((c) => (TACTIC_IDS as readonly unknown[]).includes(c))) return null;
   if (!Array.isArray(o.evidence) || !o.evidence.every(isEvidence)) return null;
   if (!isStrList(o.flags) || !(o.scene === null || isStr(o.scene))) return null;
+  if (o.v === 4 && !isInt(o.chapterSanity, 0, 100)) return null;
   const rel = o.rel as Record<NpcId, number>;
-  if (o.v === 3 && (!(MAP_IDS as readonly unknown[]).includes(o.map) || !(CHAPTERS as readonly unknown[]).includes(o.chapter) || !isName(o.name))) return null;
+  if (o.v >= 3 && (!(MAP_IDS as readonly unknown[]).includes(o.map) || !(CHAPTERS as readonly unknown[]).includes(o.chapter) || !isName(o.name))) return null;
   return {
     ...base,
-    ...(o.v === 3 ? { map: o.map as MapId, chapter: o.chapter as Chapter, name: o.name as string } : {}),
+    ...(o.v >= 3 ? { map: o.map as MapId, chapter: o.chapter as Chapter, name: o.name as string } : {}),
     sanity: o.sanity,
+    chapterSanity: o.v === 4 ? (o.chapterSanity as number) : o.sanity,
     zeroCount: o.zeroCount,
     rel: Object.fromEntries(NPC_IDS.map((k) => [k, rel[k]])) as Record<NpcId, number>,
     codex: [...new Set(o.codex as TacticId[])],

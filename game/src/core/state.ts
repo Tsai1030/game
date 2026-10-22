@@ -34,7 +34,7 @@ export interface EvidenceItem {
 
 /** 需要存檔的遊戲狀態。暫時的移動與路徑狀態放在 Mover。 */
 export interface GameState {
-  v: 3;
+  v: 4;
   /** 目前所在的地圖。 */
   map: MapId;
   chapter: Chapter;
@@ -53,6 +53,8 @@ export interface GameState {
   sec: number;
   /** 理智值 0–100。 */
   sanity: number;
+  /** 這一章開始時的理智值（試玩結束卡顯示本章變化）。 */
+  chapterSanity: number;
   /** 理智歸零過幾次（第一次強制請假，第二次燃盡）。 */
   zeroCount: number;
   rel: Record<NpcId, number>;
@@ -74,7 +76,7 @@ export const REL_START: Record<NpcId, number> = { boss: 0, kevin: 10, fse: 10, f
 /** 新遊戲：序章開場。 */
 export function newState(): GameState {
   return {
-    v: 3,
+    v: 4,
     map: PROLOGUE_START.map,
     chapter: 'prologue',
     name: '',
@@ -89,6 +91,7 @@ export function newState(): GameState {
     etch: 'fixed',
     sec: PROLOGUE_START.sec,
     sanity: 80,
+    chapterSanity: 80,
     zeroCount: 0,
     rel: { ...REL_START },
     codex: [],

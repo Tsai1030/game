@@ -77,7 +77,11 @@ export function applyEffect(s: GameState, e: Effect, recognized = false): Runner
     const [h, m] = e.time.split(':').map(Number);
     s.sec = (h ?? 0) * 3600 + (m ?? 0) * 60;
   }
-  if (e.chapter !== undefined) s.chapter = e.chapter;
+  if (e.chapter !== undefined) {
+    s.chapter = e.chapter;
+    // 記下這一章開始時的理智（同一個效果裡的理智變化最後才套用）。
+    s.chapterSanity = s.sanity;
+  }
   if (e.etch !== undefined) s.etch = e.etch;
   if (e.warp) {
     const { map, x, y, dir = 'up' } = e.warp;

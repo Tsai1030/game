@@ -104,6 +104,15 @@ test('effects set the time, chapter and ETCH-07 state', () => {
   expect([s.sec, s.chapter, s.etch]).toEqual([54000, 'ch2', 'alarm']);
 });
 
+test('starting a chapter remembers the sanity it started with', () => {
+  s.sanity = 59;
+  applyEffect(s, { chapter: 'ch2' });
+  expect(s.chapterSanity).toBe(59);
+  s.sanity = 70;
+  applyEffect(s, { chapter: 'ch2', sanity: 5 });
+  expect([s.chapterSanity, s.sanity]).toEqual([70, 75]);
+});
+
 test('a warp moves the player and emits exactly one warp event', () => {
   const ev = applyEffect(s, { warp: { map: 'M04', x: 5, y: 4 } });
   expect([s.map, s.x, s.y, s.dir]).toEqual(['M04', 5, 4, 'up']);
