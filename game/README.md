@@ -23,9 +23,9 @@ src/
   systems/         尋路、線索、結論判定、咖啡、任務清單、理智、證據、關係、回應、劇本執行器（純邏輯）
   world3d/         three.js 3D 世界：地板與牆、機台（LED、告警）、家具、人物、天車、相機、點選、畫面迴圈（view.ts）
   render/          配色、對話框的 16×16 頭像、點陣字
-  game/            移動控制（Mover）、換地圖（travel.ts）、輸入、互動
+  game/            移動控制（Mover）、換地圖（travel.ts）、新遊戲與繼續（session.ts）、輸入、互動
   ui/              DOM 介面：HUD、對話框、劇情播放（scene.ts）、劇情卡、機台視窗、證據簿、圖鑑、設定、標題畫面
-tests/             bun:test 測試
+tests/             bun:test 測試；drive.ts 是自動玩劇情的共用工具（序章、第 2 章、完整試玩）
 ```
 
 ## 劇本格式 · Script format
@@ -62,8 +62,8 @@ scenes:
     # evidence：直接記一筆證據（例如 LINE 訊息）
     # evidence: log an item directly (for example a LINE message)
     - evidence: { id: E-EX-01, time: "03:05", source: chat, speaker: me, zh: "收到。", en: "Got it." }
-    # card：全畫面劇情卡（章節卡、通知）
-    # card: a full-screen story card (chapter card or notice)
+    # card：全畫面劇情卡（chapter 章節卡、notice 通知、end 試玩結束卡）。end 的文字是下一章預告，必須是劇情最後一段
+    # card: a full-screen story card (chapter card, notice, or end: the end-of-demo card). An end card's text is the next-chapter teaser, and it must be the scene's last beat
     - card: { kind: chapter, zh: "第 2 章　夜班", en: "Chapter 2: Night Shift" }
     # include：插入另一段劇情，播完回來；goto：換到另一段劇情，不回來
     # include: play another scene, then come back; goto: switch to another scene for good
@@ -90,9 +90,9 @@ Each map is a `MapDef` in `src/data/maps/`: tile rows (one string per row), obje
 { x: 10, y: 0, to: 'M02', at: { x: 2, y: 10, dir: 'up' }, if: { flag: 'p_badge' }, locked: 'p_gate_locked' },
 ```
 
-劇本檔可以寫 `triggers:`，在走進某張地圖（或某個範圍 `at: [x, y, w, h]`）時自動播劇情。觸發的劇情要設一個旗標，讓自己的條件不再成立（測試會檢查）。效果可以用 `time: "15:00"`、`chapter: ch2`、`etch: alarm`，以及 `warp: { map, x, y, dir }` 把玩家帶到別的地方；台詞裡的 `{name}` 會換成玩家的名字。
+劇本檔可以寫 `triggers:`，在走進某張地圖（或某個範圍 `at: [x, y, w, h]`）時自動播劇情。觸發的劇情要設一個旗標，讓自己的條件不再成立（測試會檢查）。效果可以用 `time: "15:00"`、`chapter: ch2`（同時記下本章開始時的理智，試玩結束卡會用）、`etch: alarm`，以及 `warp: { map, x, y, dir }` 把玩家帶到別的地方；台詞裡的 `{name}` 會換成玩家的名字。
 
-A story file can list `triggers:` that start a scene when you enter a map (or an area `at: [x, y, w, h]`). A triggered scene must set a flag that turns its own condition off (a test checks this). Effects can use `time: "15:00"`, `chapter: ch2`, `etch: alarm` and `warp: { map, x, y, dir }` to move the player. `{name}` in a line becomes the player's name.
+A story file can list `triggers:` that start a scene when you enter a map (or an area `at: [x, y, w, h]`). A triggered scene must set a flag that turns its own condition off (a test checks this). Effects can use `time: "15:00"`, `chapter: ch2` (which also records the sanity the chapter started with, for the end-of-demo card), `etch: alarm` and `warp: { map, x, y, dir }` to move the player. `{name}` in a line becomes the player's name.
 
 ```yaml
 triggers:

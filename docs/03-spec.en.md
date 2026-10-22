@@ -283,6 +283,12 @@ In the effects column, "San" is sanity and "Rel" is relationship.
 | Email a timeline after the meeting, CC yourself | At least 2 of E-C2-01 to 04 for the email to carry weight | San +8, Wang Rel −5, flag `paper_trail` (used in Chapter 6). With too little evidence: San +0 |
 | Let it go | — | San −5, Wang Rel +5, flag `let_it_go` |
 
+**Implementation notes (M1-2b, Claude's calls):**
+- An email with fewer than 2 of E-C2-01 to 04 still goes out: San +0, Wang Rel −5, and the flag is `paper_trail_thin` instead of `paper_trail`, so Chapter 6 can tell a thin email apart.
+- In Chapter 2, the allies for the once-per-chapter chat are Kevin, Fang-jie and A-Zhe.
+- C2-07 plays in the fab: you watch Bear swap the ring, then you're back in the office at 07:40. Walking into the meeting room starts the stand-up.
+- After the end-of-demo card, Continue shows the card again. There is no free roaming after the demo.
+
 ---
 
 ## 8. Art and audio
