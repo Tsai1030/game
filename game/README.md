@@ -17,13 +17,13 @@
 
 ```
 src/
-  main.ts          啟動：設定 → 語言 → DOM → Phaser → 標題畫面
+  main.ts          啟動：設定 → 語言 → DOM → 3D 畫面（world3d/view.ts）→ 標題畫面
   core/            語系、設定、遊戲狀態、存檔、事件匯流排、亂數
   data/            目前地圖（world.ts）、四張地圖（maps/）、Case 03（case03.json）、劇本（story/*.yaml）、介面文字（locales/）
   systems/         尋路、線索、結論判定、咖啡、任務清單、理智、證據、關係、回應、劇本執行器（純邏輯）
   world3d/         three.js 3D 世界：地板與牆、機台（LED、告警）、家具、人物、天車、相機、點選、畫面迴圈（view.ts）
   render/          配色、對話框的 16×16 頭像、點陣字
-  game/            Phaser 場景、移動控制（Mover）、輸入、互動、視窗大小
+  game/            移動控制（Mover）、換地圖（travel.ts）、輸入、互動
   ui/              DOM 介面：HUD、對話框、劇情播放（scene.ts）、劇情卡、機台視窗、證據簿、圖鑑、設定、標題畫面
 tests/             bun:test 測試
 ```

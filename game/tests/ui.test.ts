@@ -384,6 +384,14 @@ test('Back on the name step returns to the title buttons', () => {
   expect($('#title [data-act="new"]')).not.toBeNull();
 });
 
+/* ---------- M1-3D：畫布尺寸規則不能套到對話框頭像 ---------- */
+test('the 3D canvas sizing rule does not stretch the dialog portrait', async () => {
+  const css = await Bun.file(new URL('../src/style.css', import.meta.url)).text();
+  const rule = css.split('\n').find((l) => /canvas[^{]*\{[^}]*height: 100%/.test(l))!;
+  const selector = rule.slice(0, rule.indexOf('{')).trim();
+  expect([...document.querySelectorAll(selector)].map((e) => e.id)).not.toContain('dlg-por');
+});
+
 /* ---------- M1-3D：換地圖的淡入淡出 ---------- */
 import { fadeIn, fadeOut } from '../src/ui/fade';
 

@@ -259,7 +259,7 @@ function pickWorld(tx: number, tz: number, p: THREE.Vector3) {
   const cam = makeCamera(16 / 9, false);
   placeCamera(cam, new THREE.Vector3(tx, 0, tz));
   const ndc = p.clone().project(cam);
-  const r = pickAt(cam, ndc.x, ndc.y, w.pickables());
+  const r = pickAt(cam, ndc.x, ndc.y, w.pickables(), w.blockers());
   w.dispose();
   return r;
 }
@@ -294,4 +294,78 @@ test('render quality follows the stage width and the device', () => {
   expect(quality(400, 3)).toEqual({ pixelRatio: 1.5, shadowMap: 1024, narrow: true });
   expect(quality(1400, 1)).toEqual({ pixelRatio: 1, shadowMap: 2048, narrow: false });
   expect(quality(1400, 3)).toEqual({ pixelRatio: 2, shadowMap: 2048, narrow: false });
+});
+
+/* ---------- 最終審查的修正 ---------- */
+import { halfHeight, viewHalf } from '../src/world3d/camera';
+import { walkable } from '../src/data/world';
+
+test('clicking the floor right next to a tool or desk walks there instead of opening it', () => {
+  for (const [x, y] of [
+    [16, 4],
+    [24, 9],
+    [1, 4],
+  ] as const) {
+    const r = pickWorld(x + 0.5, y + 0.5, new THREE.Vector3(x + 0.5, 0, y + 0.5));
+    expect({ tile: `${x},${y}`, got: r && 'wx' in r ? [Math.floor(r.wx / 16), Math.floor(r.wy / 16)] : r }).toEqual({ tile: `${x},${y}`, got: [x, y] });
+  }
+});
+
+test('clicking a wall does nothing, even where the floor behind it is walkable', () => {
+  expect(pickWorld(5.5, 11, new THREE.Vector3(5.5, 1.6, 11.0))).toBeNull();
+});
+
+test('the camera keeps the player fully on screen on every walkable tile of every map', () => {
+  setState({ ...ch2State(), suit: true });
+  const off: string[] = [];
+  for (const m of Object.values(MAPS)) {
+    loadMap(m.id);
+    for (const [sw, sh] of [
+      [1225, 460],
+      [1794, 810],
+      [352, 422],
+    ] as const) {
+      const half = halfHeight(sw < 700);
+      const cam = makeCamera(sw / sh, sw < 700);
+      Object.assign(cam, { left: (-half * sw) / sh, right: (half * sw) / sh, top: half, bottom: -half });
+      cam.updateProjectionMatrix();
+      for (let y = 0; y < MAPH; y++)
+        for (let x = 0; x < MAPW; x++) {
+          if (!walkable(x, y, true)) continue;
+          placeCamera(cam, followTarget(new THREE.Vector3(), x * 16, y * 16, MAPW, MAPH, 1, viewHalf(cam)));
+          for (const h of [0, 1.4]) {
+            const p = new THREE.Vector3(x + 0.5, h, y + 0.5).project(cam);
+            if (Math.abs(p.x) > 1 || Math.abs(p.y) > 1) off.push(`${m.id} ${sw}x${sh} (${x},${y}) h${h}`);
+          }
+        }
+    }
+  }
+  loadMap('M03');
+  expect(off.slice(0, 8)).toEqual([]);
+});
+
+test('dispose frees the shadow map and the LED buffers', () => {
+  setState(ch2State());
+  loadMap('M03');
+  const w = new WorldModel();
+  w.build();
+  let lights = 0;
+  let instanced = 0;
+  const ld = THREE.DirectionalLight.prototype.dispose;
+  const id = THREE.InstancedMesh.prototype.dispose;
+  THREE.DirectionalLight.prototype.dispose = function () {
+    lights++;
+    ld.call(this);
+  };
+  THREE.InstancedMesh.prototype.dispose = function () {
+    instanced++;
+    return id.call(this);
+  };
+  try {
+    w.dispose();
+  } finally {
+    THREE.DirectionalLight.prototype.dispose = ld;
+    THREE.InstancedMesh.prototype.dispose = id;
+  }
+  expect([lights, instanced]).toEqual([1, 1]);
 });

@@ -182,7 +182,7 @@ export class WorldView {
     if (busy()) return;
     held.length = 0;
     const r = this.canvas.getBoundingClientRect();
-    const hit = pickAt(this.cam, ((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, this.model.pickables());
+    const hit = pickAt(this.cam, ((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, this.model.pickables(), this.model.blockers());
     if (!hit) return;
     if ('thing' in hit) this.mover.click(hit.thing.x * TS, hit.thing.y * TS, hit.thing);
     else this.mover.click(hit.wx, hit.wy, null);

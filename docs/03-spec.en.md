@@ -98,7 +98,7 @@ D:\g\
 ### 2.5 Display and performance
 
 - 3D world, 1 tile = 1 unit. An orthographic camera looks down at a fixed 3/4 angle and follows the player; it shows about 13 tiles of height on wide screens and 11 on phones. Render resolution is capped at 2× (1.5× on phones).
-- Target 60 fps. LEDs aren't drawn for tools outside the camera view.
+- Target 60 fps. All LEDs on a map are drawn in one instanced call, so they are cheap even when off-screen.
 - Supported browsers: the latest two versions of Chrome, Edge, Firefox, and Safari.
 
 ---

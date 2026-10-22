@@ -37,6 +37,8 @@ export class WorldModel {
   private oht: ReturnType<typeof buildOht> | null = null;
   private readonly npcs = new Map<string, { thing: Thing; person: PersonModel }>();
   private picks: THREE.Object3D[] = [];
+  /** 擋住點擊的東西：牆、玻璃、風淋室門框、不能互動的家具。 */
+  private blocks: THREE.Object3D[] = [];
   private tops = new Map<Thing, number>();
   private player: { office: PersonModel; suit: PersonModel; root: THREE.Group } | null = null;
   private sun = new THREE.DirectionalLight(0xdfe6ff, 1.4);
@@ -47,7 +49,9 @@ export class WorldModel {
     this.dispose();
     const sc = this.scene;
     sc.background = new THREE.Color(0x050507);
-    sc.add(buildGround(T));
+    const groundG = buildGround(T);
+    sc.add(groundG);
+    this.blocks = groundG.children.filter((c) => c.name !== 'floor');
     for (const o of OBJ) {
       const m = isTool(o) ? buildTool(o) : buildFurniture(o);
       if (!m) continue;
@@ -55,6 +59,7 @@ export class WorldModel {
       if (isTool(o)) this.tools.push(m as ToolModel);
       else this.furn.push(m as FurnModel);
       if (o.act) this.picks.push(m.group);
+      else this.blocks.push(m.group);
       this.tops.set(o, new THREE.Box3().setFromObject(m.group).max.y);
     }
     const specs = this.tools.flatMap((t) => t.leds);
@@ -111,6 +116,10 @@ export class WorldModel {
     return [...this.picks, ...[...this.npcs.values()].map((e) => e.person.group)];
   }
 
+  blockers(): THREE.Object3D[] {
+    return this.blocks;
+  }
+
   update(t: number, _dt: number, v: ViewState): void {
     for (const m of this.tools) m.update(t, v.reduce);
     for (const m of this.furn) m.update(t, v.reduce);
@@ -154,6 +163,7 @@ export class WorldModel {
     this.oht = null;
     this.npcs.clear();
     this.picks = [];
+    this.blocks = [];
     this.tops.clear();
     this.player = null;
   }
@@ -162,6 +172,9 @@ export class WorldModel {
 /** 釋放一棵物件樹的幾何與材質（keep 裡的留著重用）。共用材質釋放後下次使用會自動重新上傳。 */
 function disposeTree(root: THREE.Object3D, keep = new Set<unknown>()): void {
   root.traverse((o) => {
+    // 平行光的陰影貼圖、LED 的 instance 緩衝區都在顯示卡上，不會自己回收。
+    if ((o as THREE.DirectionalLight).isDirectionalLight) (o as THREE.DirectionalLight).dispose();
+    if ((o as THREE.InstancedMesh).isInstancedMesh) (o as THREE.InstancedMesh).dispose();
     const m = o as THREE.Mesh;
     if (m.geometry && !keep.has(m.geometry)) m.geometry.dispose();
     const mats = Array.isArray(m.material) ? m.material : m.material ? [m.material] : [];
