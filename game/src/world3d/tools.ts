@@ -4,6 +4,7 @@ import { S } from '../core/state';
 import type { Thing } from '../data/world';
 import { C, type LedColor } from '../render/palette';
 import type { LedSpec } from './leds';
+import { GLOW } from './glow';
 import { BODY, EDGE, ledColor, POD, solid, TOP } from './materials';
 
 /** 機台機身高度（單位）。比例沿用 mockups/tools-threejs.html。 */
@@ -132,7 +133,7 @@ export function buildTool(o: Thing): ToolModel {
           : [['A', -1.65, 0.55], ['B', 0, -0.75], ['C', 1.65, 0.55]];
       for (const [n, dx, dz] of ch) {
         cyl(g, 0.46, 0.5, 0.36, dark, cx + dx, h + 0.18, cz + dz);
-        const win = cyl(g, 0.3, 0.3, 0.02, new THREE.MeshStandardMaterial({ color: 0x0a0b10, emissive: hex(C.win), emissiveIntensity: 0.9 }), cx + dx, h + 0.37, cz + dz, `pm:${n}`);
+        const win = cyl(g, 0.3, 0.3, 0.02, new THREE.MeshStandardMaterial({ color: 0x0a0b10, emissive: hex(C.win), emissiveIntensity: GLOW.window }), cx + dx, h + 0.37, cz + dz, `pm:${n}`);
         pms.push(win as THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>);
       }
       foups(3, 1.3);
@@ -235,15 +236,15 @@ export function buildTool(o: Thing): ToolModel {
       for (const m of pms) {
         const n = m.name.slice(3);
         m.material.emissive.setHex(pmColor(o, n, blink));
-        m.material.emissiveIntensity = o.id === 'ETCH-07' && n === 'B' && S.etch === 'alarm' && blink ? 2.2 : 0.9;
+        m.material.emissiveIntensity = o.id === 'ETCH-07' && n === 'B' && S.etch === 'alarm' && blink ? GLOW.windowAlarm : GLOW.window;
       }
-      lamps.r.material.emissiveIntensity = o.st === 'alarm' && blink ? 3 : 0;
-      lamps.a.material.emissiveIntensity = o.st === 'idle' || o.st === 'inhibit' ? 2.2 : 0;
-      lamps.g.material.emissiveIntensity = o.st === 'run' ? 2.2 : 0;
+      lamps.r.material.emissiveIntensity = o.st === 'alarm' && blink ? GLOW.lampAlarm : 0;
+      lamps.a.material.emissiveIntensity = o.st === 'idle' || o.st === 'inhibit' ? GLOW.lamp : 0;
+      lamps.g.material.emissiveIntensity = o.st === 'run' ? GLOW.lamp : 0;
       const sk: LedColor = o.st === 'alarm' ? 'r' : o.st === 'inhibit' ? 'a' : 'c';
       (head.material as THREE.MeshBasicMaterial).color.setHex(ledColor(sk));
       head.position.x = reduce ? x0 + w / 2 : x0 + 0.3 + fract(t * 0.35 + (hashStr(o.id) % 10) / 10) * (w - 0.6);
-      if (alarm) alarm.intensity = o.st === 'alarm' ? (blink ? 3.2 : 0.4) : 0;
+      if (alarm) alarm.intensity = o.st === 'alarm' ? (blink ? GLOW.alarmLight : GLOW.alarmLightDim) : 0;
     },
   };
 }

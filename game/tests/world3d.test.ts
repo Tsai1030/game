@@ -106,6 +106,33 @@ test('ETCH-07 alarm blinks its PM-B window red, and Reduce motion freezes everyt
   expect(S.etch).toBe('alarm');
 });
 
+import { GLOW } from '../src/world3d/glow';
+
+test('the glow stays tight and subtle, and tools and LEDs use it (owner, 2026-10-22: halos were too big and bright)', () => {
+  expect(GLOW.bloom.strength).toBeLessThanOrEqual(0.6);
+  expect(GLOW.bloom.radius).toBeLessThanOrEqual(0.2);
+  expect(GLOW.bloom.threshold).toBeGreaterThanOrEqual(0.7);
+  expect(GLOW.led).toBeLessThanOrEqual(1.4);
+  setState(ch2State());
+  syncEtch('alarm');
+  const etch = buildTool(tools().find((x) => x.id === 'ETCH-07')!);
+  etch.update(0, false);
+  const mat = (g: THREE.Object3D, name: string) => (g.getObjectByName(name) as THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>).material;
+  expect(mat(etch.group, 'pm:A').emissiveIntensity).toBe(GLOW.window);
+  expect(mat(etch.group, 'pm:B').emissiveIntensity).toBe(GLOW.windowAlarm);
+  expect(mat(etch.group, 'lamp:r').emissiveIntensity).toBe(GLOW.lampAlarm);
+  const light = etch.group.children.find((c) => (c as THREE.PointLight).isPointLight) as THREE.PointLight;
+  expect(light.intensity).toBe(GLOW.alarmLight);
+  const run = buildTool(tools().find((x) => x.id === 'CVD-11')!);
+  run.update(0, false);
+  expect(mat(run.group, 'lamp:g').emissiveIntensity).toBe(GLOW.lamp);
+  const field = new LedField(etch.leds.filter((l) => l.kind === 'steady').slice(0, 1));
+  field.update(0, false, () => 'run');
+  const c = new THREE.Color();
+  field.mesh.getColorAt(0, c);
+  expect(Math.max(c.r, c.g, c.b)).toBeLessThanOrEqual(GLOW.led + 1e-6);
+});
+
 /* ---------- Task 4：家具 ---------- */
 import type { Thing } from '../src/data/world';
 import { buildFurniture, FURN_H } from '../src/world3d/furniture';

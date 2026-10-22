@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { ToolSt } from '../data/world';
 import type { LedColor } from '../render/palette';
+import { GLOW } from './glow';
 import { ledColor } from './materials';
 
 /** 一顆 LED：位置、顏色、亮法（常亮／規律閃／亂閃）與節奏；tool 是所屬機台 id。 */
@@ -33,7 +34,7 @@ export class LedField {
       this.mesh.setMatrixAt(i, m.makeTranslation(l.pos.x, l.pos.y, l.pos.z));
       this.mesh.setColorAt(i, OFF);
     });
-    this.cols = (['g', 'c', 'a', 'b', 'r', 'w'] as LedColor[]).reduce<THREE.Color[]>((a, k) => ((a[k.charCodeAt(0)] = new THREE.Color(ledColor(k)).multiplyScalar(1.6)), a), []);
+    this.cols = (['g', 'c', 'a', 'b', 'r', 'w'] as LedColor[]).reduce<THREE.Color[]>((a, k) => ((a[k.charCodeAt(0)] = new THREE.Color(ledColor(k)).multiplyScalar(GLOW.led)), a), []);
   }
 
   /**

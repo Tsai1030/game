@@ -20,6 +20,7 @@ import { hideShower, setLocation, setPrompt, showBanner, showShower } from '../u
 import { advanceScene, pumpQueue } from '../ui/scene';
 import { toast } from '../ui/toast';
 import { followTarget, halfHeight, placeCamera, viewHalf } from './camera';
+import { GLOW } from './glow';
 import { WorldModel } from './model';
 import { pickAt } from './pick';
 import { quality } from './quality';
@@ -69,7 +70,7 @@ export class WorldView {
     stage.prepend(this.canvas);
     this.composer = new EffectComposer(r);
     this.composer.addPass(new RenderPass(this.model.scene, this.cam));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.95, 0.45, 0.55);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), GLOW.bloom.strength, GLOW.bloom.radius, GLOW.bloom.threshold);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
     this.canvas.addEventListener('pointerdown', (e) => this.onPointer(e));
