@@ -11,7 +11,7 @@ import { syncEtch } from '../data/world';
 import { busy } from '../game/runtime';
 import { reportScene } from '../systems/reports';
 import { ScriptRunner, type Frame, type RunnerEvent } from '../systems/script';
-import { hideCard, showCard } from './cards';
+import { hideCard, showCard, showEndCard } from './cards';
 import { closeDialog, finishTyping, hideRecognize, initDialog, openDialog, renderChoices, renderLine } from './dialog';
 import { refreshHud } from './hud';
 import { toast } from './toast';
@@ -63,6 +63,15 @@ function show(f: Frame): void {
   else if (f.kind === 'choice') renderChoices(f.options.map((o) => ({ id: o.id, label: { zh: o.zh, en: o.en }, enabled: o.enabled })));
   else if (f.kind === 'card') {
     closeDialog();
+    if (f.card.kind === 'end') {
+      // 試玩結束卡：關掉後把劇情跑完（會存檔），再回標題畫面。
+      showEndCard({ zh: f.card.zh, en: f.card.en }, () => {
+        if (!runner) return;
+        render(runner.advance());
+        emit('toTitle');
+      });
+      return;
+    }
     showCard({ zh: f.card.zh, en: f.card.en }, null, () => {
       if (!runner) return;
       openDialog();

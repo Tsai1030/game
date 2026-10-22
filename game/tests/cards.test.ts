@@ -92,3 +92,49 @@ test('a card blocks the player, relocalizes, and closes with Enter', () => {
   press('Enter');
   expect(closed).toBe(1);
 });
+
+/** 試玩結束卡用的狀態：本章從 59 到 77，王經理 −35，兩張卡。 */
+const endState = () => {
+  S.chapterSanity = 59;
+  S.sanity = 77;
+  S.rel = { ...S.rel, boss: -35 };
+  S.codex = ['credit_stealing', 'personal_attack'];
+};
+
+test('the end-of-demo card sums up the chapter', () => {
+  endState();
+  playScene('c2_demo_end');
+  expect(isCardOpen()).toBe(true);
+  const text = $('#card').textContent!;
+  expect(text).toContain('59 → 77（+18）');
+  expect(text).toContain('王經理');
+  expect(text).toContain('−35');
+  expect(text).toContain('2/7');
+  const teaser = SCENES.c2_demo_end!.find((b) => 'card' in b)!;
+  expect(text).toContain('card' in teaser ? teaser.card.zh : 'missing');
+});
+
+test('closing the end card twice fast returns to the title once and saves no scene', () => {
+  let toTitle = 0;
+  const off = on('toTitle', () => toTitle++);
+  setAutosave(true);
+  endState();
+  playScene('c2_demo_end');
+  press('Enter');
+  press('Enter');
+  expect(toTitle).toBe(1);
+  expect(isSceneActive()).toBe(false);
+  expect(isCardOpen()).toBe(false);
+  expect(JSON.parse(localStorage.getItem(SAVE_KEY)!).scene).toBeNull();
+  off();
+});
+
+test('the end card switches language while open', () => {
+  endState();
+  playScene('c2_demo_end');
+  switchLang('en');
+  const text = $('#card').textContent!;
+  expect(/[㐀-鿿]/.test(text)).toBe(false);
+  expect(text).toContain('Manager Wang');
+  expect(text).toContain('59 → 77 (+18)');
+});

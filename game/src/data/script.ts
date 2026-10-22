@@ -61,7 +61,8 @@ export type Beat =
   | { if: Cond; then: Beat[]; else?: Beat[] }
   | { effect: Effect }
   | { evidence: EvidenceItem }
-  | { card: { kind: 'chapter' | 'notice' } & Bi }
+  /** 劇情卡；end 是試玩結束卡（zh/en 是下一章預告），必須是劇情的最後一段。 */
+  | { card: { kind: 'chapter' | 'notice' | 'end' } & Bi }
   | { goto: string }
   | { include: string };
 

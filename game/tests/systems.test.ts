@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
-import { newState } from '../src/core/state';
+import { NPC_IDS, newState, REL_START, type TacticId } from '../src/core/state';
+import { chapterSummary, signed } from '../src/systems/summary';
 import { addClue } from '../src/systems/clues';
 import { COFFEE_DECAY_MS, COFFEE_MAX, decay, drink } from '../src/systems/coffee';
 import { judge } from '../src/systems/conclusion';
@@ -57,4 +58,14 @@ test('quest progress follows the game state', () => {
   const done = { ...newState(), clues: ['spc', 'fdc', 'ring', 'map'], everSuit: true, solved: true };
   expect(QUEST.filter((q) => q.done(done)).length).toBe(5);
   expect(QUEST[2]!.done({ ...newState(), clues: ['fdc'] })).toBe(false);
+});
+
+test('the chapter summary reads sanity, relationships and cards in a fixed order', () => {
+  const s = { ...newState(), chapterSanity: 59, sanity: 77, rel: { ...REL_START, boss: -35 }, codex: ['credit_stealing', 'personal_attack'] as TacticId[] };
+  const r = chapterSummary(s);
+  expect([r.from, r.to]).toEqual([59, 77]);
+  expect(r.rel.map((x) => x.id)).toEqual([...NPC_IDS]);
+  expect(r.rel[0]).toEqual({ id: 'boss', value: -35 });
+  expect(r.codex).toEqual(['personal_attack', 'credit_stealing']);
+  expect([signed(18), signed(-35), signed(0)]).toEqual(['+18', '−35', '0']);
 });

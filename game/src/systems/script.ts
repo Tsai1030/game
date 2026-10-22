@@ -11,7 +11,7 @@ import { applySanity, FORCED_LEAVE_SANITY, zeroOutcome } from './sanity';
 export type Frame =
   | { kind: 'line'; line: ScriptLine; canRecognize: boolean }
   | { kind: 'choice'; options: { id: string; zh: string; en: string; enabled: boolean }[] }
-  | { kind: 'card'; card: { kind: 'chapter' | 'notice' } & Bi }
+  | { kind: 'card'; card: { kind: 'chapter' | 'notice' | 'end' } & Bi }
   | { kind: 'end' };
 
 export type RunnerEvent =

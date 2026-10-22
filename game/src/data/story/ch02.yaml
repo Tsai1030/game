@@ -79,6 +79,10 @@ scenes:
         - goto: say_end
     - line: { id: say_bossdesk-1, speaker: me, zh: "桌上放著 8 點晨會的簡報，標題是「ETCH CD 異常說明」……內容還是空的。", en: "The slides for the 8 a.m. stand-up sit on the desk, titled “ETCH CD Excursion Explained”… They're still blank." }
 
+  # 試玩結束卡：第 2 章結尾、試玩結束後再按「繼續」都播這段。
+  c2_demo_end:
+    - card: { kind: end, zh: "第 3 章 · 互踢皮球｜11 月，一場 particle 異常。大熊說是你們製程的問題，你說是他的機台。王經理對你們兩個說的，好像不太一樣。", en: "Chapter 3 · The Blame Game | November. A particle excursion. Bear says it's your process; you say it's his tool. And Manager Wang seems to be telling each of you something different." }
+
   # 查看物件時用來提早結束的空劇情。
   say_end: []
 
