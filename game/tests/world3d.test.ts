@@ -133,6 +133,26 @@ test('the glow stays tight and subtle, and tools and LEDs use it (owner, 2026-10
   expect(Math.max(c.r, c.g, c.b)).toBeLessThanOrEqual(GLOW.led + 1e-6);
 });
 
+import { C } from '../src/render/palette';
+
+test('the fab floors are lighter, and their seams and dots still show (owner, 2026-10-22)', () => {
+  // sRGB → 線性亮度。
+  const lum = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map((i) => {
+      const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+  };
+  // 原本的 Fab 地板 #1a1922、黃光區 #2e2712：至少亮兩倍。
+  expect(lum(C.fab)).toBeGreaterThanOrEqual(2 * lum('#1a1922'));
+  expect(lum(C.yel)).toBeGreaterThanOrEqual(2 * lum('#2e2712'));
+  for (const [base, seam, dot] of [[C.fab, C.fab2, C.fabDot], [C.yel, C.yel2, C.yelDot]] as const) {
+    expect(lum(seam)).toBeGreaterThan(lum(base));
+    expect(lum(dot)).toBeGreaterThan(lum(seam));
+  }
+});
+
 /* ---------- Task 4：家具 ---------- */
 import type { Thing } from '../src/data/world';
 import { buildFurniture, FURN_H } from '../src/world3d/furniture';
