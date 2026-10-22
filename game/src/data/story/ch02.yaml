@@ -34,7 +34,7 @@ scenes:
           else:
             - include: boss_more
   boss_solved:
-    - line: { id: boss_solved-1, speaker: boss, zh: "辛苦了。8 點我來報，你去吃早餐吧。", en: "Good work. I'll present it at 8. Go get some breakfast." }
+    - line: { id: boss_solved-1, speaker: boss, zh: "辛苦了。8 點晨會我來報，你也一起進來。陳處長會在。", en: "Good work. I'll present it at the 8 o'clock stand-up. You come in too. Director Chen will be there." }
   boss_suit:
     - line: { id: boss_suit-1, speaker: boss, zh: "你穿兔寶寶裝跑來辦公室幹嘛……算了。", en: "Why are you wearing the bunny suit in the office… never mind." }
   boss_main:
@@ -45,16 +45,29 @@ scenes:
     - line: { id: boss_more-1, speaker: boss, zh: "去 Fab 看看 ETCH-07。記得帶證據回來，不要跟我說「感覺」。", en: "Go look at ETCH-07 in the fab. Bring back evidence. Don't tell me it's a “feeling.”" }
 
   kevin:
-    - line: { id: kevin-1, speaker: kevin, zh: "喔，你也被 call 來了。", en: "Oh, they called you in too." }
-    - line: { id: kevin-2, speaker: kevin, zh: "PM-B 從前天就怪怪的，RF 反射功率一直往上爬。", en: "PM-B has been acting weird since the day before yesterday. RF reflected power keeps creeping up." }
-    - line: { id: kevin-3, speaker: kevin, zh: "偷偷跟你說，PM-B 的 PM 上禮拜被延了，生管說產能要顧。你懂的。", en: "Between us, PM-B's maintenance got pushed back last week. Production control said throughput comes first. You know how it is." }
-    - line: { id: kevin-4, speaker: kevin, zh: "機台畫面有「耗材」頁，可以看 focus ring 用了幾小時。", en: "The tool screen has a Consumables tab. It shows how many hours the focus ring has run." }
-    - effect: { clue: pm }
+    - if: { solved: true }
+      then:
+        - line: { id: kevin-solved-1, speaker: kevin, zh: "聽說是 focus ring？做得好。大熊在 seasoning 了。", en: "Focus ring, huh? Nice work. Bear's seasoning the chamber now." }
+      else:
+        - line: { id: kevin-1, speaker: kevin, zh: "喔，你也被 call 來了。", en: "Oh, they called you in too." }
+        - line: { id: kevin-2, speaker: kevin, zh: "PM-B 從前天就怪怪的，RF 反射功率一直往上爬。", en: "PM-B has been acting weird since the day before yesterday. RF reflected power keeps creeping up." }
+        - line: { id: kevin-3, speaker: kevin, zh: "偷偷跟你說，PM-B 的 PM 上禮拜被延了，生管說產能要顧。你懂的。", en: "Between us, PM-B's maintenance got pushed back last week. Production control said throughput comes first. You know how it is." }
+        - line: { id: kevin-4, speaker: kevin, zh: "機台畫面有「耗材」頁，可以看 focus ring 用了幾小時。", en: "The tool screen has a Consumables tab. It shows how many hours the focus ring has run." }
+        - effect: { clue: pm }
+    # 找盟友聊天：每章一次，理智 +5。
+    - if: { notFlag: chat_kevin_ch2 }
+      then:
+        - effect: { sanity: 5, flag: chat_kevin_ch2 }
+        - line: { id: kevin-chat, speaker: sys, zh: "（跟 Kevin 學長抱怨了兩句夜班，心情好一點。理智 +5）", en: "(You grumble about the night shift with Kevin for a bit and feel a little better. Sanity +5)" }
 
   fse:
     - line: { id: fse-1, speaker: fse, zh: "我是原廠的阿哲。CVD-11 今天很乖。", en: "I'm A-Zhe from the OEM. CVD-11 is behaving today." }
     - line: { id: fse-2, speaker: fse, zh: "ETCH-07？原廠 part 要等三週喔～", en: "ETCH-07? OEM parts take three weeks~" }
     - line: { id: fse-3, speaker: fse, zh: "不過 focus ring 你們倉庫應該有庫存啦。", en: "Your warehouse should have focus rings in stock, though." }
+    - if: { notFlag: chat_fse_ch2 }
+      then:
+        - effect: { sanity: 5, flag: chat_fse_ch2 }
+        - line: { id: fse-chat, speaker: sys, zh: "（阿哲講了一個原廠的八卦，你笑了出來。理智 +5）", en: "(A-Zhe shares some OEM gossip and you laugh out loud. Sanity +5)" }
 
   # 序章接第 2 章（C2-01）：章節卡、換到夜班、回到辦公室。
   ch2_start:
@@ -98,11 +111,32 @@ scenes:
   rc_wrong:
     - effect: { sanity: -5 }
     - line: { id: rc_wrong-1, speaker: boss, zh: "EE 照你的結論處理了，CD 還是沒回來。再查查看？（咖啡 −1）", en: "EE did what your conclusion said, and the CD still hasn't come back. Look again? (Coffee −1)" }
+  # C2-07：送出正確結論 → 過場：大熊換 focus ring（理智 +5、大熊 +10），接著回辦公室。
   rc_solved:
-    - line: { id: rc_solved-1, speaker: sys, zh: "EE 換上新的 focus ring，PM-B 跑 monitor wafer：CD 45.1 nm，回到 target。", en: "EE installed a new focus ring. PM-B ran a monitor wafer: CD 45.1 nm, back on target." }
-    - line: { id: rc_solved-2, speaker: sys, zh: "Hold 的 4 批 lot 重新量測後放行。", en: "The 4 held lots were re-measured and released." }
-    - line: { id: rc_solved-3, speaker: boss, zh: "好，8 點我來報。你去吃早餐吧。", en: "Fine. I'll present it at 8. Go get some breakfast." }
-    - line: { id: rc_solved-4, speaker: sys, zh: "CASE 03 完成！用到線索 {clues}/5，剩下咖啡 {coffee} 杯。", en: "CASE 03 complete! Clues used: {clues}/5. Coffee left: {coffee}." }
+    - line: { id: rc_solved-1, speaker: sys, zh: "05:40，你送出結論。EE 的大熊抱著一個新的 focus ring 趕到 ETCH-07。", en: "05:40. You send in your conclusion. Bear from EE hurries over to ETCH-07 with a new focus ring." }
+    - effect: { time: "05:40", suit: true, flag: c2_bear_here, warp: { map: M03, x: 26, y: 7, dir: up } }
+    - line: { id: rc_solved-2, speaker: bear, zh: "你就是那個 PE？機台沒問題，是你們製程的問題。", en: "You're the PE? The tool's fine. It's your process." }
+    - line: { id: rc_solved-3, speaker: sys, zh: "大熊打開 PM-B 的耗材頁。Focus ring：1,180 / 1,200 h。", en: "Bear opens PM-B's Consumables page. Focus ring: 1,180 / 1,200 h." }
+    - line: { id: rc_solved-4, speaker: bear, zh: "……好啦，這個算我們的。PM 上禮拜被生管延了。", en: "…Fine, that one's on us. Production control pushed the PM back last week." }
+    - effect: { etch: fixed }
+    - line: { id: rc_solved-5, speaker: sys, zh: "破真空、拆舊環、裝新環、抽真空、seasoning。PM-B 跑 monitor wafer：CD 45.1 nm，回到 target。", en: "Vent, pull the old ring, fit the new one, pump down, season. PM-B runs a monitor wafer: CD 45.1 nm, back on target." }
+    - line: { id: rc_solved-6, speaker: bear, zh: "不錯嘛，菜鳥。下次直接打給我，比開單快。", en: "Not bad, rookie. Next time call me directly. It's faster than a ticket." }
+    - effect: { sanity: 5, rel: { bear: 10 } }
+    - line: { id: rc_solved-7, speaker: sys, zh: "Hold 的 4 批 lot 重新量測後放行。（理智 +5）", en: "The 4 held lots were re-measured and released. (Sanity +5)" }
+    - line: { id: rc_solved-8, speaker: sys, zh: "CASE 03 完成！用到線索 {clues}/5，剩下咖啡 {coffee} 杯。", en: "CASE 03 complete! Clues used: {clues}/5. Coffee left: {coffee}." }
+    - goto: c2_back_office
+
+  # 過場之後：07:40 回辦公室，等 8 點晨會（走進會議室就開始）。
+  c2_back_office:
+    - effect: { time: "07:40", suit: false, flag: c2_standup_call, warp: { map: M03, x: 3, y: 4, dir: up } }
+    - line: { id: c2_back_office-1, speaker: sys, zh: "07:40，你換下無塵衣，回到辦公室。", en: "07:40. You change out of the bunny suit and head back to the office." }
+    - line: { id: c2_back_office-2, speaker: boss, zh: "（LINE）收到。8 點晨會我來報，你也進來。", en: "(LINE) Got it. I'll present at the 8 o'clock stand-up. You come in too." }
+    - line: { id: c2_back_office-3, speaker: sys, zh: "晨會在會議室（沿著走廊往下）。陳處長也會來。進去之前，可以先翻翻證據簿（J）。", en: "The stand-up is in the meeting room, down the corridor. Director Chen will be there too. You might want to look over your Evidence Log (J) first." }
+
+  # 過場之後還站在 ETCH-07 旁的大熊。
+  c2_bear:
+    - line: { id: c2_bear-1, speaker: bear, zh: "PM-B 還在 seasoning，別碰。", en: "PM-B is still seasoning. Don't touch it." }
+    - line: { id: c2_bear-2, speaker: bear, zh: "你去睡一下吧，你看起來比機台還慘。", en: "Go get some sleep. You look worse than the tool did." }
 
   # C2-03：拿到 SPC 線索後，你在 LINE 回報王經理（證據 E-C2-01、E-C2-02）。
   c2_report_spc:

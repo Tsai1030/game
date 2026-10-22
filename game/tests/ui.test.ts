@@ -4,6 +4,8 @@ import { settings, SETTINGS_KEY } from '../src/core/settings';
 import { ch2State, newState, S, setState } from '../src/core/state';
 import { loadMap, NPC, OBJ, resetNpcs, syncEtch } from '../src/data/world';
 import { SCENES } from '../src/data/story';
+import type { ScriptLine } from '../src/data/script';
+import { walkBeats } from '../src/systems/script';
 import { cleanName } from '../src/core/name';
 import { doInteract } from '../src/game/actions';
 import { CODEX } from '../src/data/codex';
@@ -51,6 +53,14 @@ const toastText = () => $('#toast').textContent;
 /** 劇情裡的台詞（只看最外層的 line 段落）。 */
 const lines = (id: string) => SCENES[id]!.flatMap((b) => ('line' in b ? [b.line] : []));
 const line = (id: string, i = 0) => lines(id)[i]!;
+/** 任何劇情裡（含巢狀分支）某個 id 的台詞。 */
+const lineById = (id: string): ScriptLine => {
+  let found: ScriptLine | null = null;
+  for (const sc of Object.values(SCENES)) walkBeats(sc, (b) => {
+    if ('line' in b && b.line.id === id) found = b.line;
+  });
+  return found!;
+};
 /** 一路按下去直到對話框關掉，回傳看過的每一句。 */
 const playThrough = () => {
   const seen: string[] = [];
@@ -64,8 +74,9 @@ const playThrough = () => {
 test('a dialog walks through its lines and calls onEnd once', () => {
   let ended = 0;
   playScene('kevin', { onEnd: () => ended++ });
-  expect($('#dlg-text').textContent).toBe(line('kevin').zh);
-  for (let i = 0; i < 4; i++) advanceScene();
+  expect($('#dlg-text').textContent).toBe(lineById('kevin-1').zh);
+  // 四句台詞，加上第一次聊天的理智 +5。
+  for (let i = 0; i < 5; i++) advanceScene();
   expect(isDialogOpen()).toBe(false);
   expect(ended).toBe(1);
 });
@@ -74,7 +85,7 @@ test('switching language relocalizes the open dialog line', () => {
   playScene('kevin');
   setLang('en');
 
-  expect($('#dlg-text').textContent).toBe(line('kevin').en);
+  expect($('#dlg-text').textContent).toBe(lineById('kevin-1').en);
   expect($('#dlg-who').textContent).toBe('Kevin');
 });
 
@@ -110,7 +121,7 @@ test('settings can be opened mid-dialog and switching there relocalizes the dial
   expect(canOpenSettings()).toBe(true);
   openSettings();
   $<HTMLButtonElement>('#win [data-lang="en"]').click();
-  expect($('#dlg-text').textContent).toBe(line('kevin').en);
+  expect($('#dlg-text').textContent).toBe(lineById('kevin-1').en);
   expect($('#win .win-h b').textContent).toBe('Settings');
 });
 
@@ -135,7 +146,8 @@ test('submitting the right answer with 3 clues solves the case', () => {
   pick('#rc-cause', 'focus_ring_eol');
   $<HTMLButtonElement>('#rc-go').click();
   expect(S.solved).toBe(true);
-  expect(OBJ.find((o) => o.id === 'ETCH-07')!.st).toBe('run');
+  // 停機等 EE；過場裡大熊換好環才回到 run（chapter2.test）。
+  expect(OBJ.find((o) => o.id === 'ETCH-07')!.st).toBe('inhibit');
   expect($('#dlg-text').textContent).toBe(line('rc_solved').zh);
 });
 
@@ -273,8 +285,8 @@ test('the codex shows locked cards and opens unlocked ones', () => {
 
 test('talking to Kevin plays his scene and then gives the PM clue', () => {
   doInteract(NPC.find((n) => n.id === 'kevin')!);
-  expect($('#dlg-text').textContent).toBe(line('kevin').zh);
-  expect(playThrough()).toHaveLength(4);
+  expect($('#dlg-text').textContent).toBe(lineById('kevin-1').zh);
+  expect(playThrough()).toEqual(['kevin-1', 'kevin-2', 'kevin-3', 'kevin-4', 'kevin-chat'].map((id) => lineById(id).zh));
   expect(S.clues).toContain('pm');
 });
 

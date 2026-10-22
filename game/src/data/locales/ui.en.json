@@ -47,6 +47,7 @@
   "quest.q3": "Check ETCH-07's log and consumables",
   "quest.q4": "Look at the wafer map on MET-02",
   "quest.q5": "Submit a conclusion at the PE workstation",
+  "quest.q6": "Go to the 8:00 stand-up in the meeting room",
   "hint.controls": "Arrow keys / WASD to walk · Click the floor to walk there · Click a tool or person to walk over and interact · E / Space to interact · Esc closes windows · C opens the clue book · J the Evidence Log · K the Codex · Click the game once so the keyboard works",
   "pad.label": "Touch controls",
   "pad.up": "Up",

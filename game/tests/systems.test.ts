@@ -53,7 +53,7 @@ test('coffee caps at the maximum and never goes negative', () => {
 });
 
 test('quest progress follows the game state', () => {
-  expect(QUEST.map((q) => q.key)).toEqual(['quest.q1', 'quest.q2', 'quest.q3', 'quest.q4', 'quest.q5']);
+  expect(QUEST.map((q) => q.key)).toEqual(['quest.q1', 'quest.q2', 'quest.q3', 'quest.q4', 'quest.q5', 'quest.q6']);
   expect(QUEST.filter((q) => q.done(newState())).length).toBe(0);
   const done = { ...newState(), clues: ['spc', 'fdc', 'ring', 'map'], everSuit: true, solved: true };
   expect(QUEST.filter((q) => q.done(done)).length).toBe(5);

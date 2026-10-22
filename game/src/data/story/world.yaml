@@ -18,7 +18,16 @@ scenes:
       then:
         - line: { id: fang-1, speaker: fang, zh: "新來的喔？有不懂的來問我，我做給你看。", en: "New here? If you don't get something, ask me. I'll show you." }
       else:
-        - line: { id: fang-2, speaker: fang, zh: "夜班喔？ETCH-07 那台今天叫好幾次了，你小心點。", en: "Night shift, huh? ETCH-07 has been alarming all night. Watch yourself." }
+        - if: { solved: true }
+          then:
+            - line: { id: fang-3, speaker: fang, zh: "ETCH-07 終於安靜了。辛苦啦。", en: "ETCH-07 finally went quiet. Good work." }
+          else:
+            - line: { id: fang-2, speaker: fang, zh: "夜班喔？ETCH-07 那台今天叫好幾次了，你小心點。", en: "Night shift, huh? ETCH-07 has been alarming all night. Watch yourself." }
+        # 找盟友聊天：每章一次，理智 +5。
+        - if: { notFlag: chat_fang_ch2 }
+          then:
+            - effect: { sanity: 5, flag: chat_fang_ch2 }
+            - line: { id: fang-chat, speaker: sys, zh: "（跟芳姐聊了幾句，心情好一點了。理智 +5）", en: "(A few words with Fang-jie, and you feel a little lighter. Sanity +5)" }
   guard:
     - line: { id: guard-1, speaker: guard, zh: "通行證要一直掛在身上，進出都要刷。", en: "Keep your badge on you at all times. Tap it every time you go in or out." }
   amy:

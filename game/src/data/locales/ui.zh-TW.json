@@ -47,6 +47,7 @@
   "quest.q3": "檢查 ETCH-07 的 log 與耗材",
   "quest.q4": "到 MET-02 看 wafer map",
   "quest.q5": "回 PE 工作站提交結論",
+  "quest.q6": "8 點到會議室開晨會",
   "hint.controls": "方向鍵 / WASD 走路 · 點地板自動走過去 · 點機台或人會走過去互動 · E / 空白鍵 互動 · Esc 關閉視窗 · C 線索簿 · J 證據簿 · K 圖鑑 · 先點一下畫面，鍵盤才有反應",
   "pad.label": "觸控操作",
   "pad.up": "上",

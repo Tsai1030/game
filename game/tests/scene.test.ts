@@ -139,7 +139,7 @@ test('rc_solved shows real clue and coffee counts even when replayed without par
   S.clues = ['spc', 'fdc', 'ring'];
   S.coffee = 2;
   playScene('rc_solved');
-  for (let i = 0; i < 3; i++) advanceScene();
+  for (let i = 0; i < 20 && !($('#dlg-text').textContent ?? '').includes('CASE 03'); i++) advanceScene();
   expect($('#dlg-text').textContent).toBe('CASE 03 完成！用到線索 3/5，剩下咖啡 2 杯。');
 });
 
@@ -185,7 +185,8 @@ test('a scene saves at its start, not in the middle, and again at its end', () =
   S.sanity = 50;
   saveNow();
   expect(stored().sanity).toBe(80);
-  for (let i = 0; i < 4; i++) advanceScene();
+  // Kevin 的四句台詞，加上第一次聊天的理智 +5。
+  for (let i = 0; i < 5; i++) advanceScene();
   expect(isSceneActive()).toBe(false);
   expect(stored().scene).toBeNull();
   expect(stored().clues).toEqual(['pm']);

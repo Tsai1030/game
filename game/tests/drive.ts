@@ -1,0 +1,153 @@
+import { expect } from 'bun:test';
+import { newState, S, setState } from '../src/core/state';
+import { settings } from '../src/core/settings';
+import type { ScriptLine } from '../src/data/script';
+import { SCENES } from '../src/data/story';
+import { NPC, OBJ, refreshNpcs } from '../src/data/world';
+import { doInteract } from '../src/game/actions';
+import { rt } from '../src/game/runtime';
+import { fireTrigger, onArrive, placeLoaded, setFader } from '../src/game/travel';
+import { walkBeats } from '../src/systems/script';
+import { isCardOpen } from '../src/ui/cards';
+import { isDialogOpen } from '../src/ui/dialog';
+import { advanceScene, initScenePlayer, isSceneActive, playScene, pumpQueue, stopScene } from '../src/ui/scene';
+import { hideTitle } from '../src/ui/title';
+import { closeWin, initWin, showTab } from '../src/ui/win';
+import { openPC } from '../src/ui/windows';
+
+/** 整套劇情的「自動玩」工具：序章、第 2 章與完整試玩測試共用。 */
+
+const html = await Bun.file(new URL('../index.html', import.meta.url)).text();
+// 拿掉 <script>，避免 happy-dom 試著載入 main.ts。
+const body = /<body>([\s\S]*)<\/body>/.exec(html)![1]!.replace(/<script[\s\S]*?<\/script>/g, '');
+export const $ = <T extends Element = HTMLElement>(s: string) => document.querySelector(s) as T;
+export const CJK = /[㐀-鿿]/;
+
+/** 每個測試前：重設畫面、視窗、劇情播放器；換地圖立即完成。 */
+export function resetWorld(): void {
+  document.body.innerHTML = body;
+  closeWin();
+  hideTitle();
+  initWin(() => {});
+  stopScene();
+  initScenePlayer();
+  setFader(null);
+  rt.traveling = false;
+  settings.textSpeed = 'instant';
+  localStorage.clear();
+}
+
+/** 某段劇情裡標了某種話術的那一句。 */
+export const tacticLine = (scene: string, tactic: string): ScriptLine => {
+  let found: ScriptLine | null = null;
+  walkBeats(SCENES[scene]!, (b) => {
+    if ('line' in b && b.line.tactic === tactic) found = b.line;
+  });
+  return found!;
+};
+
+let checkText = false;
+/** 開著時，play() 每一步都檢查對話框、說話者和卡片裡沒有中文。 */
+export const setCheckText = (on: boolean): void => {
+  checkText = on;
+};
+
+/**
+ * 一路播到沒有劇情為止：遇到選項就照 picks 選，遇到卡片就按 Enter，指定的台詞先辨識話術。
+ * 沒有劇情在播時，先讓排隊中的劇情（LINE 回報）播出來，跟遊戲畫面每格做的一樣。
+ */
+export function play(picks: string[] = [], recognize: Record<string, string> = {}): void {
+  for (let k = 0; k < 400; k++) {
+    if (!isSceneActive() && !isCardOpen()) {
+      pumpQueue();
+      if (!isSceneActive()) break;
+    }
+    // 遊戲畫面每格都會更新 NPC 清單；這裡每推進一步也更新一次。
+    refreshNpcs(S);
+    if (checkText) for (const sel of ['#dlg-text', '#dlg-who', '#card']) expect({ sel, text: $(sel).textContent, cjk: CJK.test($(sel).textContent ?? '') }).toMatchObject({ cjk: false });
+    if (isCardOpen()) {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter', bubbles: true }));
+      continue;
+    }
+    const choices = [...document.querySelectorAll<HTMLButtonElement>('#dlg-choices button')];
+    if (!$('#dlg-choices').hidden && choices.length) {
+      const id = picks.shift() ?? choices.find((c) => !c.disabled)!.dataset.choice!;
+      $<HTMLButtonElement>(`#dlg-choices [data-choice="${id}"]`).click();
+      continue;
+    }
+    const tactic = Object.entries(recognize).find(([text]) => $('#dlg-text').textContent === text)?.[1];
+    if (tactic && !$('#dlg-rec').hidden) {
+      $<HTMLButtonElement>('#dlg-rec').click();
+      $<HTMLButtonElement>(`#dlg-pick [data-tactic="${tactic}"]`).click();
+    }
+    advanceScene();
+  }
+  expect(isSceneActive() || isCardOpen() || isDialogOpen()).toBe(false);
+}
+
+/** 辨識某段劇情裡某種話術的那一句（中英文都認得）。 */
+export const recognizeIn = (scene: string, tactic: string): Record<string, string> => {
+  const l = tacticLine(scene, tactic);
+  return { [l.zh]: tactic, [l.en]: tactic };
+};
+
+/** 走到 (x, y)：跟遊戲畫面一樣，先看是不是門，再看有沒有觸發劇情。 */
+export function walkTo(x: number, y: number): void {
+  S.x = x;
+  S.y = y;
+  if (!onArrive()) fireTrigger();
+}
+
+/** 跟 NPC 說話（遊戲畫面每格都會更新 NPC 清單，這裡先更新一次）。 */
+export const talk = (id: string): void => {
+  refreshNpcs(S);
+  doInteract(NPC.find((n) => n.id === id)!);
+};
+export const use = (id: string): void => doInteract(OBJ.find((o) => o.id === id)!);
+
+/** 下拉選單選一個值（觸發 change）。 */
+export const pick = (sel: string, value: string): void => {
+  const el = $<HTMLSelectElement>(sel);
+  el.value = value;
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+};
+
+/** 在 PE 工作站填結論並送出（預設是正確答案）。 */
+export function submitRC(cause = 'focus_ring_eol'): void {
+  openPC();
+  showTab(2);
+  pick('#rc-tool', 'ETCH-07');
+  pick('#rc-ch', 'PM-B');
+  pick('#rc-cause', cause);
+  $<HTMLButtonElement>('#rc-go').click();
+}
+
+export function newGame(name = ''): void {
+  setState({ ...newState(), name });
+  placeLoaded(S);
+  playScene('p_s1');
+  play();
+}
+
+/** 序章的標準路線，直到第 2 章開始。stay 為 true 時選留下來加班。 */
+export function prologue(stay = false, name = ''): void {
+  newGame(name);
+  talk('guard');
+  play();
+  walkTo(10, 0);
+  expect(S.map).toBe('M02');
+  play();
+  talk('amy');
+  play();
+  walkTo(15, 11);
+  expect(S.map).toBe('M03');
+  play();
+  use('pc');
+  play();
+  talk('kevin');
+  play();
+  talk('boss');
+  play();
+  talk('fang');
+  play([stay ? 'stay' : 'leave'], recognizeIn('p_s6', 'personal_attack'));
+}

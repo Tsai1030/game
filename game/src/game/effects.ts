@@ -39,9 +39,10 @@ export function setEtch(e: EtchState): void {
   requestSave();
 }
 
+/** 結論正確：PM-B 先停機（inhibit）等 EE，過場裡大熊換好 focus ring 才恢復。 */
 export function solveCase(): void {
   S.solved = true;
-  setEtch('fixed');
+  setEtch('inhibit');
 }
 
 export function setCoffee(n: number): void {

@@ -70,7 +70,8 @@ export const M03: MapDef = {
     { id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'down', talk: 'p_ask_kevin', when: { chapter: 'prologue', flag: 'task_hold', notFlag: ['knows_hold_lot', 'p_asked_kevin'] } },
     { id: 'kevin', look: 'kevinDay', x: 7, y: 4, dir: 'down', talk: 'p_kevin', when: { chapter: 'prologue' } },
     { id: 'fang', look: 'fang', x: 8, y: 27, dir: 'up', talk: 'p_ask_fang', when: { chapter: 'prologue', flag: 'task_hold', notFlag: 'knows_hold_lot' } },
-    // 第 2 章（夜班）。
+    // 第 2 章（夜班）。過場之後，大熊留在 ETCH-07 旁。
+    { id: 'bear', look: 'bear', x: 26, y: 6, dir: 'up', talk: 'c2_bear', when: { chapter: 'ch2', flag: 'c2_bear_here' } },
     { id: 'boss', look: 'boss', x: 11, y: 4, dir: 'down', talk: 'boss', when: { chapter: 'ch2' } },
     { id: 'kevin', look: 'kevin', x: 27, y: 7, dir: 'up', talk: 'kevin', when: { chapter: 'ch2' } },
     { id: 'fse', look: 'fse', x: 36, y: 7, dir: 'left', talk: 'fse', when: { chapter: 'ch2' } },
