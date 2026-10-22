@@ -1,6 +1,6 @@
 import { C } from './palette';
 
-export type PortraitId = 'sys' | 'me' | 'meSuit' | 'boss' | 'kevin' | 'fse' | 'fang' | 'amy' | 'guard';
+export type PortraitId = 'sys' | 'me' | 'meSuit' | 'boss' | 'kevin' | 'fse' | 'fang' | 'amy' | 'guard' | 'bear' | 'chen';
 
 const BOSS = ['................', '.....OOOOOO.....', '....OHHHHHHO....', '...OHHHHHHHHO...', '...OHSSSSSSHO...', '...OSSSSSSSSO...', '...OGGGSSGGGO...', '...OGEGSSGEGO...', '...OSSSSSSSSO...', '...OSSSMMSSSO...', '....OSSSSSSO....', '.....OOSSOO.....', '...OOWWRRWWOO...', '..OWWWWRRWWWWO..', '..OWWWWRRWWWWO..', '..OOOOOOOOOOOO..'];
 const HOOD = ['................', '.....OOOOOO.....', '....OWWWWWWO....', '...OWWWWWWWWO...', '...OWVVVVVVWO...', '...OWVEVVEVWO...', '...OWVVVVVVWO...', '...OWWWWWWWWO...', '...OWWWWWWWWO...', '....OWWWWWWO....', '.....OOWWOO.....', '...OOWWWWWWOO...', '..OWWWWSSWWWWO..', '..OWWWWWWWWWWO..', '..OWWWWWWWWWWO..', '..OOOOOOOOOOOO..'];
@@ -16,6 +16,8 @@ export const PORTRAITS: Record<PortraitId, [string[], Record<string, string>]> =
   fang: [ME, { O: C.line, H: '#1e1a24', S: C.skin, E: C.line, M: '#c0605a', B: '#2f7d74' }],
   amy: [ME, { O: C.line, H: '#6b4a32', S: C.skin, E: C.line, M: '#d46a7a', B: '#e8a0b4' }],
   guard: [ME, { O: C.line, H: '#23304a', S: C.skin, E: C.line, M: '#a05a50', B: '#9fb4d0' }],
+  bear: [HOOD, { O: C.line, W: C.suit, S: '#5ab86a', V: C.visor, E: C.skin }],
+  chen: [BOSS, { O: C.line, H: '#1a1820', S: C.skin, G: C.line, E: C.white, M: C.red, W: '#2a2e44', R: '#c8a040' }],
   meSuit: [HOOD, { O: C.line, W: C.suit, S: C.glove, V: C.visor, E: C.skin }],
   sys: [PHONE, { O: C.line, K: '#3a3e6b', A: C.win, R: C.red, W: C.white }],
 };

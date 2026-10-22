@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { setLang, t } from '../src/core/i18n';
 import { LOOK } from '../src/data/looks';
 import type { LookId } from '../src/data/world';
 import { GL, parseColor, txt, type Painter } from '../src/render/paint';
@@ -23,11 +24,21 @@ test('txt draws one pixel per lit glyph bit', () => {
   expect(p.rects.every(([, , , w, h]) => w === 1 && h === 1)).toBe(true);
 });
 
-test('Fang-jie, Amy and the guard have looks and 16×16 portraits', () => {
-  for (const id of ['fang', 'amy', 'guard']) {
+test('Fang-jie, Amy, the guard, Bear and Director Chen have looks and 16×16 portraits', () => {
+  for (const id of ['fang', 'amy', 'guard', 'bear', 'chen']) {
     expect(LOOK[id as LookId]).toBeDefined();
     const [rows] = PORTRAITS[id as PortraitId];
     expect(rows.length).toBe(16);
     expect(rows.every((r) => r.length === 16)).toBe(true);
+  }
+});
+
+test('Bear and Director Chen have speaker names in both languages', () => {
+  expect([t('speaker.bear'), t('speaker.chen')]).toEqual(['大熊（EE）', '陳處長']);
+  setLang('en');
+  try {
+    expect([t('speaker.bear'), t('speaker.chen')]).toEqual(['Bear (EE)', 'Director Chen']);
+  } finally {
+    setLang('zh-TW');
   }
 });

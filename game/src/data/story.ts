@@ -9,7 +9,7 @@ import type { Trigger } from '../systems/triggers';
 type StoryFile = { scenes?: Record<string, Scene>; triggers?: Trigger[] };
 const FILES: Record<string, StoryFile> = { prologue: prologueStory as StoryFile, ch02: ch02 as StoryFile, world: worldStory as StoryFile };
 
-export const SPEAKERS = ['sys', 'me', 'boss', 'kevin', 'fse', 'fang', 'amy', 'guard'] as const;
+export const SPEAKERS = ['sys', 'me', 'boss', 'kevin', 'fse', 'fang', 'amy', 'guard', 'bear', 'chen'] as const;
 export type Speaker = (typeof SPEAKERS)[number];
 
 /** 一句對話；文字中英並排。 */

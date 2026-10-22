@@ -20,4 +20,7 @@ export const LOOK: Record<LookId, Look> = {
   fang: { hair: '#1e1a24', top: '#2f7d74', bottom: '#2b2d3a' },
   amy: { hair: '#6b4a32', top: '#e8a0b4', bottom: '#7a7f92' },
   guard: { hair: '#23304a', top: '#9fb4d0', bottom: '#23304a' },
+  // v0.1 的大熊只出現在 Fab 裡：無塵衣、綠手套。
+  bear: { suit: true, glove: '#5ab86a' },
+  chen: { hair: '#1a1820', top: '#2a2e44', bottom: '#1a1c28', tie: true },
 };
