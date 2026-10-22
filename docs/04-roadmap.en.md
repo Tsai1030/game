@@ -51,7 +51,7 @@ Effort uses relative sizes: S, M, L, XL. Calendar time depends on how many peopl
 > - Bear and Director Chen in 3D, ally chats (+5 once per chapter), and sanity −5 for a wrong conclusion.
 > - Save format v4, which remembers sanity at the start of the chapter.
 >
-> Automated tests now play the whole demo, from New Game to the end-of-demo card, in both languages. They also cover save and Continue at each checkpoint and all three stand-up choices. 215 tests pass. Plan: `docs/superpowers/plans/2026-10-22-m1-2b-chapter2-ending.md`. Still manual: frame rate at 1280×720 and 1920×1080, phone width, and Reduce motion (spec §9.6 and §9.8).
+> Automated tests now play the whole demo, from New Game to the end-of-demo card, in both languages. They also cover save and Continue at each checkpoint and all three stand-up choices. 219 tests pass. Plan: `docs/superpowers/plans/2026-10-22-m1-2b-chapter2-ending.md`. Still manual: frame rate at 1280×720 and 1920×1080, phone width, and Reduce motion (spec §9.6 and §9.8).
 
 > **M1-3D (2026-10-21): code complete, waiting for the owner's playtest.** The world is now three.js Smooth 3D: 3D floors and walls, tools with instanced glowing LEDs and alarm light, furniture, low-poly characters, an orthographic follow camera with 3D picking, and fades between maps. Phaser is removed and the bundle drops from 1,613 KB to 617 KB. 177 automated tests pass. Plan: `docs/superpowers/plans/2026-10-21-m1-3d-renderer.md`.
 
